@@ -91,12 +91,16 @@ adp["est_price"] = adp["adp_rank"].map(curve).fillna(1).round().astype(int)
 # the aggregate gap left alone. Treat these as a FLOOR: in a live room expect
 # competitive bidding to run a few dollars over on players people want.
 
-# Underdog lists no K or DEF; this league has always paid $1-2 for both
-extra = pd.DataFrame([
-    {"player_name": f"(streaming {p})", "player_key": f"_{p.lower()}", "position": p,
-     "nfl_team": "--", "adp": 999, "adp_rank": 999, "est_price": 2}
-    for p in ("K", "DEF")])
-pool = pd.concat([adp, extra], ignore_index=True)
+# FFC drafts kickers and defenses, so both now carry real market prices. The
+# placeholder "(streaming K/DEF)" rows this used to inject are gone.
+pool = adp.copy()
+missing = [p for p in ("K", "DEF") if not (pool["position"] == p).any()]
+if missing:
+    pool = pd.concat([pool, pd.DataFrame([
+        {"player_name": f"(streaming {p})", "player_key": f"_{p.lower()}",
+         "position": p, "nfl_team": "--", "adp": 999, "adp_rank": 999,
+         "est_price": 2} for p in missing])], ignore_index=True)
+    print(f"  (no market data for {missing}; using $2 placeholders)")
 
 print("2026 expected auction prices (FFC redraft ADP primary, rank-matched to history)")
 print(pool.head(14)[["adp_rank", "player_name", "position", "nfl_team", "adp",
