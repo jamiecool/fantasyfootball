@@ -1,0 +1,4316 @@
+{
+ "draft": [
+  {
+   "round": 1,
+   "pick": 1,
+   "player": "CeeDee Lamb",
+   "nfl": "Dal",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 1,
+   "pick": 2,
+   "player": "Ka'imi Fairbairn",
+   "nfl": "Hou",
+   "pos": "K",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 1,
+   "pick": 3,
+   "player": "Drake London",
+   "nfl": "Atl",
+   "pos": "WR",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 1,
+   "pick": 4,
+   "player": "Kaleb Johnson",
+   "nfl": "Pit",
+   "pos": "RB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 1,
+   "pick": 5,
+   "player": "Bijan Robinson",
+   "nfl": "Atl",
+   "pos": "RB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 1,
+   "pick": 6,
+   "player": "Brandon Aubrey",
+   "nfl": "Dal",
+   "pos": "K",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 1,
+   "pick": 7,
+   "player": "Cameron Dicker",
+   "nfl": "LAC",
+   "pos": "K",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 1,
+   "pick": 8,
+   "player": "Justin Jefferson",
+   "nfl": "Min",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 1,
+   "pick": 9,
+   "player": "Ja'Marr Chase",
+   "nfl": "Cin",
+   "pos": "WR",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 1,
+   "pick": 10,
+   "player": "Malik Nabers",
+   "nfl": "NYG",
+   "pos": "WR",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 1,
+   "pick": 11,
+   "player": "Broncos",
+   "nfl": "Den",
+   "pos": "DEF",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 1,
+   "pick": 12,
+   "player": "Christian McCaffrey",
+   "nfl": "SF",
+   "pos": "RB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 2,
+   "pick": 1,
+   "player": "Ashton Jeanty",
+   "nfl": "LV",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 2,
+   "pick": 2,
+   "player": "Chase Brown",
+   "nfl": "Cin",
+   "pos": "RB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 2,
+   "pick": 3,
+   "player": "Nico Collins",
+   "nfl": "Hou",
+   "pos": "WR",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 2,
+   "pick": 4,
+   "player": "James Conner",
+   "nfl": "Ari",
+   "pos": "RB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 2,
+   "pick": 5,
+   "player": "Rome Odunze",
+   "nfl": "Chi",
+   "pos": "WR",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 2,
+   "pick": 6,
+   "player": "Harrison Butker",
+   "nfl": "KC",
+   "pos": "K",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 2,
+   "pick": 7,
+   "player": "Cam Little",
+   "nfl": "Jax",
+   "pos": "K",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 2,
+   "pick": 8,
+   "player": "Saquon Barkley",
+   "nfl": "Phi",
+   "pos": "RB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 2,
+   "pick": 9,
+   "player": "Jahmyr Gibbs",
+   "nfl": "Det",
+   "pos": "RB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 2,
+   "pick": 10,
+   "player": "Jake Elliott",
+   "nfl": "Phi",
+   "pos": "K",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 2,
+   "pick": 11,
+   "player": "Texans",
+   "nfl": "Hou",
+   "pos": "DEF",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 2,
+   "pick": 12,
+   "player": "George Kittle",
+   "nfl": "SF",
+   "pos": "TE",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 3,
+   "pick": 1,
+   "player": "Amon-Ra St. Brown",
+   "nfl": "Det",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 3,
+   "pick": 2,
+   "player": "A.J. Brown",
+   "nfl": "NE",
+   "pos": "WR",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 3,
+   "pick": 3,
+   "player": "Dak Prescott",
+   "nfl": "Dal",
+   "pos": "QB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 3,
+   "pick": 4,
+   "player": "Jalen Hurts",
+   "nfl": "Phi",
+   "pos": "QB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 3,
+   "pick": 5,
+   "player": "DK Metcalf",
+   "nfl": "Pit",
+   "pos": "WR",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 3,
+   "pick": 6,
+   "player": "Bills",
+   "nfl": "Buf",
+   "pos": "DEF",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 3,
+   "pick": 7,
+   "player": "Eagles",
+   "nfl": "Phi",
+   "pos": "DEF",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 3,
+   "pick": 8,
+   "player": "Puka Nacua",
+   "nfl": "LAR",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 3,
+   "pick": 9,
+   "player": "Derrick Henry",
+   "nfl": "Bal",
+   "pos": "RB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 3,
+   "pick": 10,
+   "player": "Jayden Daniels",
+   "nfl": "Was",
+   "pos": "QB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 3,
+   "pick": 11,
+   "player": "Brock Purdy",
+   "nfl": "SF",
+   "pos": "QB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 3,
+   "pick": 12,
+   "player": "De'Von Achane",
+   "nfl": "Mia",
+   "pos": "RB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 4,
+   "pick": 1,
+   "player": "Brian Thomas Jr.",
+   "nfl": "Jax",
+   "pos": "WR",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 4,
+   "pick": 2,
+   "player": "Josh Jacobs",
+   "nfl": "GB",
+   "pos": "RB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 4,
+   "pick": 3,
+   "player": "Travis Kelce",
+   "nfl": "KC",
+   "pos": "TE",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 4,
+   "pick": 4,
+   "player": "Rashee Rice",
+   "nfl": "KC",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 4,
+   "pick": 5,
+   "player": "Jerry Jeudy",
+   "nfl": "Cle",
+   "pos": "WR",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 4,
+   "pick": 6,
+   "player": "George Pickens",
+   "nfl": "Dal",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 4,
+   "pick": 7,
+   "player": "Steelers",
+   "nfl": "Pit",
+   "pos": "DEF",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 4,
+   "pick": 8,
+   "player": "Trey McBride",
+   "nfl": "Ari",
+   "pos": "TE",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 4,
+   "pick": 9,
+   "player": "Chris Boswell",
+   "nfl": "Pit",
+   "pos": "K",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 4,
+   "pick": 10,
+   "player": "Josh Allen",
+   "nfl": "Buf",
+   "pos": "QB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 4,
+   "pick": 11,
+   "player": "Justin Herbert",
+   "nfl": "LAC",
+   "pos": "QB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 4,
+   "pick": 12,
+   "player": "Nick Chubb",
+   "nfl": "Hou",
+   "pos": "RB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 5,
+   "pick": 1,
+   "player": "Brock Bowers",
+   "nfl": "LV",
+   "pos": "TE",
+   "fteam": "Banks"
+  },
+  {
+   "round": 5,
+   "pick": 2,
+   "player": "Jonathan Taylor",
+   "nfl": "Ind",
+   "pos": "RB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 5,
+   "pick": 3,
+   "player": "Patrick Mahomes",
+   "nfl": "KC",
+   "pos": "QB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 5,
+   "pick": 4,
+   "player": "David Njoku",
+   "nfl": "LAC",
+   "pos": "TE",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 5,
+   "pick": 5,
+   "player": "Sam LaPorta",
+   "nfl": "Det",
+   "pos": "TE",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 5,
+   "pick": 6,
+   "player": "Garrett Wilson",
+   "nfl": "NYJ",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 5,
+   "pick": 7,
+   "player": "Joe Burrow",
+   "nfl": "Cin",
+   "pos": "QB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 5,
+   "pick": 8,
+   "player": "Lamar Jackson",
+   "nfl": "Bal",
+   "pos": "QB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 5,
+   "pick": 9,
+   "player": "Ravens",
+   "nfl": "Bal",
+   "pos": "DEF",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 5,
+   "pick": 10,
+   "player": "Russell Wilson",
+   "nfl": "NYG",
+   "pos": "QB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 5,
+   "pick": 11,
+   "player": "Jordan Love",
+   "nfl": "GB",
+   "pos": "QB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 5,
+   "pick": 12,
+   "player": "James Cook III",
+   "nfl": "Buf",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 6,
+   "pick": 1,
+   "player": "Breece Hall",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 6,
+   "pick": 2,
+   "player": "Omarion Hampton",
+   "nfl": "LAC",
+   "pos": "RB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 6,
+   "pick": 3,
+   "player": "Davante Adams",
+   "nfl": "LAR",
+   "pos": "WR",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 6,
+   "pick": 4,
+   "player": "Matthew Golden",
+   "nfl": "GB",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 6,
+   "pick": 5,
+   "player": "Bucky Irving",
+   "nfl": "TB",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 6,
+   "pick": 6,
+   "player": "Jameson Williams",
+   "nfl": "Det",
+   "pos": "WR",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 6,
+   "pick": 7,
+   "player": "Tee Higgins",
+   "nfl": "Cin",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 6,
+   "pick": 8,
+   "player": "Bo Nix",
+   "nfl": "Den",
+   "pos": "QB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 6,
+   "pick": 9,
+   "player": "Vikings",
+   "nfl": "Min",
+   "pos": "DEF",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 6,
+   "pick": 10,
+   "player": "Evan McPherson",
+   "nfl": "Cin",
+   "pos": "K",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 6,
+   "pick": 11,
+   "player": "C.J. Stroud",
+   "nfl": "Hou",
+   "pos": "QB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 6,
+   "pick": 12,
+   "player": "Jaxon Smith-Njigba",
+   "nfl": "Sea",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 7,
+   "pick": 1,
+   "player": "Kenneth Walker III",
+   "nfl": "KC",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 7,
+   "pick": 2,
+   "player": "Kyren Williams",
+   "nfl": "LAR",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 7,
+   "pick": 3,
+   "player": "Stefon Diggs",
+   "nfl": "Was",
+   "pos": "WR",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 7,
+   "pick": 4,
+   "player": "Chris Olave",
+   "nfl": "NO",
+   "pos": "WR",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 7,
+   "pick": 5,
+   "player": "T.J. Hockenson",
+   "nfl": "Min",
+   "pos": "TE",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 7,
+   "pick": 6,
+   "player": "Jaylen Waddle",
+   "nfl": "Den",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 7,
+   "pick": 7,
+   "player": "Cardinals",
+   "nfl": "Ari",
+   "pos": "DEF",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 7,
+   "pick": 8,
+   "player": "Commanders",
+   "nfl": "Was",
+   "pos": "DEF",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 7,
+   "pick": 9,
+   "player": "Ladd McConkey",
+   "nfl": "LAC",
+   "pos": "WR",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 7,
+   "pick": 10,
+   "player": "Chuba Hubbard",
+   "nfl": "Car",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 7,
+   "pick": 11,
+   "player": "Tyrone Tracy Jr.",
+   "nfl": "NYG",
+   "pos": "RB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 7,
+   "pick": 12,
+   "player": "Tyreek Hill",
+   "nfl": "Mia",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 8,
+   "pick": 1,
+   "player": "DeVonta Smith",
+   "nfl": "Phi",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 8,
+   "pick": 2,
+   "player": "TreVeyon Henderson",
+   "nfl": "NE",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 8,
+   "pick": 3,
+   "player": "Wil Lutz",
+   "nfl": "Den",
+   "pos": "K",
+   "fteam": "Banks"
+  },
+  {
+   "round": 8,
+   "pick": 4,
+   "player": "Tank Bigsby",
+   "nfl": "Phi",
+   "pos": "RB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 8,
+   "pick": 5,
+   "player": "Evan Engram",
+   "nfl": "Den",
+   "pos": "TE",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 8,
+   "pick": 6,
+   "player": "Zay Flowers",
+   "nfl": "Bal",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 8,
+   "pick": 7,
+   "player": "Mike Evans",
+   "nfl": "SF",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 8,
+   "pick": 8,
+   "player": "Cam Skattebo",
+   "nfl": "NYG",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 8,
+   "pick": 9,
+   "player": "Marvin Harrison Jr.",
+   "nfl": "Ari",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 8,
+   "pick": 10,
+   "player": "DJ Moore",
+   "nfl": "Buf",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 8,
+   "pick": 11,
+   "player": "Colston Loveland",
+   "nfl": "Chi",
+   "pos": "TE",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 8,
+   "pick": 12,
+   "player": "Calvin Ridley",
+   "nfl": "Ten",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 9,
+   "pick": 1,
+   "player": "Alvin Kamara",
+   "nfl": "NO",
+   "pos": "RB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 9,
+   "pick": 2,
+   "player": "Tony Pollard",
+   "nfl": "Ten",
+   "pos": "RB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 9,
+   "pick": 3,
+   "player": "Cooper Kupp",
+   "nfl": "Sea",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 9,
+   "pick": 4,
+   "player": "Jaylen Warren",
+   "nfl": "Pit",
+   "pos": "RB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 9,
+   "pick": 5,
+   "player": "Aaron Jones Sr.",
+   "nfl": "Min",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 9,
+   "pick": 6,
+   "player": "Deebo Samuel Sr.",
+   "nfl": "SF",
+   "pos": "WR",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 9,
+   "pick": 7,
+   "player": "Mark Andrews",
+   "nfl": "Bal",
+   "pos": "TE",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 9,
+   "pick": 8,
+   "player": "Chase McLaughlin",
+   "nfl": "TB",
+   "pos": "K",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 9,
+   "pick": 9,
+   "player": "Terry McLaurin",
+   "nfl": "Was",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 9,
+   "pick": 10,
+   "player": "Xavier Worthy",
+   "nfl": "KC",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 9,
+   "pick": 11,
+   "player": "Courtland Sutton",
+   "nfl": "Den",
+   "pos": "WR",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 9,
+   "pick": 12,
+   "player": "D'Andre Swift",
+   "nfl": "Chi",
+   "pos": "RB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 10,
+   "pick": 1,
+   "player": "Jake Bates",
+   "nfl": "Det",
+   "pos": "K",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 10,
+   "pick": 2,
+   "player": "RJ Harvey",
+   "nfl": "Den",
+   "pos": "RB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 10,
+   "pick": 3,
+   "player": "Jakobi Meyers",
+   "nfl": "Jax",
+   "pos": "WR",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 10,
+   "pick": 4,
+   "player": "Najee Harris",
+   "nfl": "LAC",
+   "pos": "RB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 10,
+   "pick": 5,
+   "player": "Braelon Allen",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 10,
+   "pick": 6,
+   "player": "Ricky Pearsall",
+   "nfl": "SF",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 10,
+   "pick": 7,
+   "player": "Isiah Pacheco",
+   "nfl": "Det",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 10,
+   "pick": 8,
+   "player": "Baker Mayfield",
+   "nfl": "TB",
+   "pos": "QB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 10,
+   "pick": 9,
+   "player": "Tetairoa McMillan",
+   "nfl": "Car",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 10,
+   "pick": 10,
+   "player": "Emeka Egbuka",
+   "nfl": "TB",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 10,
+   "pick": 11,
+   "player": "Joe Mixon",
+   "nfl": "Hou",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 10,
+   "pick": 12,
+   "player": "Kyler Murray",
+   "nfl": "Min",
+   "pos": "QB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 11,
+   "pick": 1,
+   "player": "Jordan Mason",
+   "nfl": "Min",
+   "pos": "RB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 11,
+   "pick": 2,
+   "player": "Dallas Goedert",
+   "nfl": "Phi",
+   "pos": "TE",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 11,
+   "pick": 3,
+   "player": "Justin Fields",
+   "nfl": "KC",
+   "pos": "QB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 11,
+   "pick": 4,
+   "player": "Michael Pittman Jr.",
+   "nfl": "Pit",
+   "pos": "WR",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 11,
+   "pick": 5,
+   "player": "AJ Dillon",
+   "nfl": "Car",
+   "pos": "RB",
+   "fteam": "Sir Phobos"
+  },
+  {
+   "round": 11,
+   "pick": 6,
+   "player": "Darnell Mooney",
+   "nfl": "NYG",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 11,
+   "pick": 7,
+   "player": "Travis Hunter",
+   "nfl": "Jax",
+   "pos": "WR",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 11,
+   "pick": 8,
+   "player": "49ers",
+   "nfl": "SF",
+   "pos": "DEF",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 11,
+   "pick": 9,
+   "player": "Jacory Croskey-Merritt",
+   "nfl": "Was",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 11,
+   "pick": 10,
+   "player": "Christian Kirk",
+   "nfl": "SF",
+   "pos": "WR",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 11,
+   "pick": 11,
+   "player": "Quinshon Judkins",
+   "nfl": "Cle",
+   "pos": "RB",
+   "fteam": "Daniel's Dandy Team"
+  },
+  {
+   "round": 11,
+   "pick": 12,
+   "player": "Khalil Shakir",
+   "nfl": "Buf",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 12,
+   "pick": 1,
+   "player": "David Montgomery",
+   "nfl": "Hou",
+   "pos": "RB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 12,
+   "pick": 2,
+   "player": "Trevor Lawrence",
+   "nfl": "Jax",
+   "pos": "QB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 12,
+   "pick": 3,
+   "player": "Jared Goff",
+   "nfl": "Det",
+   "pos": "QB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 12,
+   "pick": 4,
+   "player": "--empty--",
+   "nfl": "",
+   "pos": "",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 12,
+   "pick": 5,
+   "player": "Marvin Mims Jr.",
+   "nfl": "Den",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 12,
+   "pick": 6,
+   "player": "Tyler Warren",
+   "nfl": "Ind",
+   "pos": "TE",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 12,
+   "pick": 7,
+   "player": "Matt Gay",
+   "nfl": "LV",
+   "pos": "K",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 12,
+   "pick": 8,
+   "player": "Zach Charbonnet",
+   "nfl": "Sea",
+   "pos": "RB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 12,
+   "pick": 9,
+   "player": "Chris Godwin Jr.",
+   "nfl": "TB",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 12,
+   "pick": 10,
+   "player": "Austin Ekeler",
+   "nfl": "Was",
+   "pos": "RB",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 12,
+   "pick": 11,
+   "player": "Caleb Williams",
+   "nfl": "Chi",
+   "pos": "QB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 12,
+   "pick": 12,
+   "player": "Tucker Kraft",
+   "nfl": "GB",
+   "pos": "TE",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 13,
+   "pick": 1,
+   "player": "Jordan Addison",
+   "nfl": "Min",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 13,
+   "pick": 2,
+   "player": "Keenan Allen",
+   "nfl": "LAC",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 13,
+   "pick": 3,
+   "player": "Jayden Reed",
+   "nfl": "GB",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 13,
+   "pick": 4,
+   "player": "Travis Etienne Jr.",
+   "nfl": "NO",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 13,
+   "pick": 5,
+   "player": "Rashid Shaheed",
+   "nfl": "Sea",
+   "pos": "WR",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 13,
+   "pick": 6,
+   "player": "J.K. Dobbins",
+   "nfl": "Den",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 13,
+   "pick": 7,
+   "player": "Ollie Gordon II",
+   "nfl": "Mia",
+   "pos": "RB",
+   "fteam": "Jamie's Team"
+  },
+  {
+   "round": 13,
+   "pick": 8,
+   "player": "Rashod Bateman",
+   "nfl": "Bal",
+   "pos": "WR",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 13,
+   "pick": 9,
+   "player": "Jayden Higgins",
+   "nfl": "Hou",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 13,
+   "pick": 10,
+   "player": "Javonte Williams",
+   "nfl": "Dal",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 13,
+   "pick": 11,
+   "player": "Jake Ferguson",
+   "nfl": "Dal",
+   "pos": "TE",
+   "fteam": "Banks"
+  },
+  {
+   "round": 13,
+   "pick": 12,
+   "player": "Cole Kmet",
+   "nfl": "Chi",
+   "pos": "TE",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 14,
+   "pick": 1,
+   "player": "Josh Downs",
+   "nfl": "Ind",
+   "pos": "WR",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 14,
+   "pick": 2,
+   "player": "Jauan Jennings",
+   "nfl": "Min",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 14,
+   "pick": 3,
+   "player": "Drake Maye",
+   "nfl": "NE",
+   "pos": "QB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 14,
+   "pick": 4,
+   "player": "Dalton Kincaid",
+   "nfl": "Buf",
+   "pos": "TE",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 14,
+   "pick": 5,
+   "player": "Brandon Aiyuk",
+   "nfl": "SF",
+   "pos": "WR",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 14,
+   "pick": 6,
+   "player": "Cedric Tillman",
+   "nfl": "Cle",
+   "pos": "WR",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 14,
+   "pick": 7,
+   "player": "Keon Coleman",
+   "nfl": "Buf",
+   "pos": "WR",
+   "fteam": "Kempton's Alt Right"
+  },
+  {
+   "round": 14,
+   "pick": 8,
+   "player": "Rhamondre Stevenson",
+   "nfl": "NE",
+   "pos": "RB",
+   "fteam": "Banks"
+  },
+  {
+   "round": 14,
+   "pick": 9,
+   "player": "Jerome Ford",
+   "nfl": "Was",
+   "pos": "RB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 14,
+   "pick": 10,
+   "player": "Romeo Doubs",
+   "nfl": "NE",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 14,
+   "pick": 11,
+   "player": "DeMario Douglas",
+   "nfl": "NE",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 14,
+   "pick": 12,
+   "player": "Bhayshul Tuten",
+   "nfl": "Jax",
+   "pos": "RB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 15,
+   "pick": 1,
+   "player": "Rachaad White",
+   "nfl": "Was",
+   "pos": "RB",
+   "fteam": "Pooky and the Pumpkin Pounders"
+  },
+  {
+   "round": 15,
+   "pick": 2,
+   "player": "Matthew Stafford",
+   "nfl": "LAR",
+   "pos": "QB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 15,
+   "pick": 3,
+   "player": "Jaydon Blue",
+   "nfl": "Dal",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 15,
+   "pick": 4,
+   "player": "Chiefs",
+   "nfl": "KC",
+   "pos": "DEF",
+   "fteam": "Banks"
+  },
+  {
+   "round": 15,
+   "pick": 5,
+   "player": "Packers",
+   "nfl": "GB",
+   "pos": "DEF",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 15,
+   "pick": 6,
+   "player": "Trey Benson",
+   "nfl": "Ari",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 15,
+   "pick": 7,
+   "player": "Dont'e Thornton Jr.",
+   "nfl": "LV",
+   "pos": "WR",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 15,
+   "pick": 8,
+   "player": "Hunter Henry",
+   "nfl": "NE",
+   "pos": "TE",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 15,
+   "pick": 9,
+   "player": "Kenny Gainwell",
+   "nfl": "TB",
+   "pos": "RB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 15,
+   "pick": 10,
+   "player": "Kyle Monangai",
+   "nfl": "Chi",
+   "pos": "RB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 15,
+   "pick": 11,
+   "player": "Kareem Hunt",
+   "nfl": "KC",
+   "pos": "RB",
+   "fteam": "Injured Reserve"
+  },
+  {
+   "round": 15,
+   "pick": 12,
+   "player": "Luther Burden III",
+   "nfl": "Chi",
+   "pos": "WR",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 16,
+   "pick": 1,
+   "player": "Brian Robinson",
+   "nfl": "Atl",
+   "pos": "RB",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 16,
+   "pick": 2,
+   "player": "J.J. McCarthy",
+   "nfl": "Min",
+   "pos": "QB",
+   "fteam": "Stars and Scrubs"
+  },
+  {
+   "round": 16,
+   "pick": 3,
+   "player": "Dylan Sampson",
+   "nfl": "Cle",
+   "pos": "RB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 16,
+   "pick": 4,
+   "player": "Chig Okonkwo",
+   "nfl": "Was",
+   "pos": "TE",
+   "fteam": "All up to Luck"
+  },
+  {
+   "round": 16,
+   "pick": 5,
+   "player": "DeAndre Hopkins",
+   "nfl": "Bal",
+   "pos": "WR",
+   "fteam": "Banks"
+  },
+  {
+   "round": 16,
+   "pick": 6,
+   "player": "Tyler Allgeier",
+   "nfl": "Ari",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 16,
+   "pick": 7,
+   "player": "Tyjae Spears",
+   "nfl": "Ten",
+   "pos": "RB",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 16,
+   "pick": 8,
+   "player": "Bryce Young",
+   "nfl": "Car",
+   "pos": "QB",
+   "fteam": "Lev Bell’s Roommates"
+  },
+  {
+   "round": 16,
+   "pick": 9,
+   "player": "Rico Dowdle",
+   "nfl": "Pit",
+   "pos": "RB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 16,
+   "pick": 10,
+   "player": "Xavier Legette",
+   "nfl": "Car",
+   "pos": "WR",
+   "fteam": "Jachizz Rogers"
+  },
+  {
+   "round": 16,
+   "pick": 11,
+   "player": "Michael Penix Jr.",
+   "nfl": "Atl",
+   "pos": "QB",
+   "fteam": "Cops and Rodgers"
+  },
+  {
+   "round": 16,
+   "pick": 12,
+   "player": "Younghoe Koo",
+   "nfl": "NYG",
+   "pos": "K",
+   "fteam": "Cops and Rodgers"
+  }
+ ],
+ "rosters": [
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jaxson Dart",
+   "nfl": "NYG",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Zay Flowers",
+   "nfl": "Bal",
+   "pos": "WR",
+   "cost": "16"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Mike Evans",
+   "nfl": "SF",
+   "pos": "WR",
+   "cost": "27"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jauan Jennings",
+   "nfl": "Min",
+   "pos": "WR",
+   "cost": "4"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Derrick Henry",
+   "nfl": "Bal",
+   "pos": "RB",
+   "cost": "50"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jahmyr Gibbs",
+   "nfl": "Det",
+   "pos": "RB",
+   "cost": "61"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Dallas Goedert",
+   "nfl": "Phi",
+   "pos": "TE",
+   "cost": "1"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jaylen Waddle",
+   "nfl": "Den",
+   "pos": "WR",
+   "cost": "10"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Sam Darnold",
+   "nfl": "Sea",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jakobi Meyers",
+   "nfl": "Jax",
+   "pos": "WR",
+   "cost": "5"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "David Montgomery",
+   "nfl": "Hou",
+   "pos": "RB",
+   "cost": "6"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Zach Charbonnet",
+   "nfl": "Sea",
+   "pos": "RB",
+   "cost": "5"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Will Reichard",
+   "nfl": "Min",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Jaguars",
+   "nfl": "Jax",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Chiefs",
+   "nfl": "KC",
+   "pos": "DEF",
+   "cost": "1"
+  },
+  {
+   "fteam": "Kempton's Alt Right",
+   "player": "Bears",
+   "nfl": "Chi",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Justin Herbert",
+   "nfl": "LAC",
+   "pos": "QB",
+   "cost": "5"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Deebo Samuel Sr.",
+   "nfl": "SF",
+   "pos": "WR",
+   "cost": "8"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Drake London",
+   "nfl": "Atl",
+   "pos": "WR",
+   "cost": "34"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Stefon Diggs",
+   "nfl": "Was",
+   "pos": "WR",
+   "cost": "8"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Christian McCaffrey",
+   "nfl": "SF",
+   "pos": "RB",
+   "cost": "50"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Tyler Allgeier",
+   "nfl": "Ari",
+   "pos": "RB",
+   "cost": "2"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Juwan Johnson",
+   "nfl": "NO",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Alvin Kamara",
+   "nfl": "NO",
+   "pos": "RB",
+   "cost": "26"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Brian Thomas Jr.",
+   "nfl": "Jax",
+   "pos": "WR",
+   "cost": "44"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "DJ Moore",
+   "nfl": "Buf",
+   "pos": "WR",
+   "cost": "16"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Devin Neal",
+   "nfl": "NO",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Alec Pierce",
+   "nfl": "Ind",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "C.J. Stroud",
+   "nfl": "Hou",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Tyler Loop",
+   "nfl": "Bal",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Buccaneers",
+   "nfl": "TB",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "All up to Luck",
+   "player": "Falcons",
+   "nfl": "Atl",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Lamar Jackson",
+   "nfl": "Bal",
+   "pos": "QB",
+   "cost": "35"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Khalil Shakir",
+   "nfl": "Buf",
+   "pos": "WR",
+   "cost": "2"
+  },
+  {
+   "fteam": "Banks",
+   "player": "DeVonta Smith",
+   "nfl": "Phi",
+   "pos": "WR",
+   "cost": "18"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Keenan Allen",
+   "nfl": "LAC",
+   "pos": "WR",
+   "cost": "5"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Tony Pollard",
+   "nfl": "Ten",
+   "pos": "RB",
+   "cost": "14"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Josh Jacobs",
+   "nfl": "GB",
+   "pos": "RB",
+   "cost": "44"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Brock Bowers",
+   "nfl": "LV",
+   "pos": "TE",
+   "cost": "36"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Cooper Kupp",
+   "nfl": "Sea",
+   "pos": "WR",
+   "cost": "5"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Emanuel Wilson",
+   "nfl": "Sea",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Jake Ferguson",
+   "nfl": "Dal",
+   "pos": "TE",
+   "cost": "1"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Rhamondre Stevenson",
+   "nfl": "NE",
+   "pos": "RB",
+   "cost": "5"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Jordan Mason",
+   "nfl": "Min",
+   "pos": "RB",
+   "cost": "4"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Jared Goff",
+   "nfl": "Det",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Cam Little",
+   "nfl": "Jax",
+   "pos": "K",
+   "cost": "1"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Ravens",
+   "nfl": "Bal",
+   "pos": "DEF",
+   "cost": "2"
+  },
+  {
+   "fteam": "Banks",
+   "player": "Terry McLaurin",
+   "nfl": "Was",
+   "pos": "WR",
+   "cost": "27"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Brock Purdy",
+   "nfl": "SF",
+   "pos": "QB",
+   "cost": "5"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Jaxon Smith-Njigba",
+   "nfl": "Sea",
+   "pos": "WR",
+   "cost": "26"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Ja'Marr Chase",
+   "nfl": "Cin",
+   "pos": "WR",
+   "cost": "68"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Luther Burden III",
+   "nfl": "Chi",
+   "pos": "WR",
+   "cost": "1"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Kyren Williams",
+   "nfl": "LAR",
+   "pos": "RB",
+   "cost": "32"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "James Cook III",
+   "nfl": "Buf",
+   "pos": "RB",
+   "cost": "28"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Harold Fannin Jr.",
+   "nfl": "Cle",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Jayden Reed",
+   "nfl": "GB",
+   "pos": "WR",
+   "cost": "2"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Darren Waller",
+   "nfl": "Mia",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Davante Adams",
+   "nfl": "LAR",
+   "pos": "WR",
+   "cost": "18"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Jordan Love",
+   "nfl": "GB",
+   "pos": "QB",
+   "cost": "5"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Breece Hall",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "cost": "21"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Kyle Monangai",
+   "nfl": "Chi",
+   "pos": "RB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Blake Corum",
+   "nfl": "LAR",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Eddy Pineiro",
+   "nfl": "SF",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Patriots",
+   "nfl": "NE",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Pooky and the Pumpkin Pounders",
+   "player": "Garrett Wilson",
+   "nfl": "NYJ",
+   "pos": "WR",
+   "cost": "20"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Tyler Shough",
+   "nfl": "NO",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Jameson Williams",
+   "nfl": "Det",
+   "pos": "WR",
+   "cost": "14"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Michael Wilson",
+   "nfl": "Ari",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Chris Olave",
+   "nfl": "NO",
+   "pos": "WR",
+   "cost": "11"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "De'Von Achane",
+   "nfl": "Mia",
+   "pos": "RB",
+   "cost": "43"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Tyrone Tracy Jr.",
+   "nfl": "NYG",
+   "pos": "RB",
+   "cost": "13"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Travis Kelce",
+   "nfl": "KC",
+   "pos": "TE",
+   "cost": "11"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "J.J. McCarthy",
+   "nfl": "Min",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Quinshon Judkins",
+   "nfl": "Cle",
+   "pos": "RB",
+   "cost": "3"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Darnell Mooney",
+   "nfl": "NYG",
+   "pos": "WR",
+   "cost": "1"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Theo Johnson",
+   "nfl": "NYG",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Jalen Coker",
+   "nfl": "Car",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Chase McLaughlin",
+   "nfl": "TB",
+   "pos": "K",
+   "cost": "2"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Evan McPherson",
+   "nfl": "Cin",
+   "pos": "K",
+   "cost": "1"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Broncos",
+   "nfl": "Den",
+   "pos": "DEF",
+   "cost": "5"
+  },
+  {
+   "fteam": "Daniel's Dandy Team",
+   "player": "Browns",
+   "nfl": "Cle",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Matthew Stafford",
+   "nfl": "LAR",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "DK Metcalf",
+   "nfl": "Pit",
+   "pos": "WR",
+   "cost": "17"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Darius Slayton",
+   "nfl": "NYG",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "A.J. Brown",
+   "nfl": "NE",
+   "pos": "WR",
+   "cost": "38"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Saquon Barkley",
+   "nfl": "Phi",
+   "pos": "RB",
+   "cost": "66"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Kareem Hunt",
+   "nfl": "KC",
+   "pos": "RB",
+   "cost": "2"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "George Kittle",
+   "nfl": "SF",
+   "pos": "TE",
+   "cost": "27"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Nick Chubb",
+   "nfl": "Hou",
+   "pos": "RB",
+   "cost": "5"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Rashid Shaheed",
+   "nfl": "Sea",
+   "pos": "WR",
+   "cost": "2"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Dak Prescott",
+   "nfl": "Dal",
+   "pos": "QB",
+   "cost": "4"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Aaron Rodgers",
+   "nfl": "Pit",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Dalton Kincaid",
+   "nfl": "Buf",
+   "pos": "TE",
+   "cost": "4"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Dyami Brown",
+   "nfl": "Was",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Brandon Aubrey",
+   "nfl": "Dal",
+   "pos": "K",
+   "cost": "2"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Matt Prater",
+   "nfl": "Buf",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Injured Reserve",
+   "player": "Eagles",
+   "nfl": "Phi",
+   "pos": "DEF",
+   "cost": "3"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Jalen Hurts",
+   "nfl": "Phi",
+   "pos": "QB",
+   "cost": "26"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Puka Nacua",
+   "nfl": "LAR",
+   "pos": "WR",
+   "cost": "47"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Romeo Doubs",
+   "nfl": "NE",
+   "pos": "WR",
+   "cost": "1"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Tee Higgins",
+   "nfl": "Cin",
+   "pos": "WR",
+   "cost": "27"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Bucky Irving",
+   "nfl": "TB",
+   "pos": "RB",
+   "cost": "33"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Isiah Pacheco",
+   "nfl": "Det",
+   "pos": "RB",
+   "cost": "10"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Trey McBride",
+   "nfl": "Ari",
+   "pos": "TE",
+   "cost": "30"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Kayshon Boutte",
+   "nfl": "NE",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Tyjae Spears",
+   "nfl": "Ten",
+   "pos": "RB",
+   "cost": "2"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Bam Knight",
+   "nfl": "Ari",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Isaiah Davis",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Olamide Zaccheaus",
+   "nfl": "Atl",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Ollie Gordon II",
+   "nfl": "Mia",
+   "pos": "RB",
+   "cost": "3"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Joshua Palmer",
+   "nfl": "Buf",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Cairo Santos",
+   "nfl": "Chi",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Bills",
+   "nfl": "Buf",
+   "pos": "DEF",
+   "cost": "1"
+  },
+  {
+   "fteam": "Jachizz Rogers",
+   "player": "Trey Benson",
+   "nfl": "Ari",
+   "pos": "RB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Joe Burrow",
+   "nfl": "Cin",
+   "pos": "QB",
+   "cost": "19"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Tetairoa McMillan",
+   "nfl": "Car",
+   "pos": "WR",
+   "cost": "11"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Emeka Egbuka",
+   "nfl": "TB",
+   "pos": "WR",
+   "cost": "5"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "George Pickens",
+   "nfl": "Dal",
+   "pos": "WR",
+   "cost": "16"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Travis Etienne Jr.",
+   "nfl": "NO",
+   "pos": "RB",
+   "cost": "10"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "TreVeyon Henderson",
+   "nfl": "NE",
+   "pos": "RB",
+   "cost": "24"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Tyler Warren",
+   "nfl": "Ind",
+   "pos": "TE",
+   "cost": "5"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Rashee Rice",
+   "nfl": "KC",
+   "pos": "WR",
+   "cost": "5"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Ashton Jeanty",
+   "nfl": "LV",
+   "pos": "RB",
+   "cost": "43"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Kenneth Walker III",
+   "nfl": "KC",
+   "pos": "RB",
+   "cost": "20"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Quentin Johnston",
+   "nfl": "LAC",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Jaylen Wright",
+   "nfl": "Mia",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Kirk Cousins",
+   "nfl": "LV",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Hollywood Brown",
+   "nfl": "Phi",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Jason Myers",
+   "nfl": "Sea",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Seahawks",
+   "nfl": "Sea",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Jamie's Team",
+   "player": "Jayden Daniels",
+   "nfl": "Was",
+   "pos": "QB",
+   "cost": "25"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Drake Maye",
+   "nfl": "NE",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Xavier Worthy",
+   "nfl": "KC",
+   "pos": "WR",
+   "cost": "16"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Amon-Ra St. Brown",
+   "nfl": "Det",
+   "pos": "WR",
+   "cost": "57"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Christian Watson",
+   "nfl": "GB",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Bijan Robinson",
+   "nfl": "Atl",
+   "pos": "RB",
+   "cost": "62"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "RJ Harvey",
+   "nfl": "Den",
+   "pos": "RB",
+   "cost": "8"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Brenton Strange",
+   "nfl": "Jax",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Woody Marks",
+   "nfl": "Hou",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Adonai Mitchell",
+   "nfl": "NYJ",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Jacoby Brissett",
+   "nfl": "Ari",
+   "pos": "QB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Jordan Addison",
+   "nfl": "Min",
+   "pos": "WR",
+   "cost": "7"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Ricky Pearsall",
+   "nfl": "SF",
+   "pos": "WR",
+   "cost": "8"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Kimani Vidal",
+   "nfl": "LAC",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Matthew Golden",
+   "nfl": "GB",
+   "pos": "WR",
+   "cost": "8"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Jake Bates",
+   "nfl": "Det",
+   "pos": "K",
+   "cost": "1"
+  },
+  {
+   "fteam": "Stars and Scrubs",
+   "player": "Dolphins",
+   "nfl": "Mia",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Josh Allen",
+   "nfl": "Buf",
+   "pos": "QB",
+   "cost": "38"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Nico Collins",
+   "nfl": "Hou",
+   "pos": "WR",
+   "cost": "40"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Ladd McConkey",
+   "nfl": "LAC",
+   "pos": "WR",
+   "cost": "31"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Wan'Dale Robinson",
+   "nfl": "Ten",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Chase Brown",
+   "nfl": "Cin",
+   "pos": "RB",
+   "cost": "33"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Jaylen Warren",
+   "nfl": "Pit",
+   "pos": "RB",
+   "cost": "8"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Mark Andrews",
+   "nfl": "Bal",
+   "pos": "TE",
+   "cost": "8"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Omarion Hampton",
+   "nfl": "LAC",
+   "pos": "RB",
+   "cost": "23"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Michael Pittman Jr.",
+   "nfl": "Pit",
+   "pos": "WR",
+   "cost": "4"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Elic Ayomanor",
+   "nfl": "Ten",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Hunter Henry",
+   "nfl": "NE",
+   "pos": "TE",
+   "cost": "1"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Rachaad White",
+   "nfl": "Was",
+   "pos": "RB",
+   "cost": "12"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Bhayshul Tuten",
+   "nfl": "Jax",
+   "pos": "RB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Troy Franklin",
+   "nfl": "Den",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Chris Boswell",
+   "nfl": "Pit",
+   "pos": "K",
+   "cost": "1"
+  },
+  {
+   "fteam": "Lev Bell’s Roommates",
+   "player": "Texans",
+   "nfl": "Hou",
+   "pos": "DEF",
+   "cost": "2"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Bo Nix",
+   "nfl": "Den",
+   "pos": "QB",
+   "cost": "7"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Rome Odunze",
+   "nfl": "Chi",
+   "pos": "WR",
+   "cost": "11"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Tre Tucker",
+   "nfl": "LV",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Jerry Jeudy",
+   "nfl": "Cle",
+   "pos": "WR",
+   "cost": "12"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Aaron Jones Sr.",
+   "nfl": "Min",
+   "pos": "RB",
+   "cost": "14"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Javonte Williams",
+   "nfl": "Dal",
+   "pos": "RB",
+   "cost": "2"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Kyle Pitts Sr.",
+   "nfl": "Atl",
+   "pos": "TE",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Trevor Lawrence",
+   "nfl": "Jax",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Sam LaPorta",
+   "nfl": "Det",
+   "pos": "TE",
+   "cost": "17"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Chuba Hubbard",
+   "nfl": "Car",
+   "pos": "RB",
+   "cost": "20"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Parker Washington",
+   "nfl": "Jax",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Xavier Legette",
+   "nfl": "Car",
+   "pos": "WR",
+   "cost": "1"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Sean Tucker",
+   "nfl": "TB",
+   "pos": "RB",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Jake Elliott",
+   "nfl": "Phi",
+   "pos": "K",
+   "cost": "2"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Joshua Karty",
+   "nfl": "Ari",
+   "pos": "K",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Panthers",
+   "nfl": "Car",
+   "pos": "DEF",
+   "cost": "-"
+  },
+  {
+   "fteam": "Sir Phobos",
+   "player": "Cam Skattebo",
+   "nfl": "NYG",
+   "pos": "RB",
+   "cost": "2"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Caleb Williams",
+   "nfl": "Chi",
+   "pos": "QB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Justin Jefferson",
+   "nfl": "Min",
+   "pos": "WR",
+   "cost": "52"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "CeeDee Lamb",
+   "nfl": "Dal",
+   "pos": "WR",
+   "cost": "52"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Courtland Sutton",
+   "nfl": "Den",
+   "pos": "WR",
+   "cost": "12"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Jonathan Taylor",
+   "nfl": "Ind",
+   "pos": "RB",
+   "cost": "40"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "D'Andre Swift",
+   "nfl": "Chi",
+   "pos": "RB",
+   "cost": "12"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Colston Loveland",
+   "nfl": "Chi",
+   "pos": "TE",
+   "cost": "4"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Baker Mayfield",
+   "nfl": "TB",
+   "pos": "QB",
+   "cost": "4"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Rico Dowdle",
+   "nfl": "Pit",
+   "pos": "RB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Chimere Dike",
+   "nfl": "Ten",
+   "pos": "WR",
+   "cost": "-"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Chris Godwin Jr.",
+   "nfl": "TB",
+   "pos": "WR",
+   "cost": "3"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Kenny Gainwell",
+   "nfl": "TB",
+   "pos": "RB",
+   "cost": "1"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Jayden Higgins",
+   "nfl": "Hou",
+   "pos": "WR",
+   "cost": "2"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Marvin Harrison Jr.",
+   "nfl": "Ari",
+   "pos": "WR",
+   "cost": "24"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Harrison Butker",
+   "nfl": "KC",
+   "pos": "K",
+   "cost": "1"
+  },
+  {
+   "fteam": "Cops and Rodgers",
+   "player": "Bengals",
+   "nfl": "Cin",
+   "pos": "DEF",
+   "cost": "-"
+  }
+ ],
+ "ranks": [
+  {
+   "rank": 1,
+   "player": "Ja'Marr Chase",
+   "nfl": "CIN",
+   "pos": "WR",
+   "posrank": 1
+  },
+  {
+   "rank": 2,
+   "player": "Bijan Robinson",
+   "nfl": "ATL",
+   "pos": "RB",
+   "posrank": 1
+  },
+  {
+   "rank": 3,
+   "player": "Justin Jefferson",
+   "nfl": "MIN",
+   "pos": "WR",
+   "posrank": 2
+  },
+  {
+   "rank": 4,
+   "player": "Saquon Barkley",
+   "nfl": "PHI",
+   "pos": "RB",
+   "posrank": 2
+  },
+  {
+   "rank": 5,
+   "player": "Jahmyr Gibbs",
+   "nfl": "DET",
+   "pos": "RB",
+   "posrank": 3
+  },
+  {
+   "rank": 6,
+   "player": "Christian McCaffrey",
+   "nfl": "SF",
+   "pos": "RB",
+   "posrank": 4
+  },
+  {
+   "rank": 7,
+   "player": "CeeDee Lamb",
+   "nfl": "DAL",
+   "pos": "WR",
+   "posrank": 3
+  },
+  {
+   "rank": 8,
+   "player": "Malik Nabers",
+   "nfl": "NYG",
+   "pos": "WR",
+   "posrank": 4
+  },
+  {
+   "rank": 9,
+   "player": "Puka Nacua",
+   "nfl": "LAR",
+   "pos": "WR",
+   "posrank": 5
+  },
+  {
+   "rank": 10,
+   "player": "Ashton Jeanty",
+   "nfl": "LV",
+   "pos": "RB",
+   "posrank": 5
+  },
+  {
+   "rank": 11,
+   "player": "Amon-Ra St. Brown",
+   "nfl": "DET",
+   "pos": "WR",
+   "posrank": 6
+  },
+  {
+   "rank": 12,
+   "player": "De'Von Achane",
+   "nfl": "MIA",
+   "pos": "RB",
+   "posrank": 6
+  },
+  {
+   "rank": 13,
+   "player": "Nico Collins",
+   "nfl": "HOU",
+   "pos": "WR",
+   "posrank": 7
+  },
+  {
+   "rank": 14,
+   "player": "Brian Thomas Jr.",
+   "nfl": "JAC",
+   "pos": "WR",
+   "posrank": 8
+  },
+  {
+   "rank": 15,
+   "player": "A.J. Brown",
+   "nfl": "PHI",
+   "pos": "WR",
+   "posrank": 9
+  },
+  {
+   "rank": 16,
+   "player": "Drake London",
+   "nfl": "ATL",
+   "pos": "WR",
+   "posrank": 10
+  },
+  {
+   "rank": 17,
+   "player": "Jonathan Taylor",
+   "nfl": "IND",
+   "pos": "RB",
+   "posrank": 7
+  },
+  {
+   "rank": 18,
+   "player": "Josh Jacobs",
+   "nfl": "GB",
+   "pos": "RB",
+   "posrank": 8
+  },
+  {
+   "rank": 19,
+   "player": "Derrick Henry",
+   "nfl": "BAL",
+   "pos": "RB",
+   "posrank": 9
+  },
+  {
+   "rank": 20,
+   "player": "Brock Bowers",
+   "nfl": "LV",
+   "pos": "TE",
+   "posrank": 1
+  },
+  {
+   "rank": 21,
+   "player": "Trey McBride",
+   "nfl": "ARI",
+   "pos": "TE",
+   "posrank": 2
+  },
+  {
+   "rank": 22,
+   "player": "Bucky Irving",
+   "nfl": "TB",
+   "pos": "RB",
+   "posrank": 10
+  },
+  {
+   "rank": 23,
+   "player": "Chase Brown",
+   "nfl": "CIN",
+   "pos": "RB",
+   "posrank": 11
+  },
+  {
+   "rank": 24,
+   "player": "Tee Higgins",
+   "nfl": "CIN",
+   "pos": "WR",
+   "posrank": 11
+  },
+  {
+   "rank": 25,
+   "player": "Tyreek Hill",
+   "nfl": "MIA",
+   "pos": "WR",
+   "posrank": 12
+  },
+  {
+   "rank": 26,
+   "player": "Ladd McConkey",
+   "nfl": "LAC",
+   "pos": "WR",
+   "posrank": 13
+  },
+  {
+   "rank": 27,
+   "player": "Davante Adams",
+   "nfl": "LAR",
+   "pos": "WR",
+   "posrank": 14
+  },
+  {
+   "rank": 28,
+   "player": "Josh Allen",
+   "nfl": "BUF",
+   "pos": "QB",
+   "posrank": 1
+  },
+  {
+   "rank": 29,
+   "player": "Lamar Jackson",
+   "nfl": "BAL",
+   "pos": "QB",
+   "posrank": 2
+  },
+  {
+   "rank": 30,
+   "player": "Jayden Daniels",
+   "nfl": "WAS",
+   "pos": "QB",
+   "posrank": 3
+  },
+  {
+   "rank": 31,
+   "player": "Jalen Hurts",
+   "nfl": "PHI",
+   "pos": "QB",
+   "posrank": 4
+  },
+  {
+   "rank": 32,
+   "player": "Kyren Williams",
+   "nfl": "LAR",
+   "pos": "RB",
+   "posrank": 12
+  },
+  {
+   "rank": 33,
+   "player": "James Cook",
+   "nfl": "BUF",
+   "pos": "RB",
+   "posrank": 13
+  },
+  {
+   "rank": 34,
+   "player": "Jaxon Smith-Njigba",
+   "nfl": "SEA",
+   "pos": "WR",
+   "posrank": 15
+  },
+  {
+   "rank": 35,
+   "player": "Terry McLaurin",
+   "nfl": "WAS",
+   "pos": "WR",
+   "posrank": 16
+  },
+  {
+   "rank": 36,
+   "player": "Garrett Wilson",
+   "nfl": "NYJ",
+   "pos": "WR",
+   "posrank": 17
+  },
+  {
+   "rank": 37,
+   "player": "Omarion Hampton",
+   "nfl": "LAC",
+   "pos": "RB",
+   "posrank": 14
+  },
+  {
+   "rank": 38,
+   "player": "Alvin Kamara",
+   "nfl": "NO",
+   "pos": "RB",
+   "posrank": 15
+  },
+  {
+   "rank": 39,
+   "player": "Joe Burrow",
+   "nfl": "CIN",
+   "pos": "QB",
+   "posrank": 5
+  },
+  {
+   "rank": 40,
+   "player": "George Kittle",
+   "nfl": "SF",
+   "pos": "TE",
+   "posrank": 3
+  },
+  {
+   "rank": 41,
+   "player": "Chuba Hubbard",
+   "nfl": "CAR",
+   "pos": "RB",
+   "posrank": 16
+  },
+  {
+   "rank": 42,
+   "player": "James Conner",
+   "nfl": "ARI",
+   "pos": "RB",
+   "posrank": 17
+  },
+  {
+   "rank": 43,
+   "player": "TreVeyon Henderson",
+   "nfl": "NE",
+   "pos": "RB",
+   "posrank": 18
+  },
+  {
+   "rank": 44,
+   "player": "Kenneth Walker III",
+   "nfl": "SEA",
+   "pos": "RB",
+   "posrank": 19
+  },
+  {
+   "rank": 45,
+   "player": "Marvin Harrison Jr.",
+   "nfl": "ARI",
+   "pos": "WR",
+   "posrank": 18
+  },
+  {
+   "rank": 46,
+   "player": "DK Metcalf",
+   "nfl": "PIT",
+   "pos": "WR",
+   "posrank": 19
+  },
+  {
+   "rank": 47,
+   "player": "Tetairoa McMillan",
+   "nfl": "CAR",
+   "pos": "WR",
+   "posrank": 20
+  },
+  {
+   "rank": 48,
+   "player": "Xavier Worthy",
+   "nfl": "KC",
+   "pos": "WR",
+   "posrank": 21
+  },
+  {
+   "rank": 49,
+   "player": "Mike Evans",
+   "nfl": "TB",
+   "pos": "WR",
+   "posrank": 22
+  },
+  {
+   "rank": 50,
+   "player": "DJ Moore",
+   "nfl": "CHI",
+   "pos": "WR",
+   "posrank": 23
+  },
+  {
+   "rank": 51,
+   "player": "Breece Hall",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "posrank": 20
+  },
+  {
+   "rank": 52,
+   "player": "D'Andre Swift",
+   "nfl": "CHI",
+   "pos": "RB",
+   "posrank": 21
+  },
+  {
+   "rank": 53,
+   "player": "Zay Flowers",
+   "nfl": "BAL",
+   "pos": "WR",
+   "posrank": 24
+  },
+  {
+   "rank": 54,
+   "player": "Courtland Sutton",
+   "nfl": "DEN",
+   "pos": "WR",
+   "posrank": 25
+  },
+  {
+   "rank": 55,
+   "player": "Calvin Ridley",
+   "nfl": "TEN",
+   "pos": "WR",
+   "posrank": 26
+  },
+  {
+   "rank": 56,
+   "player": "DeVonta Smith",
+   "nfl": "PHI",
+   "pos": "WR",
+   "posrank": 27
+  },
+  {
+   "rank": 57,
+   "player": "Jaylen Waddle",
+   "nfl": "MIA",
+   "pos": "WR",
+   "posrank": 28
+  },
+  {
+   "rank": 58,
+   "player": "Jerry Jeudy",
+   "nfl": "CLE",
+   "pos": "WR",
+   "posrank": 29
+  },
+  {
+   "rank": 59,
+   "player": "Jameson Williams",
+   "nfl": "DET",
+   "pos": "WR",
+   "posrank": 30
+  },
+  {
+   "rank": 60,
+   "player": "Rashee Rice",
+   "nfl": "KC",
+   "pos": "WR",
+   "posrank": 31
+  },
+  {
+   "rank": 61,
+   "player": "Sam LaPorta",
+   "nfl": "DET",
+   "pos": "TE",
+   "posrank": 4
+  },
+  {
+   "rank": 62,
+   "player": "Patrick Mahomes",
+   "nfl": "KC",
+   "pos": "QB",
+   "posrank": 6
+  },
+  {
+   "rank": 63,
+   "player": "Baker Mayfield",
+   "nfl": "TB",
+   "pos": "QB",
+   "posrank": 7
+  },
+  {
+   "rank": 64,
+   "player": "George Pickens",
+   "nfl": "DAL",
+   "pos": "WR",
+   "posrank": 32
+  },
+  {
+   "rank": 65,
+   "player": "Rome Odunze",
+   "nfl": "CHI",
+   "pos": "WR",
+   "posrank": 33
+  },
+  {
+   "rank": 66,
+   "player": "Travis Hunter",
+   "nfl": "JAC",
+   "pos": "WR",
+   "posrank": 34
+  },
+  {
+   "rank": 67,
+   "player": "Tony Pollard",
+   "nfl": "TEN",
+   "pos": "RB",
+   "posrank": 22
+  },
+  {
+   "rank": 68,
+   "player": "David Montgomery",
+   "nfl": "DET",
+   "pos": "RB",
+   "posrank": 23
+  },
+  {
+   "rank": 69,
+   "player": "T.J. Hockenson",
+   "nfl": "MIN",
+   "pos": "TE",
+   "posrank": 5
+  },
+  {
+   "rank": 70,
+   "player": "Aaron Jones",
+   "nfl": "MIN",
+   "pos": "RB",
+   "posrank": 24
+  },
+  {
+   "rank": 71,
+   "player": "RJ Harvey",
+   "nfl": "DEN",
+   "pos": "RB",
+   "posrank": 25
+  },
+  {
+   "rank": 72,
+   "player": "Isiah Pacheco",
+   "nfl": "KC",
+   "pos": "RB",
+   "posrank": 26
+  },
+  {
+   "rank": 73,
+   "player": "Jakobi Meyers",
+   "nfl": "LV",
+   "pos": "WR",
+   "posrank": 35
+  },
+  {
+   "rank": 74,
+   "player": "Matthew Golden",
+   "nfl": "GB",
+   "pos": "WR",
+   "posrank": 36
+  },
+  {
+   "rank": 75,
+   "player": "Emeka Egbuka",
+   "nfl": "TB",
+   "pos": "WR",
+   "posrank": 37
+  },
+  {
+   "rank": 76,
+   "player": "Chris Olave",
+   "nfl": "NO",
+   "pos": "WR",
+   "posrank": 38
+  },
+  {
+   "rank": 77,
+   "player": "Ricky Pearsall",
+   "nfl": "SF",
+   "pos": "WR",
+   "posrank": 39
+  },
+  {
+   "rank": 78,
+   "player": "Michael Pittman Jr.",
+   "nfl": "IND",
+   "pos": "WR",
+   "posrank": 40
+  },
+  {
+   "rank": 79,
+   "player": "Stefon Diggs",
+   "nfl": "NE",
+   "pos": "WR",
+   "posrank": 41
+  },
+  {
+   "rank": 80,
+   "player": "Tyrone Tracy Jr.",
+   "nfl": "NYG",
+   "pos": "RB",
+   "posrank": 27
+  },
+  {
+   "rank": 81,
+   "player": "Jaylen Warren",
+   "nfl": "PIT",
+   "pos": "RB",
+   "posrank": 28
+  },
+  {
+   "rank": 82,
+   "player": "Bill Croskey-Merritt",
+   "nfl": "WAS",
+   "pos": "RB",
+   "posrank": 29
+  },
+  {
+   "rank": 83,
+   "player": "Travis Kelce",
+   "nfl": "KC",
+   "pos": "TE",
+   "posrank": 6
+  },
+  {
+   "rank": 84,
+   "player": "David Njoku",
+   "nfl": "CLE",
+   "pos": "TE",
+   "posrank": 7
+  },
+  {
+   "rank": 85,
+   "player": "Mark Andrews",
+   "nfl": "BAL",
+   "pos": "TE",
+   "posrank": 8
+  },
+  {
+   "rank": 86,
+   "player": "Evan Engram",
+   "nfl": "DEN",
+   "pos": "TE",
+   "posrank": 9
+  },
+  {
+   "rank": 87,
+   "player": "Bo Nix",
+   "nfl": "DEN",
+   "pos": "QB",
+   "posrank": 8
+  },
+  {
+   "rank": 88,
+   "player": "Kyler Murray",
+   "nfl": "ARI",
+   "pos": "QB",
+   "posrank": 9
+  },
+  {
+   "rank": 89,
+   "player": "Brock Purdy",
+   "nfl": "SF",
+   "pos": "QB",
+   "posrank": 10
+  },
+  {
+   "rank": 90,
+   "player": "Austin Ekeler",
+   "nfl": "WAS",
+   "pos": "RB",
+   "posrank": 30
+  },
+  {
+   "rank": 91,
+   "player": "J.K. Dobbins",
+   "nfl": "DEN",
+   "pos": "RB",
+   "posrank": 31
+  },
+  {
+   "rank": 92,
+   "player": "Rhamondre Stevenson",
+   "nfl": "NE",
+   "pos": "RB",
+   "posrank": 32
+  },
+  {
+   "rank": 93,
+   "player": "Javonte Williams",
+   "nfl": "DAL",
+   "pos": "RB",
+   "posrank": 33
+  },
+  {
+   "rank": 94,
+   "player": "Kaleb Johnson",
+   "nfl": "PIT",
+   "pos": "RB",
+   "posrank": 34
+  },
+  {
+   "rank": 95,
+   "player": "Cam Skattebo",
+   "nfl": "NYG",
+   "pos": "RB",
+   "posrank": 35
+  },
+  {
+   "rank": 96,
+   "player": "Cooper Kupp",
+   "nfl": "SEA",
+   "pos": "WR",
+   "posrank": 42
+  },
+  {
+   "rank": 97,
+   "player": "Jordan Addison",
+   "nfl": "MIN",
+   "pos": "WR",
+   "posrank": 43
+  },
+  {
+   "rank": 98,
+   "player": "Jauan Jennings",
+   "nfl": "SF",
+   "pos": "WR",
+   "posrank": 44
+  },
+  {
+   "rank": 99,
+   "player": "Deebo Samuel Sr.",
+   "nfl": "WAS",
+   "pos": "WR",
+   "posrank": 45
+  },
+  {
+   "rank": 100,
+   "player": "Khalil Shakir",
+   "nfl": "BUF",
+   "pos": "WR",
+   "posrank": 46
+  },
+  {
+   "rank": 101,
+   "player": "Keon Coleman",
+   "nfl": "BUF",
+   "pos": "WR",
+   "posrank": 47
+  },
+  {
+   "rank": 102,
+   "player": "Chris Godwin",
+   "nfl": "TB",
+   "pos": "WR",
+   "posrank": 48
+  },
+  {
+   "rank": 103,
+   "player": "Justin Herbert",
+   "nfl": "LAC",
+   "pos": "QB",
+   "posrank": 11
+  },
+  {
+   "rank": 104,
+   "player": "Caleb Williams",
+   "nfl": "CHI",
+   "pos": "QB",
+   "posrank": 12
+  },
+  {
+   "rank": 105,
+   "player": "Drake Maye",
+   "nfl": "NE",
+   "pos": "QB",
+   "posrank": 13
+  },
+  {
+   "rank": 106,
+   "player": "Dak Prescott",
+   "nfl": "DAL",
+   "pos": "QB",
+   "posrank": 14
+  },
+  {
+   "rank": 107,
+   "player": "Josh Downs",
+   "nfl": "IND",
+   "pos": "WR",
+   "posrank": 49
+  },
+  {
+   "rank": 108,
+   "player": "Jayden Reed",
+   "nfl": "GB",
+   "pos": "WR",
+   "posrank": 50
+  },
+  {
+   "rank": 109,
+   "player": "Keenan Allen",
+   "nfl": "LAC",
+   "pos": "WR",
+   "posrank": 51
+  },
+  {
+   "rank": 110,
+   "player": "Darnell Mooney",
+   "nfl": "ATL",
+   "pos": "WR",
+   "posrank": 52
+  },
+  {
+   "rank": 111,
+   "player": "Rashid Shaheed",
+   "nfl": "NO",
+   "pos": "WR",
+   "posrank": 53
+  },
+  {
+   "rank": 112,
+   "player": "Xavier Legette",
+   "nfl": "CAR",
+   "pos": "WR",
+   "posrank": 54
+  },
+  {
+   "rank": 113,
+   "player": "Tyler Warren",
+   "nfl": "IND",
+   "pos": "TE",
+   "posrank": 10
+  },
+  {
+   "rank": 114,
+   "player": "Jordan Mason",
+   "nfl": "MIN",
+   "pos": "RB",
+   "posrank": 36
+  },
+  {
+   "rank": 115,
+   "player": "Travis Etienne Jr.",
+   "nfl": "JAC",
+   "pos": "RB",
+   "posrank": 37
+  },
+  {
+   "rank": 116,
+   "player": "Tank Bigsby",
+   "nfl": "JAC",
+   "pos": "RB",
+   "posrank": 38
+  },
+  {
+   "rank": 117,
+   "player": "Bhayshul Tuten",
+   "nfl": "JAC",
+   "pos": "RB",
+   "posrank": 39
+  },
+  {
+   "rank": 118,
+   "player": "Zach Charbonnet",
+   "nfl": "SEA",
+   "pos": "RB",
+   "posrank": 40
+  },
+  {
+   "rank": 119,
+   "player": "Nick Chubb",
+   "nfl": "HOU",
+   "pos": "RB",
+   "posrank": 41
+  },
+  {
+   "rank": 120,
+   "player": "Jerome Ford",
+   "nfl": "CLE",
+   "pos": "RB",
+   "posrank": 42
+  },
+  {
+   "rank": 121,
+   "player": "Justin Fields",
+   "nfl": "NYJ",
+   "pos": "QB",
+   "posrank": 15
+  },
+  {
+   "rank": 122,
+   "player": "Jordan Love",
+   "nfl": "GB",
+   "pos": "QB",
+   "posrank": 16
+  },
+  {
+   "rank": 123,
+   "player": "J.J. McCarthy",
+   "nfl": "MIN",
+   "pos": "QB",
+   "posrank": 17
+  },
+  {
+   "rank": 124,
+   "player": "C.J. Stroud",
+   "nfl": "HOU",
+   "pos": "QB",
+   "posrank": 18
+  },
+  {
+   "rank": 125,
+   "player": "Colston Loveland",
+   "nfl": "CHI",
+   "pos": "TE",
+   "posrank": 11
+  },
+  {
+   "rank": 126,
+   "player": "Tucker Kraft",
+   "nfl": "GB",
+   "pos": "TE",
+   "posrank": 12
+  },
+  {
+   "rank": 127,
+   "player": "Dallas Goedert",
+   "nfl": "PHI",
+   "pos": "TE",
+   "posrank": 13
+  },
+  {
+   "rank": 128,
+   "player": "Jake Ferguson",
+   "nfl": "DAL",
+   "pos": "TE",
+   "posrank": 14
+  },
+  {
+   "rank": 129,
+   "player": "Dalton Kincaid",
+   "nfl": "BUF",
+   "pos": "TE",
+   "posrank": 15
+  },
+  {
+   "rank": 130,
+   "player": "Trey Benson",
+   "nfl": "ARI",
+   "pos": "RB",
+   "posrank": 43
+  },
+  {
+   "rank": 131,
+   "player": "Rachaad White",
+   "nfl": "TB",
+   "pos": "RB",
+   "posrank": 44
+  },
+  {
+   "rank": 132,
+   "player": "Jaydon Blue",
+   "nfl": "DAL",
+   "pos": "RB",
+   "posrank": 45
+  },
+  {
+   "rank": 133,
+   "player": "Tyler Allgeier",
+   "nfl": "ATL",
+   "pos": "RB",
+   "posrank": 46
+  },
+  {
+   "rank": 134,
+   "player": "Braelon Allen",
+   "nfl": "NYJ",
+   "pos": "RB",
+   "posrank": 47
+  },
+  {
+   "rank": 135,
+   "player": "Najee Harris",
+   "nfl": "LAC",
+   "pos": "RB",
+   "posrank": 48
+  },
+  {
+   "rank": 136,
+   "player": "Cedric Tillman",
+   "nfl": "CLE",
+   "pos": "WR",
+   "posrank": 55
+  },
+  {
+   "rank": 137,
+   "player": "Hollywood Brown",
+   "nfl": "KC",
+   "pos": "WR",
+   "posrank": 56
+  },
+  {
+   "rank": 138,
+   "player": "Jayden Higgins",
+   "nfl": "HOU",
+   "pos": "WR",
+   "posrank": 57
+  },
+  {
+   "rank": 139,
+   "player": "Wan'Dale Robinson",
+   "nfl": "NYG",
+   "pos": "WR",
+   "posrank": 58
+  },
+  {
+   "rank": 140,
+   "player": "Marvin Mims Jr.",
+   "nfl": "DEN",
+   "pos": "WR",
+   "posrank": 59
+  },
+  {
+   "rank": 141,
+   "player": "Hunter Henry",
+   "nfl": "NE",
+   "pos": "TE",
+   "posrank": 16
+  },
+  {
+   "rank": 142,
+   "player": "Kyle Pitts",
+   "nfl": "ATL",
+   "pos": "TE",
+   "posrank": 17
+  },
+  {
+   "rank": 143,
+   "player": "Jared Goff",
+   "nfl": "DET",
+   "pos": "QB",
+   "posrank": 19
+  },
+  {
+   "rank": 144,
+   "player": "Tua Tagovailoa",
+   "nfl": "MIA",
+   "pos": "QB",
+   "posrank": 20
+  },
+  {
+   "rank": 145,
+   "player": "Matthew Stafford",
+   "nfl": "LAR",
+   "pos": "QB",
+   "posrank": 21
+  },
+  {
+   "rank": 146,
+   "player": "Dylan Sampson",
+   "nfl": "CLE",
+   "pos": "RB",
+   "posrank": 49
+  },
+  {
+   "rank": 147,
+   "player": "Quinshon Judkins",
+   "nfl": "CLE",
+   "pos": "RB",
+   "posrank": 50
+  },
+  {
+   "rank": 148,
+   "player": "Joe Mixon",
+   "nfl": "HOU",
+   "pos": "RB",
+   "posrank": 51
+  },
+  {
+   "rank": 149,
+   "player": "Ray Davis",
+   "nfl": "BUF",
+   "pos": "RB",
+   "posrank": 52
+  },
+  {
+   "rank": 150,
+   "player": "Will Shipley",
+   "nfl": "PHI",
+   "pos": "RB",
+   "posrank": 53
+  },
+  {
+   "rank": 151,
+   "player": "Ollie Gordon II",
+   "nfl": "MIA",
+   "pos": "RB",
+   "posrank": 54
+  },
+  {
+   "rank": 152,
+   "player": "Rashod Bateman",
+   "nfl": "BAL",
+   "pos": "WR",
+   "posrank": 60
+  },
+  {
+   "rank": 153,
+   "player": "DeMario Douglas",
+   "nfl": "NE",
+   "pos": "WR",
+   "posrank": 61
+  },
+  {
+   "rank": 154,
+   "player": "Christian Kirk",
+   "nfl": "HOU",
+   "pos": "WR",
+   "posrank": 62
+  },
+  {
+   "rank": 155,
+   "player": "Brandon Aiyuk",
+   "nfl": "SF",
+   "pos": "WR",
+   "posrank": 63
+  },
+  {
+   "rank": 156,
+   "player": "Joshua Palmer",
+   "nfl": "BUF",
+   "pos": "WR",
+   "posrank": 64
+  },
+  {
+   "rank": 157,
+   "player": "Romeo Doubs",
+   "nfl": "GB",
+   "pos": "WR",
+   "posrank": 65
+  },
+  {
+   "rank": 158,
+   "player": "Tre Harris",
+   "nfl": "LAC",
+   "pos": "WR",
+   "posrank": 66
+  },
+  {
+   "rank": 159,
+   "player": "Michael Wilson",
+   "nfl": "ARI",
+   "pos": "WR",
+   "posrank": 67
+  },
+  {
+   "rank": 160,
+   "player": "Woody Marks",
+   "nfl": "HOU",
+   "pos": "RB",
+   "posrank": 55
+  },
+  {
+   "rank": 161,
+   "player": "Dameon Pierce",
+   "nfl": "HOU",
+   "pos": "RB",
+   "posrank": 56
+  },
+  {
+   "rank": 162,
+   "player": "Kendre Miller",
+   "nfl": "NO",
+   "pos": "RB",
+   "posrank": 57
+  },
+  {
+   "rank": 163,
+   "player": "Amari Cooper",
+   "nfl": "LV",
+   "pos": "WR",
+   "posrank": 68
+  },
+  {
+   "rank": 164,
+   "player": "Luther Burden III",
+   "nfl": "CHI",
+   "pos": "WR",
+   "posrank": 69
+  },
+  {
+   "rank": 165,
+   "player": "Zach Ertz",
+   "nfl": "WAS",
+   "pos": "TE",
+   "posrank": 18
+  },
+  {
+   "rank": 166,
+   "player": "Brenton Strange",
+   "nfl": "JAC",
+   "pos": "TE",
+   "posrank": 19
+  },
+  {
+   "rank": 167,
+   "player": "Jonnu Smith",
+   "nfl": "PIT",
+   "pos": "TE",
+   "posrank": 20
+  },
+  {
+   "rank": 168,
+   "player": "Darren Waller",
+   "nfl": "MIA",
+   "pos": "TE",
+   "posrank": 21
+  },
+  {
+   "rank": 169,
+   "player": "Steelers D/ST",
+   "nfl": "PIT",
+   "pos": "DST",
+   "posrank": 1
+  },
+  {
+   "rank": 170,
+   "player": "Broncos D/ST",
+   "nfl": "DEN",
+   "pos": "DST",
+   "posrank": 2
+  },
+  {
+   "rank": 171,
+   "player": "Texans D/ST",
+   "nfl": "HOU",
+   "pos": "DST",
+   "posrank": 3
+  },
+  {
+   "rank": 172,
+   "player": "Ravens D/ST",
+   "nfl": "BAL",
+   "pos": "DST",
+   "posrank": 4
+  },
+  {
+   "rank": 173,
+   "player": "Vikings D/ST",
+   "nfl": "MIN",
+   "pos": "DST",
+   "posrank": 5
+  },
+  {
+   "rank": 174,
+   "player": "Seahawks D/ST",
+   "nfl": "SEA",
+   "pos": "DST",
+   "posrank": 6
+  },
+  {
+   "rank": 175,
+   "player": "Lions D/ST",
+   "nfl": "DET",
+   "pos": "DST",
+   "posrank": 7
+  },
+  {
+   "rank": 176,
+   "player": "Patriots D/ST",
+   "nfl": "NE",
+   "pos": "DST",
+   "posrank": 8
+  },
+  {
+   "rank": 177,
+   "player": "Colts D/ST",
+   "nfl": "IND",
+   "pos": "DST",
+   "posrank": 9
+  },
+  {
+   "rank": 178,
+   "player": "Packers D/ST",
+   "nfl": "GB",
+   "pos": "DST",
+   "posrank": 10
+  },
+  {
+   "rank": 179,
+   "player": "Eagles D/ST",
+   "nfl": "PHI",
+   "pos": "DST",
+   "posrank": 11
+  },
+  {
+   "rank": 180,
+   "player": "Bills D/ST",
+   "nfl": "BUF",
+   "pos": "DST",
+   "posrank": 12
+  },
+  {
+   "rank": 181,
+   "player": "Jake Bates",
+   "nfl": "DET",
+   "pos": "K",
+   "posrank": 1
+  },
+  {
+   "rank": 182,
+   "player": "Chase McLaughlin",
+   "nfl": "TB",
+   "pos": "K",
+   "posrank": 2
+  },
+  {
+   "rank": 183,
+   "player": "Cameron Dicker",
+   "nfl": "LAC",
+   "pos": "K",
+   "posrank": 3
+  },
+  {
+   "rank": 184,
+   "player": "Brandon Aubrey",
+   "nfl": "DAL",
+   "pos": "K",
+   "posrank": 4
+  },
+  {
+   "rank": 185,
+   "player": "Tyler Bass",
+   "nfl": "BUF",
+   "pos": "K",
+   "posrank": 5
+  },
+  {
+   "rank": 186,
+   "player": "Jake Elliott",
+   "nfl": "PHI",
+   "pos": "K",
+   "posrank": 6
+  },
+  {
+   "rank": 187,
+   "player": "Chris Boswell",
+   "nfl": "PIT",
+   "pos": "K",
+   "posrank": 7
+  },
+  {
+   "rank": 188,
+   "player": "Harrison Butker",
+   "nfl": "KC",
+   "pos": "K",
+   "posrank": 8
+  },
+  {
+   "rank": 189,
+   "player": "Cairo Santos",
+   "nfl": "CHI",
+   "pos": "K",
+   "posrank": 9
+  },
+  {
+   "rank": 190,
+   "player": "Tyler Loop",
+   "nfl": "BAL",
+   "pos": "K",
+   "posrank": 10
+  },
+  {
+   "rank": 191,
+   "player": "Matt Gay",
+   "nfl": "WAS",
+   "pos": "K",
+   "posrank": 11
+  },
+  {
+   "rank": 192,
+   "player": "Ka'imi Fairbairn",
+   "nfl": "HOU",
+   "pos": "K",
+   "posrank": 12
+  },
+  {
+   "rank": 193,
+   "player": "Darius Slayton",
+   "nfl": "NYG",
+   "pos": "WR",
+   "posrank": 70
+  },
+  {
+   "rank": 194,
+   "player": "Nick Westbrook-Ikhine",
+   "nfl": "MIA",
+   "pos": "WR",
+   "posrank": 71
+  },
+  {
+   "rank": 195,
+   "player": "Brian Robinson Jr.",
+   "nfl": "SF",
+   "pos": "RB",
+   "posrank": 58
+  },
+  {
+   "rank": 196,
+   "player": "Justice Hill",
+   "nfl": "BAL",
+   "pos": "RB",
+   "posrank": 59
+  },
+  {
+   "rank": 197,
+   "player": "Adam Thielen",
+   "nfl": "MIN",
+   "pos": "WR",
+   "posrank": 72
+  },
+  {
+   "rank": 198,
+   "player": "Trevor Lawrence",
+   "nfl": "JAC",
+   "pos": "QB",
+   "posrank": 22
+  },
+  {
+   "rank": 199,
+   "player": "Cameron Ward",
+   "nfl": "TEN",
+   "pos": "QB",
+   "posrank": 23
+  },
+  {
+   "rank": 200,
+   "player": "Michael Penix Jr.",
+   "nfl": "ATL",
+   "pos": "QB",
+   "posrank": 24
+  }
+ ]
+}
