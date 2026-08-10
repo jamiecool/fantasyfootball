@@ -643,6 +643,11 @@ if os.path.isdir(PROJ_DIR):
                 "proj_points": round(pts, 2),
                 "proj_points_sleeper_half_ppr": round(num("pts_half_ppr"), 2),
                 "scoring_basis": basis,
+                # Sleeper's own market, kept as the control for market-vs-model
+                # checks: if a value gap also shows up against THIS adp, it is
+                # not an artifact of mixing Underdog prices with Sleeper models.
+                "sleeper_adp": (float(s["adp_half_ppr"])
+                                if s.get("adp_half_ppr") is not None else None),
                 "pass_yd": num("pass_yd"), "pass_td": num("pass_td"),
                 "pass_int": num("pass_int"), "rush_yd": num("rush_yd"),
                 "rush_td": num("rush_td"), "rec": num("rec"),

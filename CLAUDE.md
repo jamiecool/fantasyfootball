@@ -788,6 +788,33 @@ Refresh, exactly like ADP (both stale after 3 days, both in `data_freshness`):
 python fetch_projections.py && python build_clean_data.py
 ```
 
+### Is the value gap real, or just two sources disagreeing?
+
+Jamie asked the right question: prices come from Underdog's market, projections from
+Sleeper's model — so is "value" just source noise? **No.** `projections.sleeper_adp`
+keeps Sleeper's own market as the control:
+
+| comparison | spearman |
+| --- | --- |
+| Underdog ADP vs Sleeper ADP | **0.963** |
+| Sleeper ADP vs Sleeper projections | 0.753 |
+| Underdog ADP vs Sleeper projections | 0.813 |
+
+The two markets agree with each other far more than either agrees with the projections,
+and Underdog actually tracks the projections *better* than Sleeper's own ADP does. So
+mixing sources is not creating the gap — it is genuine **market-consensus vs model**
+divergence. Re-run this check after any refresh.
+
+**Where the divergence lives:** the top 8 WRs are priced efficiently (market rank vs
+projection rank shifts by 0–1). Disagreement concentrates in the **$25–33 band** —
+Rashee Rice (market WR11, projection WR18), Nabers (12→16), against McConkey (18→13)
+and Olave (15→11). Hunt for edges in the middle tier, not among the elite.
+
+⚠️ **Divergence does not say who is right.** Consensus ADP aggregates thousands of
+drafters; a projection model is one opinion. We **cannot** settle it — that needs
+*historical* projections to backtest, which we don't have and can't reconstruct.
+Treat gaps as "worth a second look", never as confirmed mispricing.
+
 ### Unresolved tension this immediately surfaced
 
 On projected **PAR per dollar**, Josh Allen at $25 is the *best* value on the 2026 board

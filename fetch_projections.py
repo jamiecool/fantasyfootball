@@ -49,8 +49,13 @@ for pos in POSITIONS:
         slim = []
         for row in payload:
             p = row.get("player") or {}
+            # Keep adp_half_ppr: Sleeper's OWN market is the control that shows
+            # whether a value gap is real market-vs-model divergence or just two
+            # sources disagreeing. (Underdog vs Sleeper ADP correlate at 0.963;
+            # either market vs these projections only ~0.74-0.80.) Drop the rest
+            # of the ADP variants -- dynasty, 2QB, IDP etc. are noise here.
             stats = {k: v for k, v in (row.get("stats") or {}).items()
-                     if not k.startswith("adp_")}
+                     if not k.startswith("adp_") or k == "adp_half_ppr"}
             if not stats:
                 continue
             slim.append({
