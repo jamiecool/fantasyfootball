@@ -118,6 +118,15 @@ Each of these silently produced plausible-but-wrong output before being caught:
 8. **Underdog ADP is best ball, not redraft.** 18 rounds, no waivers, a FLEX this
    league doesn't have, and **no K or DEF at all**. Good market signal, wrong shape
    for a drafting plan — don't feed it into a PBAFFL lineup simulation unadjusted.
+9. **Never use `np.minimum.accumulate` to make a curve monotone.** A running minimum
+   drags every later point down to any dip. On the 2026 price board it flattened ADP
+   ranks 10–17 to a single $38 (true medians: 47, 50, 44, 46, 44, 43, 43, 42) and
+   under-priced them by $5–12 each. Use `sklearn.isotonic.IsotonicRegression`, which
+   fits the best monotone curve instead. Smooth first if the per-point sample is thin
+   — each ADP rank has only ~3 observations when pricing off 3 seasons.
+10. **Fitting price ~ ADP with a polynomial in log space bends the wrong way at the
+    top** — a quadratic priced ADP 1 *below* ADP 5. Rank-matching against history is
+    better behaved and inherits the budget identity.
 
 ## What Jamie actually wants out of this
 
@@ -485,18 +494,305 @@ Tension to respect: per **dollar**, cheap picks dominate (elites per $100: $1–
 and $200 both constraints bind — that trade-off *is* the auction problem, and it is
 what the backtest has to resolve.
 
+## Starter-tier analysis (`analyze_tier_surplus.py`, run 2026-08) — SUPERSEDES the top-3 framing
+
+Jamie rejected "elite = top-3" as the upside bar, correctly:
+
+> "If I pay $50 for a player they pretty much need to be top 3 or it's a problem.
+> But say I pay $5 for a WR and he hits as a top-12 WR — that's a smash, because
+> now I have a WR1 in my WR3 spot. That's a huge matchup advantage."
+
+Value is relative to **the slot you're filling** and **what you paid**. With no FLEX,
+`pos_tier = ceil(positional_finish / teams)`. A WR12 is tier 1 ("WR1 quality"); putting
+him in your WR3 slot is +2 tiers of edge.
+
+### What a starter tier is worth (mean season points)
+
+| pos | tier 1 | tier 2 | tier 3 | tier1 − tier3 |
+| --- | --- | --- | --- | --- |
+| QB | 321 | 224 | 141 | **+180** |
+| RB | 259 | 183 | 140 | +119 |
+| TE | 158 | 100 | 70 | +88 |
+| WR | 233 | 183 | 155 | **+78** |
+
+Note WR has the *smallest* tier gap — it's the deepest position, so Jamie's WR3-slot
+edge is real but is the cheapest tier upgrade to obtain. QB has the largest gap but
+only one slot to apply it to.
+
+### What each price actually bought (median realized tier)
+
+| pos | $1–2 | $3–5 | $6–10 | $11–20 | $21–35 | $36+ |
+| --- | --- | --- | --- | --- | --- | --- |
+| QB | 2 | 2 | 2 | 1 | 1 | — |
+| TE | 2 | 2 | 2 | 2 | 1 | 1 |
+| RB | 5 | 4 | 3.5 | 3 | 2 | 1 |
+| WR | **7** | 5 | 4 | 3 | 2.5 | 1 |
+
+A $1–2 QB or TE already delivers tier-2 production. A $1–2 WR delivers tier 7.
+
+### FINDING 7 — RB/WR are priced efficiently; QB/TE are not
+
+Tier-1 seasons bought **per $100 spent**:
+
+| pos | $1–2 | $3–5 | $6–10 | $11–20 | $21–35 | $36+ |
+| --- | --- | --- | --- | --- | --- | --- |
+| QB | **34.9** | 9.6 | 5.9 | 3.9 | 2.6 | — |
+| K | **31.6** | — | — | — | — | — |
+| TE | **27.7** | 12.5 | 6.3 | 3.3 | 2.5 | 2.1 |
+| RB | 2.3 | 1.2 | 1.2 | 0.9 | 1.2 | 1.2 |
+| WR | 0.5 | 1.1 | 1.6 | 1.4 | 0.9 | 1.3 |
+
+**RB and WR are flat at ~1 tier-1 season per $100 at every price point.** The market
+prices them efficiently — you get proportional production whatever you spend, and
+there is no bargain zone. **QB and TE are wildly convex**: cheap ones deliver tier-1
+production at 10–17× the rate per dollar of expensive ones.
+
+That is the edge, and it is sharper than the earlier top-3 framing suggested.
+
+### What $36+ actually buys
+
+62% return tier 1; **18% aren't startable at all**. Among $36+ RBs: 57 tier-1, 16
+tier-2, 9 tier-3, 5 complete zeros. So paying up is how you *reliably* get tier-1
+RB/WR — it just isn't cheap per dollar, and one pick in six is a write-off.
+
+### CORRECTION — "tier 1" is meaningless at 1-slot positions
+
+Jamie, 2026-08: *"For a QB or TE to hit, it really needs to be top 5. If it's top 12,
+sure it's technically tier 1, but that means you're probably always losing at that
+position."*
+
+He's right and it invalidates Finding 7's QB/TE numbers. With one starting slot,
+`tier 1` spans ranks 1–12 — the **entire** starter pool — so `tier-1 rate` at QB/TE is
+just `startable rate` renamed. The 34.9-vs-2.3 "per $100" comparison was measuring
+"any startable QB" against "top-12 of 36 WRs". Not like for like.
+
+**Correct baseline for a head-to-head league is the MEDIAN starter** (QB6, TE6, RB12,
+WR18) — that's what the opponent fields each week.
+
+### Production as a multiple of the median starter, by positional finish
+
+| rank | QB | RB | TE | WR |
+| --- | --- | --- | --- | --- |
+| 1 | 1.29 | **1.73** | **1.60** | **1.72** |
+| 3 | 1.13 | 1.46 | 1.21 | 1.44 |
+| 5 | 1.04 | 1.28 | 1.06 | 1.32 |
+| 12 | 0.88 | 1.00 | 0.80 | 1.11 |
+
+**QB is by far the flattest position** — even QB1 is only +29% on the median starter,
+against +73% for RB1. The whole QB range spans 1.29→0.88; TE spans 1.60→0.80, twice
+the spread over the same 12 starters.
+
+### FINDING 8 — what each price actually delivers vs the median starter
+
+(1.00 = coin-flip matchup. Below 1.00 = you lose that slot most weeks.)
+
+| pos | $1–2 | $3–5 | $6–10 | $11–20 | $21–35 | $36+ |
+| --- | --- | --- | --- | --- | --- | --- |
+| QB | 0.75 | 0.71 | 0.76 | 0.88 | 0.98 | *(n=4)* |
+| TE | 0.64 | 0.70 | 0.78 | 0.83 | **1.16** | **1.25** |
+| RB | 0.43 | 0.54 | 0.59 | 0.70 | 0.84 | **1.06** |
+| WR | 0.46 | 0.61 | 0.73 | 0.84 | 0.87 | **1.15** |
+
+**Except at TE, it takes $36+ to field an above-median starter.** TE gets there at
+$21–35 and is the cheapest edge on the board.
+
+Top-5 finish rate: TE $21–35 = **57%**, $36+ = 67%. QB $21–35 = 42%. RB $36+ = 32%,
+WR $36+ = 37%.
+
+### THIS REVERSES the earlier "fill QB and TE cheaply" advice — for TE
+
+- **QB: punt it.** Flattest position (QB1 only 1.29× median), so the *most* an elite QB
+  can win you is small, and even $21–35 only buys 0.98×. A $1–2 QB still returns top-5
+  14% of the time — the best top-5-per-$100 in the draft (11.6 per $100). Buy the
+  lottery ticket, not the position.
+- **TE: invest, don't punt.** Cheap TE delivers 0.64–0.78× median — you *lose* that slot
+  all season. $21–35 buys 1.16× and a 57% top-5 rate. It is the cheapest above-median
+  starter available anywhere.
+- RB/WR unchanged: $36+ or you're below median.
+
+⚠️ QB $36+ shows 1.06× but rests on **4 picks in 9 years** — ignore it. The reliable
+QB ceiling in this league's history is $21–35 at 0.98×.
+
+### Metric caveat — the ">=2 tier smash" threshold is asymmetric
+
+It is unavailable to expensive picks (a $36+ player's expected tier is ~2.1, so
+beating it by 2 needs tier 0.1) and to QB/TE (expected ~tier 2 even at $1–2). Their
+0.0% smash rates are artifacts, not findings. **Use tier-1 rate**, which is
+well-defined at every position and price.
+
+## FINDING 9 — roster SHAPE is a non-decision (`compare_roster_shapes.py`)
+
+Jamie's challenge, 2026-08: *"You're basically arguing for all-out stars and scrubs.
+All 3 options were really that."* He was right — the first three example rosters were
+3–4 big buys and a wall of $1s, so nothing was actually being compared. It also
+contradicted our own Finding (concentration vs roster quality, r = +0.02).
+
+Five genuinely different shapes, each legal (16 picks, all 9 starting slots filled,
+≤ $200), scored on projected starting-lineup points off the 2026 board:
+
+| shape | max bid | top-3 % of budget | proj. starter pts |
+| --- | --- | --- | --- |
+| D. findings-led (no mid RB, TE buy, punt QB) | $62 | 76% | **1473** |
+| C. barbell (two bats, then all mid) | $64 | 76% | 1469 |
+| B. balanced (nothing over $30) | $31 | 44% | 1449 |
+| A. stars & scrubs | $64 | 91% | 1428 |
+| E. flat (every starter $18–25) | $25 | 38% | 1413 |
+
+**Spread best-to-worst: 60 points, 4.2%.** One starter tier is worth ~78 pts at WR and
+~119 at RB — so the entire range of roster shapes is worth *less than a single tier
+upgrade at one position*. Concentration is not a lever. Stop treating it as one.
+
+**What this means for the draft board:** don't prescribe a shape. Price every player,
+then take whoever is furthest below their value on the night. The auction's real
+advantage over a snake draft is that you can buy *anyone* — so stay liquid and let the
+room's mistakes decide the shape.
+
+### Bugs found building this (all silent, all changed the answer)
+
+- **K/DEF bypassed the affordability check**, silently eating $4 and leaving three
+  shapes unable to fill their last roster spots (7–9 picks instead of 16). Buy
+  mandatory cheap slots FIRST so everything else budgets around them.
+- **The board had no $1 players at all** — the floor was $2 with 132 players stacked
+  there. Cause: the ADP list only reaches rank 175 among drafted players, and
+  forward-filling carried ~$2 to rank 260. $1 is in fact the single most common price
+  in league history (97 of 576 picks, 2023–25). Fixed by flooring ranks past the last
+  observed one to $1.
+- Comparing rosters with different pick counts / illegal lineups. **Always assert
+  legality before comparing** — the first run "showed" balanced winning by 185 points,
+  which was pure artifact.
+
+## ⚠ KNOWN BIAS — the bench has been valued at ~zero, and that is an artifact
+
+Jamie, 2026-08: *"I feel like in all your analysis you give basically zero value to the
+bench? Is that intentional?"* It was not. It entered through the metrics, and it cuts
+against this league's own structure.
+
+Where it entered, in decreasing severity:
+
+1. **`proj_starter_pts` (compare_roster_shapes.py) counts the 9 starters and nothing
+   else.** Bench contributes literally zero. This is the worst offender and it is
+   forward-looking, i.e. it feeds draft recommendations.
+2. **`startable` / tier metrics use end-of-season positional rank**, so a player who
+   missed six weeks and a player who played every week score identically.
+3. **`drafted_lineup_pts` is only partly guilty** — it takes the best N *from the whole
+   drafted roster*, so depth does get credit, but with perfect hindsight and no weekly
+   structure. You cannot retroactively start whoever ended up scoring most.
+
+### Why this matters more here than in a typical league
+
+Availability, from `final_ranks.games` (17-game season, a healthy player plays 16):
+
+| tier | mean games | played 16+ | played <12 |
+| --- | --- | --- | --- |
+| $36+ | 14.1 | 50% | **16%** |
+| $21–35 | 13.5 | 34% | 20% |
+| $11–20 | 13.8 | 43% | 19% |
+| $1–2 | 12.8 | 38% | 27% |
+
+**Even $36+ starters miss ~2.9 games each.** Nine starters × ~2.5–3.5 missed games is
+roughly **20 starter-weeks a season needing a bench fill, out of 126** — about **18%**.
+
+And we already established the wire here is bare (in-season acquisitions were startable
+just 21.4% of the time, because IR is a 17th roster spot with no acquisition cap). So
+this league needs its bench *more* than most, while every model above needs it less.
+
+**Treat concentration conclusions as provisional until this is fixed.** Finding 9
+("shape is a non-decision") is most at risk: it scored shapes on starters only, which
+systematically flatters rosters that punt their bench.
+
+### FINDING 10 — the bench is worth 100–173 pts/season, and there is a sweet spot
+
+Correcting the bias above (bench = points that FILL a starter's missed weeks; it is an
+addition, not a deduction — `exp_points` already nets out games missed):
+
+| shape | bench $ | starter pts | bench fill | total |
+| --- | --- | --- | --- | --- |
+| F. two bats + real bench | $17 | 1487 | 138 | **1625** |
+| D. findings-led | $7 | 1473 | 108 | 1581 |
+| A. stars & scrubs | $7 | 1428 | 109 | 1537 |
+| G. depth-first (12 real players) | $55 | 1338 | 173 | **1511** |
+
+**A modest bench (~$17, i.e. 3–4 players at $6–10 rather than $1) is worth ~30 points
+over a minimum bench and costs nothing in starter quality. A heavy bench ($55) is
+clearly wrong** — it buys 35 more bench points while giving up 149 starter points.
+
+Spread is now 114 pts (7.5%), up from 4.2% when the bench counted zero. So bench
+allocation matters *more* than the starter-shape question that preceded it.
+
+### Objective correction — season points is NOT the goal
+
+Jamie, 2026-08: *"You only need to make the top 6 to make the playoffs and top 2 to get
+a bye… there are no player byes in the playoffs, so usually the hottest/strongest team
+that makes the playoffs wins."*
+
+So the real objective is **P(top 6) × P(win from there)**, not expected season points:
+
+- Making the playoffs is a **threshold** problem → floor and consistency matter, and
+  each H2H loss is a full unit against the bar.
+- Winning once in is largely variance → ceiling matters, and **bye weeks don't exist in
+  weeks 15–17**, so season-long availability is worth less than it looks.
+
+Everything scored so far maximises expected season points, which is the wrong
+objective for both halves. **This is the largest remaining modelling gap.**
+
+Jamie's own mechanism to test: a roster of a few stars plus waiver-level filler
+probably *loses the week* whenever a star is out — turning ~3 missed games into ~3
+losses, which is half the margin to the playoff bar.
+
+### On modelling injury risk (Jamie: "seems tricky")
+
+Predicting *who* gets hurt is not feasible and not necessary. What is computable from a
+roster alone is **exposure**: the points/game gap between each starter and the best
+bench player behind them. You cannot know who goes down, but a given roster's cost when
+someone does is deterministic. Aggregate availability is stable and known ($36+ players
+average 14.1 of 17 games; ~20 starter-weeks a season need filling).
+
+### The fix requires weekly data
+
+`stats_player_week_YYYY` from the same nflverse release (already listed under Known
+gaps). With it we can build realistic **weekly optimal lineups** — respecting byes,
+injury weeks, and the fact that lineups are set before results are known — instead of
+season totals. That is now the highest-value item in the backlog.
+
+## Where we left off (end of session, 2026-08-09/10)
+
+Data pipeline is **done and on GitHub** (private: `jamiecool/fantasyfootball`). Nine
+seasons normalised, 2026 board priced, five findings established and three nulls.
+
+**The open question, and it's the important one:** everything scored so far maximises
+*expected season points*, which Jamie has correctly identified as the wrong objective.
+The real one is **P(make top 6) × P(win weeks 15–17)**. Modelling that needs weekly
+score *distributions* (for H2H win probability), not weekly optimal lineups — which is
+a different reason for wanting `stats_player_week_YYYY` than the one given earlier.
+
+Jamie's testable mechanism: a stars-and-scrubs roster probably *loses the week* whenever
+a star is out, converting ~3 missed games into ~3 losses — half the margin to the
+playoff bar. Finding 10 supports this directionally (bench worth 100–173 pts) but does
+not yet model wins.
+
+Open choice put to Jamie, unanswered: build the H2H/playoff model properly first, or
+ship a usable draft board now and refine after.
+
 ## Analysis backlog
 
-Ordered by expected value:
+Ordered by expected value, revised after the session's findings:
 
-1. **Retrodictive VBD valuation** — what each player was *worth* vs what was paid, all
-   9 years. Foundation for everything else.
-2. **$/PAR by position by season** — settles the QB question properly.
-3. **Positional market drift** — is this league leading or lagging the public market?
-   (`preseason_adp` vs `draft_picks.price`.)
-4. **Inflation curve within a draft** — early vs late bargains.
-5. **Stars-and-scrubs test on real data** — `pct_on_top3` vs actual outcome.
-6. **Simulation** — needs 1–4 first.
+1. **H2H + playoff-threshold model.** Weekly score distributions → P(top 6) → playoff
+   win probability. Replaces season-points maximisation, which is the wrong objective.
+   Needs `stats_player_week_YYYY` from nflverse (same release already in use).
+2. **Per-player value gap for draft night** — expected points vs expected price, so
+   bargains are visible live. Mostly built: `build_2026_board.py` has the prices,
+   `compare_roster_shapes.py` has the points curves. Needs joining and a clean output.
+3. **Retrodictive VBD valuation** — what each player was *worth* vs paid, all 9 years.
+   Still the cleanest way to size this league's total mispricing.
+4. **Inflation curve within a draft** — now possible for all 9 seasons via
+   `nomination_order`. Note Finding 4 already showed timing doesn't move *value*; this
+   would test whether it moves *price*.
+5. **D/ST** — rules captured, never built. ~1% of spend.
+
+Done or superseded: positional market drift (`v_position_spend`), stars-and-scrubs test
+(Findings 9/10 — shape is near-neutral, bench allocation is not), $/PAR by position
+(Findings 6–8).
 
 ## Known gaps
 
