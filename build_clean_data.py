@@ -494,7 +494,7 @@ FORMAT_PREFERENCE = ["half-ppr", "ppr", "standard"]     # league is half-PPR
 
 adp_rows = []
 if os.path.isdir(ADP_DIR):
-    for year in range(2017, 2026):
+    for year in range(2017, 2027):
         for fmt in FORMAT_PREFERENCE:
             path = os.path.join(ADP_DIR, f"adp_{fmt}_{year}.json")
             if not os.path.exists(path):
@@ -504,7 +504,10 @@ if os.path.isdir(ADP_DIR):
                 adp_rows.append({
                     "season": year, "scoring_format": fmt,
                     "player_name": clean_str(p.get("name")),
-                    "position": clean_str(p.get("position")).upper(),
+                    # FFC labels kickers PK; the rest of the schema uses K
+                    "position": {"PK": "K", "DST": "DEF"}.get(
+                        clean_str(p.get("position")).upper(),
+                        clean_str(p.get("position")).upper()),
                     "nfl_team": clean_str(p.get("team")).upper(),
                     "adp": p.get("adp"), "adp_formatted": p.get("adp_formatted"),
                     "times_drafted": p.get("times_drafted"), "stdev": p.get("stdev"),
@@ -554,11 +557,23 @@ if adp_rows:
     # across formats at rho 0.94-0.99, so take each player's ADP from the most
     # league-appropriate format that lists them, then rank the merged set.
     # This keeps half-PPR wherever it exists without losing depth.
-    # Underdog wins where it exists (it is the live, scoring-matched market);
-    # otherwise fall back through the FFC formats.
-    adp_all["_pref"] = [
-        (0 if src == "underdog" else 1 + FORMAT_PREFERENCE.index(f))
-        for src, f in zip(adp_all["source"], adp_all["scoring_format"])]
+    # FFC half-PPR is preferred, then Underdog, then the other FFC formats.
+    #
+    # FFC leads for two reasons. (1) Consistency: the ADP->price curve is
+    # calibrated on FFC historical ADP, so the current-season input must be FFC
+    # too or the curve is fitted on one source and applied to another.
+    # (2) Format: FFC is 12-team redraft half-PPR and drafts kickers and
+    # defenses; Underdog is best ball with a FLEX, 18 rounds and no K/DEF.
+    # Underdog still fills the tail -- it lists 250 players against FFC's 205.
+    def _rank(src, fmt):
+        if src == "ffc" and fmt == "half-ppr":
+            return 0
+        if src == "underdog":
+            return 1
+        return 2 + FORMAT_PREFERENCE.index(fmt)
+
+    adp_all["_pref"] = [_rank(s, f) for s, f in
+                        zip(adp_all["source"], adp_all["scoring_format"])]
     adp_all = adp_all.sort_values(["season", "player_key", "_pref"])
     adp_all["is_primary"] = ~adp_all.duplicated(["season", "player_key"], keep="first")
 

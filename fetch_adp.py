@@ -19,7 +19,12 @@ import urllib.request
 
 DEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rawdata", "adp")
 BASE = "https://fantasyfootballcalculator.com/api/v1/adp"
-SEASONS = range(2017, 2026)
+# Includes the CURRENT season deliberately. The ADP->price curve is calibrated on
+# FFC historical ADP, so the current-season input must also be FFC or the curve
+# is fitted on one source and applied to another. FFC is also the better format
+# match for this league than Underdog: redraft rather than best ball, and it
+# drafts kickers and defenses, which Underdog does not.
+SEASONS = range(2017, 2027)
 FORMATS = ["half-ppr", "ppr", "standard"]
 TEAMS = 12
 

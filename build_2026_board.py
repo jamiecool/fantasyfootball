@@ -1,4 +1,4 @@
-"""Turn 2026 Underdog ADP into expected auction prices, then draft example rosters.
+"""Turn current-season ADP into expected auction prices, then draft example rosters.
 
 Two steps:
 
@@ -16,10 +16,11 @@ Caveats, which matter:
   * These are ILLUSTRATIONS of allocation strategy, not player recommendations.
     Nothing here contains a 2026 projection -- the ordering is purely the
     market's (Underdog's), and the analysis only decides how to SPEND against it.
-  * Historical ADP is FFC redraft; 2026 ADP is Underdog best ball. Best ball has
-    18 rounds, no waivers and a FLEX, so its ordering is close but not identical.
-  * Underdog rosters no kickers or defenses. Both are added at historical cost
-    ($1-2), which is what this league has always paid.
+  * The board is FFC redraft half-PPR, the same source the price curve is
+    calibrated on and the closest format match to this league (12-team, redraft,
+    drafts kickers and defenses). Underdog best-ball ADP fills the tail beyond
+    FFC's 205 players; it is a sharper pool but wrong-shaped (18 rounds, FLEX,
+    no K/DEF), and the two agree at rho 0.949 so the blend is safe.
 
 Run:  python build_2026_board.py
 """
@@ -97,7 +98,7 @@ extra = pd.DataFrame([
     for p in ("K", "DEF")])
 pool = pd.concat([adp, extra], ignore_index=True)
 
-print("2026 expected auction prices (from Underdog ADP, rank-matched to history)")
+print("2026 expected auction prices (FFC redraft ADP primary, rank-matched to history)")
 print(pool.head(14)[["adp_rank", "player_name", "position", "nfl_team", "adp",
                      "est_price"]].to_string(index=False))
 print(f"\ntotal estimated value on the board: ${pool['est_price'].sum():,} "
