@@ -67,9 +67,20 @@ earlier than before). Easy to read backwards.
 ⚠️ **Underdog ADP is best ball, not redraft** — 18 rounds, no waivers, a FLEX this
 league lacks, and **no K or DEF**. Treat it as a market signal, not a draft plan.
 
+**`projections`** (3,284) — **current-season player projections**, from the
+[Sleeper API](https://api.sleeper.app) via `fetch_projections.py`. Sleeper returns raw
+stat components, so `proj_points` is computed **under this league's rulebook**
+(half-PPR, −2 interceptions) rather than taken from generic half-PPR scoring;
+`proj_points_sleeper_half_ppr` is kept alongside for comparison. Includes
+`proj_rank`, `proj_pos_rank`, and the underlying `pass_yd` / `rec` / `rush_td` etc.
+
+⚠️ `scoring_basis` is `league_rules` for QB/RB/WR/TE but `sleeper_pts` for K and DEF —
+the feed exposes only partial FG bands and points-allowed tiers for those two.
+⚠️ The feed's `gp` is a constant 18.0 placeholder, **not** an availability projection.
+
 **`data_freshness`** — which datasets go stale and when. The historical tables never
-do; current-season ADP moves daily. Check it at the start of a session:
-`SELECT * FROM data_freshness`.
+do; current-season ADP and projections both move through the preseason. Check it at the
+start of a session: `SELECT * FROM data_freshness`.
 
 **`preseason_ranks`** (200) — Yahoo's own 2025 preseason top 200 (from `top2025.txt`).
 Kept as an independent cross-check on `preseason_adp`; the two agree at rho 0.96.

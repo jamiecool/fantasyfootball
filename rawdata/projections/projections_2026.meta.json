@@ -1,0 +1,15 @@
+{
+ "season": 2026,
+ "source": "sleeper api (api.sleeper.app/projections/nfl)",
+ "fetched_at": "2026-08-10",
+ "counts": {
+  "QB": 355,
+  "RB": 744,
+  "WR": 1364,
+  "TE": 649,
+  "K": 157,
+  "DEF": 32
+ },
+ "scoring": "raw stat components; points computed in build",
+ "note": "gp is a constant placeholder, not an availability projection; K/DEF scored with Sleeper's own points (partial stat breakdown)"
+}

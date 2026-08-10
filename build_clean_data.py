@@ -599,6 +599,69 @@ if stand_files:
     st["made_playoffs"] = st["playoff_seed"].notna()
     tables["standings"] = st
 
+# --- current-season projections (see fetch_projections.py) ------------------
+# Sleeper publishes raw stat components, so points are computed HERE under this
+# league's rulebook rather than taken from someone else's scoring. That matters:
+# the -2 interception is a league override, and generic "half-PPR" points use -1.
+PROJ_DIR = os.path.join(ROOT, "rawdata", "projections")
+proj_meta = []
+proj_rows = []
+if os.path.isdir(PROJ_DIR):
+    for meta_path in sorted(glob.glob(os.path.join(PROJ_DIR, "projections_*.meta.json"))):
+        proj_meta.append(json.load(open(meta_path, encoding="utf-8")))
+    for path in sorted(glob.glob(os.path.join(PROJ_DIR, "proj_*_*.json"))):
+        season = int(re.search(r"_(\d{4})\.json$", path).group(1))
+        for row in json.load(open(path, encoding="utf-8")):
+            s = row.get("stats", {})
+            name = f"{row.get('first_name') or ''} {row.get('last_name') or ''}".strip()
+            pos = row["position"]
+            num = lambda k: float(s.get(k) or 0)
+
+            if pos in ("K", "DEF"):
+                # Sleeper exposes only the 40-49 / 50+ FG bands and a partial
+                # points-allowed breakdown, so its own total is the best
+                # available. K+DEF are ~2% of league spend.
+                pts = num("pts_half_ppr")
+                basis = "sleeper_pts"
+            else:
+                pts = (num("pass_yd") / 25
+                       + num("pass_td") * SCORING.get("passing touchdowns", 4)
+                       + num("pass_int") * SCORING.get("interceptions", -2)
+                       + num("rush_yd") / 10
+                       + num("rush_td") * SCORING.get("rushing touchdowns", 6)
+                       + num("rec") * PPR_RATE
+                       + num("rec_yd") / 10
+                       + num("rec_td") * SCORING.get("receiving touchdowns", 6)
+                       + (num("pass_2pt") + num("rush_2pt") + num("rec_2pt")) * 2
+                       + num("fum_lost") * SCORING.get("fumbles lost", -2))
+                basis = "league_rules"
+
+            proj_rows.append({
+                "season": season, "player_name": clean_str(name),
+                "player_key": player_key(name), "position": pos,
+                "nfl_team": clean_str(row.get("team")).upper(),
+                "proj_points": round(pts, 2),
+                "proj_points_sleeper_half_ppr": round(num("pts_half_ppr"), 2),
+                "scoring_basis": basis,
+                "pass_yd": num("pass_yd"), "pass_td": num("pass_td"),
+                "pass_int": num("pass_int"), "rush_yd": num("rush_yd"),
+                "rush_td": num("rush_td"), "rec": num("rec"),
+                "rec_yd": num("rec_yd"), "rec_td": num("rec_td"),
+                "fum_lost": num("fum_lost"),
+            })
+
+if proj_rows:
+    pj = pd.DataFrame(proj_rows)
+    # a player can appear under multiple positions in the feed; keep the best
+    pj = pj.sort_values("proj_points", ascending=False)
+    pj = pj.drop_duplicates(subset=["season", "player_key"], keep="first")
+    pj["proj_rank"] = pj.groupby("season")["proj_points"].rank(
+        method="first", ascending=False).astype(int)
+    pj["proj_pos_rank"] = pj.groupby(["season", "position"])["proj_points"].rank(
+        method="first", ascending=False).astype(int)
+    tables["projections"] = pj.sort_values(
+        ["season", "proj_rank"]).reset_index(drop=True)
+
 # --- data freshness ---------------------------------------------------------
 # Most of this dataset is historical and never goes stale. Current-season ADP
 # does: it moves daily through the summer. This table makes staleness a query
@@ -632,6 +695,23 @@ for meta in adp_meta:
         "fetched_on": fetched, "stale_after_days": 3,
         "refresh_command": "python fetch_underdog_adp.py && python build_clean_data.py",
         "note": f"{meta.get('rows')} players; moves daily in preseason"
+                + (f"; {age}d old at last build" if age is not None else ""),
+    })
+for meta in proj_meta:
+    fetched = meta.get("fetched_at", "")
+    age = None
+    if fetched:
+        try:
+            age = (_today - _dt.strptime(fetched, "%Y-%m-%d").date()).days
+        except ValueError:
+            age = None
+    fresh.append({
+        "dataset": f"projections (season {meta.get('season')}, sleeper)",
+        "source": meta.get("source", "sleeper"), "as_of": "",
+        "fetched_on": fetched, "stale_after_days": 3,
+        "refresh_command": "python fetch_projections.py && python build_clean_data.py",
+        "note": f"{sum((meta.get('counts') or {}).values())} players; "
+                "revised through preseason as camps and injuries land"
                 + (f"; {age}d old at last build" if age is not None else ""),
     })
 tables["data_freshness"] = pd.DataFrame(fresh)
