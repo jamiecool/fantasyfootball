@@ -137,6 +137,13 @@
   .tagn{color:var(--muted)}
   .area{color:var(--ink2);font-weight:600}
   .btn.on{border-color:var(--s1);color:var(--ink);font-weight:650}
+  /* Target star. The glyph carries the state (filled vs hollow), so colour is
+     reinforcement only -- it still reads with the colour stripped out. */
+  .star{background:none;border:0;padding:0 5px 0 0;margin:0;cursor:pointer;
+        font-size:14px;line-height:1;color:var(--axis);vertical-align:-1px}
+  .star:hover{color:var(--s4)}
+  .star.on{color:var(--s4)}
+  .star:focus-visible{outline:2px solid var(--s1);border-radius:3px}
   .toggle{margin-left:auto}
   /* --- NFL stats + player profile --- */
   .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;
@@ -201,6 +208,7 @@
         <input type="search" id="q" placeholder="filter players…">
         <select id="posf"><option value="">all positions</option></select>
         <select id="teamf"><option value="">all NFL teams</option></select>
+        <button class="btn" id="tgtOnly" aria-pressed="false">☆ targets only</button>
       </div>
       <div class="scroll" style="max-height:78vh"><table id="boardT"></table></div>
     </div>
@@ -282,6 +290,7 @@
           <input type="search" id="pq" placeholder="search…">
           <select id="ppos"><option value="">all pos</option></select>
           <label class="chk"><input type="checkbox" id="phide" checked> hide drafted</label>
+          <label class="chk"><input type="checkbox" id="ptgt"> ★ targets only</label>
         </div>
         <div class="scroll" style="max-height:62vh"><table id="planPool"></table></div>
       </div>
@@ -340,6 +349,33 @@
 <script>
 const D = __DATA__;
 const POSC = {QB:'--s1', RB:'--s2', WR:'--s3', TE:'--s4', K:'--s5', DEF:'--s6'};
+
+/* ---------- target players ----------
+   Keyed on player_key, the same canonical id the profile links use, so a star
+   set on the board is the same star in the planner even where the two datasets
+   spell a name differently. */
+const TARGET_KEY = 'pbaffl_targets_v1';
+let targets = new Set();
+try { targets = new Set(JSON.parse(localStorage.getItem(TARGET_KEY)) || []); } catch (e) {}
+const saveTargets = () => {
+  try { localStorage.setItem(TARGET_KEY, JSON.stringify([...targets])); } catch (e) {}
+};
+function starHtml(key) {
+  if (!key) return '';                       // no key (DEF, some rookies) -> no star
+  const on = targets.has(key);
+  return `<button class="star${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" ` +
+         `title="${on ? 'remove from targets' : 'mark as a target'}">${on ? '★' : '☆'}</button>`;
+}
+function bindStars(root) {
+  (root || document).querySelectorAll('button[data-star]').forEach(b => b.onclick = ev => {
+    ev.stopPropagation();                    // never trigger the row's own handler
+    const k = b.dataset.star;
+    if (targets.has(k)) targets.delete(k); else targets.add(k);
+    saveTargets();
+    // redraw only the surfaces that show stars, so a click stays instant
+    boardTable(); drawPlan();
+  });
+}
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const tip = document.getElementById('tip');
 const showTip = (e, html) => { tip.innerHTML = html; tip.style.opacity = 1;
@@ -385,7 +421,7 @@ function markTheme() {
 markTheme();
 
 /* ---------- board table ---------- */
-let sortK = 'adp_rank', sortA = true;
+let sortK = 'adp_rank', sortA = true, tgtOnly = false;
 const posSel = document.getElementById('posf');
 [...new Set(D.board.map(r => r.position))].forEach(p =>
   posSel.insertAdjacentHTML('beforeend', `<option>${p}</option>`));
@@ -397,7 +433,8 @@ function boardTable() {
   const tf = teamSel.value;
   let rows = D.board.filter(r => (!q || r.player_name.toLowerCase().includes(q)) &&
                                  (!pf || r.position === pf) &&
-                                 (!tf || r.nfl_team === tf));
+                                 (!tf || r.nfl_team === tf) &&
+                                 (!tgtOnly || targets.has(r.player_key)));
   rows.forEach(r => { r.gap = (r.posrank || 0) - (r.projrank || 0); });
   rows.sort((a, b) => (a[sortK] > b[sortK] ? 1 : -1) * (sortA ? 1 : -1));
   // mkt and proj were two raw rank numbers nobody could tell apart. The signal
@@ -433,13 +470,19 @@ function boardTable() {
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td><b>$${r.est_price}</b></td>
-      <td class="l">${pLink(r.player_name, r.player_key, 0)}</td>
+      <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
       <td class="l">${r.nfl_team}</td>
       <td class="${gcls(r)}" style="${(r.posrank > (DEPTH[r.position]||48)) ? 'color:var(--muted)' : ''}" title="market has him ${r.position}${r.posrank}, the projection model has him ${r.position}${r.projrank} — the market is the more reliable of the two (rule 4)">${r.gap > 0 ? '+' : ''}${r.gap || '—'}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
+  bindStars(document.getElementById('boardT'));
+  const tb = document.getElementById('tgtOnly');
+  tb.classList.toggle('on', tgtOnly);
+  tb.setAttribute('aria-pressed', tgtOnly);
+  tb.textContent = (tgtOnly ? '★' : '☆') + ' targets only' +
+                   (targets.size ? '  (' + targets.size + ')' : '');
   // Shade is never the only encoding -- the signed number sits in the same cell.
   document.getElementById('bdLeg').innerHTML =
     '<span>vs mkt (projection against the room):</span>' +
@@ -451,6 +494,7 @@ function boardTable() {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
 document.getElementById('q').oninput = boardTable;
+document.getElementById('tgtOnly').onclick = () => { tgtOnly = !tgtOnly; boardTable(); };
 posSel.onchange = teamSel.onchange = boardTable;
 
 /* ---------- charts ---------- */
@@ -771,7 +815,7 @@ function planBar() {
 function slotRow(lab, r, cls) {
   return '<div class="slot ' + cls + (r ? '' : ' empty') + '">' +
     '<span class="lab">' + lab + '</span>' +
-    '<span class="nm">' + (r ? pLink(r.player_name, r.player_key, 0) +
+    '<span class="nm">' + (r ? starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) +
       ' <span style="color:var(--muted)">' + r.position + r.blendrank + ' &middot; ' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
     '<span class="pr">' + (r ? '$' + r.est_price : '') + '</span>' +
     (r ? '<button class="btn mini" data-drop="' + r.player_name + '">&times;</button>' : '') +
@@ -793,6 +837,7 @@ function planRoster() {
   const host = document.getElementById('planRoster');
   host.innerHTML = html;
   bindLinks(host);
+  bindStars(host);
   host.querySelectorAll('[data-drop]').forEach(function (b) {
     b.onclick = function () {
       cur().picks = cur().picks.filter(function (n) { return n !== b.dataset.drop; });
@@ -805,18 +850,20 @@ function planPool() {
   const q = document.getElementById('pq').value.toLowerCase();
   const pf = document.getElementById('ppos').value;
   const hide = document.getElementById('phide').checked;
+  const tgt = document.getElementById('ptgt').checked;
   const taken = {};
   cur().picks.forEach(function (n) { taken[n] = 1; });
   const rows = D.board.filter(function (r) {
     return (!q || r.player_name.toLowerCase().indexOf(q) >= 0) &&
-           (!pf || r.position === pf) && (!hide || !taken[r.player_name]);
+           (!pf || r.position === pf) && (!hide || !taken[r.player_name]) &&
+           (!tgt || targets.has(r.player_key));
   }).slice(0, 300);
   document.getElementById('planPool').innerHTML =
     '<thead><tr><th class="l" style="cursor:default">#</th>' +
     '<th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
     rows.map(function (r, i) {
       return '<tr><td class="l" style="color:var(--muted)">' + (i + 1) + '</td>' +
-        '<td class="l">' + pLink(r.player_name, r.player_key, 0) + '</td>' +
+        '<td class="l">' + starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + '</td>' +
         '<td><b>$' + r.est_price + '</b></td>' +
         '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
         r.position + r.blendrank + '</span></td>' +
@@ -825,6 +872,7 @@ function planPool() {
         (taken[r.player_name] ? '&check;' : '+') + '</button></td></tr>';
     }).join('') + '</tbody>';
   bindLinks(document.getElementById('planPool'));
+  bindStars(document.getElementById('planPool'));
   document.querySelectorAll('#planPool [data-add]').forEach(function (b) {
     b.onclick = function () {
       const n = b.dataset.add;
@@ -877,6 +925,7 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
   document.getElementById('pq').oninput = planPool;
   ps.onchange = planPool;
   document.getElementById('phide').onchange = planPool;
+  document.getElementById('ptgt').onchange = planPool;
   document.getElementById('planSel').onchange = function (e) { active = +e.target.value; drawPlan(); };
   document.getElementById('planNew').onclick = function () {
     const n = prompt('Name this plan', 'Plan ' + String.fromCharCode(65 + plans.length));
