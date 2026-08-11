@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
 <title>PBAFFL — draft data</title>
 <style>
   :root{
@@ -168,10 +169,11 @@
   // Runs before first paint, so a stored dark theme never flashes light. This
   // has to live in <head> -- doing it with the rest of the JS at end of body
   // means the page has already painted in the wrong theme.
+  window.__themeStorage = true;
   try {
     var t = localStorage.getItem('pbaffl_theme_v1');
     if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
-  } catch (e) { /* storage blocked (private mode) -- fall back to system theme */ }
+  } catch (e) { window.__themeStorage = false; }   // file:// or private mode
 </script>
 </head>
 <body>
@@ -359,9 +361,28 @@ document.getElementById('themeBtn').onclick = () => {
   const next = dark ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   // persist so the choice survives a refresh; the <head> script re-applies it
-  try { localStorage.setItem('pbaffl_theme_v1', next); } catch (e) { /* storage blocked */ }
+  try { localStorage.setItem('pbaffl_theme_v1', next); }
+  catch (e) { window.__themeStorage = false; }
+  markTheme();
   draw();   // charts read their colours from CSS vars at draw time, so redraw
 };
+
+/* Storage is unavailable on file:// and in private mode. The theme then cannot
+   stick across a refresh, which is indistinguishable from a broken toggle --
+   so label the button rather than fail quietly. */
+function markTheme() {
+  const b = document.getElementById('themeBtn');
+  if (window.__themeStorage === false) {
+    b.textContent = '◐ theme (not saved)';
+    b.title = 'This page cannot save your choice — browser storage is blocked. '
+            + 'That happens when the file is opened directly (file://) rather '
+            + 'than served. Run: python serve.py';
+  } else {
+    b.textContent = '◐ theme';
+    b.title = 'Light / dark. Your choice is remembered across refreshes.';
+  }
+}
+markTheme();
 
 /* ---------- board table ---------- */
 let sortK = 'adp_rank', sortA = true;
