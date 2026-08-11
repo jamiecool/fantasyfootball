@@ -590,12 +590,11 @@ function boardTable() {
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
   };
   const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
-                ['nfl_team','tm'],['pts_per_game','off/g'],['playoff_avg','wk15-17'],
-                ['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
+                ['nfl_team','tm'],['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
   // Only the shaded column is pinned to its content width. A colour block as
   // wide as its share of the table reads as emphasis it has not earned; the
   // rest of the columns keep sharing the slack so the layout stays balanced.
-  const TIGHT = {gap: 1, pts_per_game: 1, playoff_pts: 1};
+  const TIGHT = {gap: 1};
   const vcls = t => t > 0 ? 'o' + t : t < 0 ? 'om' + (-t) : 'o0';
   document.getElementById('boardT').innerHTML =
     // leading counter is positional and renumbers with the sort, same as past drafts
@@ -608,9 +607,7 @@ function boardTable() {
       <td><b>$${r.est_price}</b></td>
       <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}${noteHtml(r.player_key)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
-      <td class="l">${r.nfl_team}</td>
-      <td class="${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game, ${r.vegas_rank} of 32` : 'no team'}">${r.pts_per_game || '\u2014'}</td>
-      <td class="${vcls(r.post_tier)}" title="${r.vegas_rank ? `${r.playoff_avg} a game across weeks 15-17, our playoff window (${r.playoff_pts} total)` : 'no team'}">${r.playoff_avg || '\u2014'}</td>
+      <td class="l ${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game \u2014 ${r.vegas_rank} of 32, and ${r.playoff_avg} a game in weeks 15-17` : ''}">${r.nfl_team}</td>
       <td class="${gcls(r)}" style="${r.yahoo_rank ? '' : 'color:var(--muted)'}" title="${r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish'}">${r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—'}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
@@ -623,19 +620,20 @@ function boardTable() {
   tb.textContent = (tgtOnly ? '★' : '☆') + ' targets only' +
                    (targets.size ? '  (' + targets.size + ')' : '');
   // Shade is never the only encoding -- the signed number sits in the same cell.
+  // Two scales, one swatch set each, one shared caveat. The earlier version ran
+  // to three lines of legend above a table that has to be scanned fast.
+  const swatch = pairs => pairs.map(([c, l]) =>
+    `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('');
   document.getElementById('bdLeg').innerHTML =
-    '<span>vs Yahoo (overall rank, the room’s anchor):</span>' +
-    [['d3', 'Yahoo sleeps on him'], ['d0', 'agree'], ['dm3', 'Yahoo hypes him']].map(([c, l]) =>
-      `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('') +
-    '<span style="color:var(--muted)">we draft in Yahoo, so their ADP is what your ' +
-    'leaguemates are anchored to — green is where the room may let him go cheap. ' +
-    'Hover for Yahoo’s average auction cost.</span>' +
+    '<span><b>tm</b> — Vegas on the offence:</span>' +
+    swatch([['o3', 'strong'], ['o0', 'average'], ['om3', 'weak']]) +
+    '<span style="color:var(--axis)">|</span>' +
+    '<span><b>vs Yahoo</b> — rank against the room:</span>' +
+    swatch([['d3', 'they sleep on him'], ['d0', 'agree'], ['dm3', 'they hype him']]) +
     '<span style="flex-basis:100%;height:0"></span>' +
-    '<span>offence (Vegas), points per game:</span>' +
-    [['o3', 'well above average'], ['o0', 'average'], ['om3', 'well below']].map(([c, l]) =>
-      `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('') +
-    '<span style="color:var(--muted)">already priced into ADP \u2014 a sanity check while ' +
-    'scanning, not a reason to bid. Sorting is unaffected.</span>';
+    '<span style="color:var(--muted)">Both are already inside ADP, so they are sanity ' +
+    'checks while scanning, not reasons to bid. Neither affects sorting. Hover either ' +
+    'for the underlying numbers.</span>';
   document.querySelectorAll('#boardT th[data-k]').forEach(th => th.onclick = () => {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
