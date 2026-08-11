@@ -52,8 +52,9 @@ b["blend"] = (ADP_WEIGHT * b["posrank"] + (1 - ADP_WEIGHT) * b["projrank"])
 b["blendrank"] = b.groupby("position")["blend"].rank(method="first").astype(int)
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
-    ["adp_rank", "player_name", "position", "posrank", "projrank", "blendrank",
-     "move", "nfl_team", "adp", "est_price", "proj_points"]].fillna(0).to_dict("records")
+    ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
+     "blendrank", "move", "nfl_team", "adp", "est_price",
+     "proj_points"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks
@@ -101,9 +102,10 @@ st["tier"] = st["tier"].astype(str)
 D["startable"] = st.to_dict("records")
 
 # ---- 6. where the two markets disagree -------------------------------------
-mk = pd.read_sql("""SELECT player_name, position, source, adp FROM preseason_adp
+mk = pd.read_sql("""SELECT player_name, player_key, position, source, adp
+                    FROM preseason_adp
                     WHERE season=2026 AND scoring_format='half-ppr'""", con)
-piv = mk.pivot_table(index=["player_name", "position"], columns="source",
+piv = mk.pivot_table(index=["player_name", "player_key", "position"], columns="source",
                      values="adp", aggfunc="min").reset_index()
 if {"ffc", "underdog"} <= set(piv.columns):
     piv = piv.dropna(subset=["ffc", "underdog"])
@@ -125,7 +127,8 @@ D["draft"], D["draft_teams"] = {}, {}
 for season in SEASONS:
     teams_n = 10 if season == 2020 else 12
     dr = pd.read_sql(f"""
-        SELECT d.nomination_order nom, d.price, d.player_name, d.position, d.nfl_team,
+        SELECT d.nomination_order nom, d.price, d.player_name, d.player_key,
+               d.position, d.nfl_team,
                d.franchise, d.price_source, f.pos_rank, f.points, f.games
         FROM draft_picks d
         LEFT JOIN final_ranks f ON f.season = d.season AND f.player_key = d.player_key
@@ -232,7 +235,7 @@ for (season, key), g in pw.groupby(["season", "player_key"], sort=False):
     games = [[int(r.week), TIDX.get(r.opponent, -1), round(float(r.points), 1)]
              + [int(getattr(r, c)) for c in WK_COLS] for r in g.itertuples()]
     ps_rows.append([first.player_name, first.position, first.nfl_team, int(season),
-                    price, franchise, pos_rank, ovr, games])
+                    price, franchise, pos_rank, ovr, games, key])
 # heaviest scorers first so the default view needs no sort pass
 ps_rows.sort(key=lambda r: -sum(x[2] for x in r[8]))
 

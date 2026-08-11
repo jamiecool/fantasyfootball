@@ -1040,6 +1040,14 @@ starter-quality weeks, so a TE isn't judged on a QB's scale:
 **Known gap:** nflverse covers QB/RB/WR/TE/K only — **no team defences**. Stated in the
 tab so it doesn't read as a bug.
 
+**Player names open the profile everywhere** — 2026 board, past drafts, planner roster
+and pool, market-disagreement table. Links join on `player_key`, never the display name;
+name joins are what caused the Michael Thomas and Chris Thompson bugs, and
+"Chris Godwin Jr." vs "Chris Godwin" would break silently. A name is only clickable when
+history exists behind it, so 2026 rookies and DEF stay plain text rather than dead links
+(board 83% linked, past drafts 94%, NFL stats 100%). Clicking from a past draft opens
+*that* season; from the 2026 board, his most recent.
+
 ### Next session
 
 - The H2H season simulator is now unblocked: weekly data exists. Build it →
