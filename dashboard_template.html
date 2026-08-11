@@ -194,6 +194,7 @@
   <section class="panel" id="p-board">
     <div class="card">
       <h2>The board</h2>
+      <div class="legend" id="bdLeg"></div>
       <div class="filters">
         <input type="search" id="q" placeholder="filter players…">
         <select id="posf"><option value="">all positions</option></select>
@@ -376,24 +377,51 @@ function boardTable() {
   let rows = D.board.filter(r => (!q || r.player_name.toLowerCase().includes(q)) &&
                                  (!pf || r.position === pf) &&
                                  (!tf || r.nfl_team === tf));
+  rows.forEach(r => { r.gap = (r.posrank || 0) - (r.projrank || 0); });
   rows.sort((a, b) => (a[sortK] > b[sortK] ? 1 : -1) * (sortA ? 1 : -1));
-  const cols = [['adp_rank','#'],['player_name','player'],['est_price','$'],
-                ['blendrank','rank'],['posrank','mkt'],['projrank','proj'],
-                ['move','trend'],['nfl_team','tm'],['adp','ADP']];
+  // mkt and proj were two raw rank numbers nobody could tell apart. The signal
+  // was never either one -- it is where they DISAGREE, so they collapse into a
+  // single shaded delta, read exactly like "vs exp" on the past-drafts table.
+  // Sign convention matches it too: green = better than the market thinks.
+  // Shade on PROPORTIONAL disagreement, not raw ranks: 3 ranks apart at WR5 is a
+  // real argument, 3 ranks apart at WR95 is rounding. And suppress the shade past
+  // roughly twice the startable depth, where neither source carries signal --
+  // otherwise the $1 tail lights up green on pure noise and reads as value.
+  const DEPTH = {QB: 24, RB: 48, WR: 72, TE: 24, K: 24, DEF: 24};
+  const gcls = r => {
+    if (!r.posrank || !r.projrank) return 'd0';
+    if (r.posrank > (DEPTH[r.position] || 48)) return 'd0';
+    const rel = r.gap / Math.max(r.posrank, 6);
+    const a = Math.abs(rel), step = a >= 0.45 ? 3 : a >= 0.25 ? 2 : a >= 0.12 ? 1 : 0;
+    const d = r.gap >= 0 ? step : -step;
+    return d === 3 ? 'd3' : d === 2 ? 'd2' : d === 1 ? 'd1'
+         : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
+  };
+  const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
+                ['nfl_team','tm'],['gap','proj vs mkt'],['move','trend'],['adp','ADP']];
   document.getElementById('boardT').innerHTML =
-    '<thead><tr>' + cols.map(([k,l],i) =>
-      `<th class="${(i<2||i===3||i===7)?'l':''}" data-k="${k}">${l}</th>`).join('') + '</tr></thead><tbody>' +
-    rows.map(r => `<tr>
-      <td class="l" style="color:var(--muted)">${r.adp_rank}</td>
-      <td class="l">${pLink(r.player_name, r.player_key, 0)}</td>
+    // leading counter is positional and renumbers with the sort, same as past drafts
+    '<thead><tr><th class="l" style="cursor:default">#</th>' + cols.map(([k,l],i) =>
+      `<th class="${(i===1||i===2||i===3)?'l':''}" data-k="${k}">${l}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    rows.map((r, i) => `<tr>
+      <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td><b>$${r.est_price}</b></td>
+      <td class="l">${pLink(r.player_name, r.player_key, 0)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
-      <td style="color:var(--muted)">${r.posrank}</td>
-      <td style="color:var(--muted)">${r.projrank}</td>
+      <td class="l">${r.nfl_team}</td>
+      <td class="${gcls(r)}" style="${(r.posrank > (DEPTH[r.position]||48)) ? 'color:var(--muted)' : ''}" title="market has him ${r.position}${r.posrank}, the projection model has him ${r.position}${r.projrank} — the market is the more reliable of the two (rule 4)">${r.gap > 0 ? '+' : ''}${r.gap || '—'}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
-      <td class="l">${r.nfl_team}</td><td>${r.adp}</td></tr>`).join('') + '</tbody>';
+      <td>${r.adp}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
-  document.querySelectorAll('#boardT th').forEach(th => th.onclick = () => {
+  // Shade is never the only encoding -- the signed number sits in the same cell.
+  document.getElementById('bdLeg').innerHTML =
+    '<span>proj vs mkt:</span>' +
+    [['d3', 'model higher'], ['d0', 'agree'], ['dm3', 'model lower']].map(([c, l]) =>
+      `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('') +
+    '<span style="color:var(--muted)">a flag to look at, not a buy signal — the room ' +
+    'beats the model (rule 4); unshaded past draftable depth, where neither has signal</span>';
+  document.querySelectorAll('#boardT th[data-k]').forEach(th => th.onclick = () => {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
 document.getElementById('q').oninput = boardTable;
