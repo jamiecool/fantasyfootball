@@ -191,4 +191,19 @@ RULES = [
             "past WR36 is gentle (WR48 is still 0.83 of a last starter, where "
             "RB48 is 0.55), so WR depth is cheap and covers a bust.",
      "n": "20,000 draws per shape from 594 real WR outcomes"},
+
+    {"id": 20, "conf": "high", "area": "Mindset",
+     "rule": "Minimise busts and let the room bust. Never optimise for 'hit rate' "
+             "— it is a trap metric that rewards low expectations.",
+     "why": "Hit rate and bust rate are not opposite dials, they are the SAME "
+            "dial, and they move TOGETHER: correlation +0.92 across price bands. "
+            "$1-2 picks have the HIGHEST rate of beating expectation (34%) and an "
+            "81% rate of returning nothing, because beating a $1 expectation is "
+            "trivial and worthless. Maximising hit rate therefore lands you on an "
+            "all-$1 roster. Meanwhile steadiness wins in every room: a busty "
+            "roster scores 0.82x / 0.83x / 0.89x a steady one against a steady, "
+            "normal and busty league. And your title odds RISE as the room gets "
+            "wilder — 8.4% to 9.5% — so a volatile league is exploited by being "
+            "steadier than it, never by matching it.",
+     "n": "1,464 picks for the hit/bust structure; 25,000 simulated seasons per cell"},
 ]
