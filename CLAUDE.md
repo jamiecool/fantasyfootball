@@ -947,6 +947,41 @@ option value** — the same blind spot as scoring the bench at zero. When a clai
 concerns a *bench* or *lottery* role, check absolute upside, not position-relative
 startable rate.
 
+## How the 2026 board is priced (settled 2026-08-10)
+
+Two separate jobs, two separate sources. Getting this wrong caused several rounds of
+bad output, so it is worth stating plainly.
+
+1. **Ordering WITHIN a position → Underdog.** Jamie's call, from years of watching it:
+   sharp money, continuously repriced, moves first. **We cannot verify this** — no
+   historical Underdog ADP exists in the dataset, so it rests on his judgement, not
+   on anything measured here. Don't re-litigate it without new evidence.
+2. **Weighting ACROSS positions → PBAFFL's own positional price curves** (2023–25).
+   Underdog cannot supply this: it is best ball, 18 rounds, with a FLEX this league
+   doesn't have and no K or DEF at all. League history says RB1 = $66 while QB1 = $36
+   — **that gap IS our format** (no FLEX, mandatory K and DEF). So Underdog says who
+   the 5th-best RB is; league history says what the 5th RB costs.
+3. **K and DEF → FFC**, the only source that drafts them.
+
+Sanity check that this is right: the board now totals **$2,425 against the $2,400 pool**
+(~1% over). The previous generic ADP→price curve came in ~15% light and needed a
+"treat as a floor" caveat.
+
+### What went wrong before, so it isn't repeated
+
+- **A single primary ADP source inherits its noise wherever it is close.** FFC had
+  Breece Hall 0.5 ahead of Kenneth Walker; Underdog had Walker ahead by 14.5 and
+  Sleeper by 12.4. The board followed the coin-flip. Under the current method Walker
+  is RB9 / $38 and Hall RB14 / $26, a $12 gap against Jamie's ~$15 estimate.
+- **One generic ADP→price curve flattens positional structure.** It priced QB and RB
+  off the same overall-rank curve, erasing exactly the no-FLEX / K+DEF effect that
+  makes this league's prices what they are.
+- **Sleeper projections are one algorithm, not a market.** They correlate with markets
+  at 0.65–0.72 while markets agree with each other at 0.95. On the dashboard they are
+  an informational column only (`proj`), never the ranking. Their QB tier is so
+  compressed — QB6–QB14 inside 21 points, about a point a week — that the ordering
+  there is close to noise.
+
 ## Where we left off (end of session, 2026-08-09/10)
 
 Data pipeline is **done and on GitHub** (private: `jamiecool/fantasyfootball`). Nine

@@ -25,18 +25,33 @@ D = {}
 proj = pd.read_sql("""SELECT player_key, player_name, position, nfl_team,
                              proj_points FROM projections WHERE season = 2026""", con)
 board = pd.read_csv(os.path.join(OUT, "analysis", "board_2026.csv"))
+# Underdog re-prices continuously, so its ADP movement is the fastest signal we
+# have on which way the room is drifting. FFC sets the level; Underdog the trend.
+mv = pd.read_sql("""SELECT player_key, adp_delta FROM preseason_adp
+                    WHERE season = 2026 AND source = 'underdog'""", con)
+board = board.merge(mv.drop_duplicates("player_key"), on="player_key", how="left")
 b = board.merge(proj[["player_key", "proj_points"]], on="player_key", how="left")
 SL = {"QB": 12, "RB": 24, "WR": 36, "TE": 12, "K": 12, "DEF": 12}
 rep = {p: (b[b.position == p].nlargest(n, "proj_points").proj_points.min()
            if (b.position == p).sum() >= n else 0) for p, n in SL.items()}
 b["par"] = (b["proj_points"] - b["position"].map(rep)).clip(lower=0).round(1)
 b["ppd"] = (b["par"] / b["est_price"]).round(2)
-D["board"] = b.nsmallest(120, "adp_rank")[
-    ["adp_rank", "player_name", "position", "nfl_team", "adp", "est_price",
-     "proj_points", "par", "ppd"]].fillna(0).to_dict("records")
 
-# ---- 2. price curve: what each ADP rank costs ------------------------------
-D["curve"] = b.nsmallest(200, "adp_rank")[["adp_rank", "est_price"]].to_dict("records")
+# The board's job is "what will the room pay", so ADP carries the ranking and
+# projections only nudge it. Weight reflects what we measured: two independent
+# markets agree with each other at rho 0.95 while either agrees with Sleeper's
+# model at only 0.65-0.72, so the model is the outlier and gets the small share.
+ADP_WEIGHT = 0.75
+b = b.sort_values("adp_rank")
+b["posrank"] = b.groupby("position").cumcount() + 1          # market rank, QB3
+b["projrank"] = b.groupby("position")["proj_points"].rank(
+    ascending=False, method="first").fillna(0).astype(int)   # model rank
+b["blend"] = (ADP_WEIGHT * b["posrank"] + (1 - ADP_WEIGHT) * b["projrank"])
+b["blendrank"] = b.groupby("position")["blend"].rank(method="first").astype(int)
+b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
+D["board"] = b.nsmallest(400, "adp_rank")[
+    ["adp_rank", "player_name", "position", "posrank", "projrank", "blendrank",
+     "move", "nfl_team", "adp", "est_price"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks

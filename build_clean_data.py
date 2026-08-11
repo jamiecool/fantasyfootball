@@ -541,6 +541,25 @@ for csv_path in sorted(glob.glob(os.path.join(UD_DIR, "underdog_adp_*.csv"))):
             "prev_adp": r.get("prev_adp"), "adp_delta": r.get("adp_delta"),
         })
 
+# Sleeper's own ADP, read straight from the projections feed, as a third market.
+for path in sorted(glob.glob(os.path.join(PROJ_DIR, "proj_*_*.json"))
+                   if os.path.isdir(PROJ_DIR := os.path.join(ROOT, "rawdata", "projections"))
+                   else []):
+    season = int(re.search(r"_(\d{4})\.json$", path).group(1))
+    for row in json.load(open(path, encoding="utf-8")):
+        a = (row.get("stats") or {}).get("adp_half_ppr")
+        if a is None or float(a) >= 400:
+            continue
+        nm = f"{row.get('first_name') or ''} {row.get('last_name') or ''}".strip()
+        adp_rows.append({
+            "season": season, "scoring_format": "half-ppr", "source": "sleeper",
+            "player_name": clean_str(nm), "position": clean_str(row["position"]).upper(),
+            "nfl_team": clean_str(row.get("team")).upper(), "adp": float(a),
+            "adp_formatted": None, "times_drafted": None, "stdev": None,
+            "high": None, "low": None, "bye": None, "total_drafts": None,
+            "prev_adp": None, "adp_delta": None,
+        })
+
 if adp_rows:
     adp_all = pd.DataFrame(adp_rows)
     if "prev_adp" not in adp_all:
@@ -563,7 +582,31 @@ if adp_rows:
     # across formats at rho 0.94-0.99, so take each player's ADP from the most
     # league-appropriate format that lists them, then rank the merged set.
     # This keeps half-PPR wherever it exists without losing depth.
-    # FFC half-PPR is preferred, then Underdog, then the other FFC formats.
+    # CONSENSUS: average each player's RANK across the independent half-PPR
+    # markets, then re-rank. Picking a single primary source inherits its noise
+    # wherever it is close: FFC had Breece Hall 0.5 ahead of Kenneth Walker while
+    # Underdog had Walker ahead by 14.5 and Sleeper by 12.4 — the board followed
+    # the coin-flip. Ranks are averaged rather than raw ADP because the sources
+    # have different roster depths (Underdog is 18-round best ball).
+    hp = adp_all[adp_all["scoring_format"] == "half-ppr"].copy()
+    if hp["source"].nunique() > 1:
+        hp["src_rank"] = hp.groupby(["season", "source"])["adp"].rank(method="min")
+        cons = (hp.groupby(["season", "player_key"])
+                .agg(adp=("src_rank", "mean"), n_src=("src_rank", "size"),
+                     player_name=("player_name", "first"),
+                     position=("position", "first"), nfl_team=("nfl_team", "first"),
+                     nfl_franchise=("nfl_franchise", "first"),
+                     prev_adp=("prev_adp", "first"), adp_delta=("adp_delta", "first"))
+                .reset_index())
+        cons["source"] = "consensus"
+        cons["scoring_format"] = "half-ppr"
+        for col in ("adp_formatted", "times_drafted", "stdev", "high", "low",
+                    "bye", "total_drafts"):
+            cons[col] = None
+        cons["format_rank"] = cons.groupby("season")["adp"].rank(method="first").astype(int)
+        adp_all = pd.concat([adp_all, cons], ignore_index=True)
+
+    # Consensus first, then FFC half-PPR, then Underdog, then other FFC formats.
     #
     # FFC leads for two reasons. (1) Consistency: the ADP->price curve is
     # calibrated on FFC historical ADP, so the current-season input must be FFC
@@ -572,11 +615,15 @@ if adp_rows:
     # defenses; Underdog is best ball with a FLEX, 18 rounds and no K/DEF.
     # Underdog still fills the tail -- it lists 250 players against FFC's 205.
     def _rank(src, fmt):
-        if src == "ffc" and fmt == "half-ppr":
+        if src == "consensus":
             return 0
-        if src == "underdog":
+        if src == "ffc" and fmt == "half-ppr":
             return 1
-        return 2 + FORMAT_PREFERENCE.index(fmt)
+        if src == "underdog":
+            return 2
+        if src == "sleeper":
+            return 3
+        return 4 + FORMAT_PREFERENCE.index(fmt)
 
     adp_all["_pref"] = [_rank(s, f) for s, f in
                         zip(adp_all["source"], adp_all["scoring_format"])]

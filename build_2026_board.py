@@ -1,26 +1,25 @@
 """Turn current-season ADP into expected auction prices, then draft example rosters.
 
-Two steps:
+Pricing, in two parts:
 
-1. ADP -> expected price, by EMPIRICAL RANK MATCHING. For each past season, sort
-   the drafted players by ADP and record what the Nth-ranked one actually cost.
-   Median across seasons gives the price curve. Rank matching is used instead of
-   fitting a curve because a polynomial in log space bends the wrong way at the
-   very top (it priced ADP 1 below ADP 5), and because rank matching inherits
-   the budget identity for free -- every season's prices sum to $2,400.
+1. ORDERING inside each position comes from UNDERDOG. Sharp money, continuously
+   repriced, and it moves first -- Jamie's call, backed by years of watching it.
 
-2. Fill rosters under the real constraints: $200, 16 picks, and a starting nine
-   of 1 QB / 3 WR / 2 RB / 1 TE / 1 K / 1 DEF with no FLEX.
+2. CROSS-POSITION WEIGHTING comes from PBAFFL's own positional price curves,
+   because Underdog cannot supply it: Underdog is best ball, with 18 rounds, a
+   FLEX this league does not have, and no kicker or defense at all. League
+   history says RB1 goes for $66 here while QB1 goes for $36 -- that gap IS our
+   format (no FLEX, and a mandatory K and DEF). So Underdog says who the 5th-best
+   RB is; league history says what the 5th RB costs.
 
-Caveats, which matter:
-  * These are ILLUSTRATIONS of allocation strategy, not player recommendations.
-    Nothing here contains a 2026 projection -- the ordering is purely the
-    market's (Underdog's), and the analysis only decides how to SPEND against it.
-  * The board is FFC redraft half-PPR, the same source the price curve is
-    calibrated on and the closest format match to this league (12-team, redraft,
-    drafts kickers and defenses). Underdog best-ball ADP fills the tail beyond
-    FFC's 205 players; it is a sharper pool but wrong-shaped (18 rounds, FLEX,
-    no K/DEF), and the two agree at rho 0.949 so the blend is safe.
+   K and DEF, which Underdog never drafts, come from FFC.
+
+3. Rosters are then filled under the real constraints: $200, 16 picks, and a
+   starting nine of 1 QB / 3 WR / 2 RB / 1 TE / 1 K / 1 DEF with no FLEX.
+
+Caveat: these rosters are ILLUSTRATIONS of allocation strategy, not player
+recommendations. No projection enters the pricing at all -- the ordering is the
+market's and the analysis only decides how to SPEND against it.
 
 Run:  python build_2026_board.py
 """
@@ -44,7 +43,45 @@ STARTERS = {"QB": 1, "RB": 2, "WR": 3, "TE": 1, "K": 1, "DEF": 1}
 # in 2024 while WR rose to 47.7% -- so nine-year averages price the wrong market.
 PRICE_SEASONS = (2023, 2025)
 
-# ---------------------------------------------------------------- 1. curve
+# ---------------------------------------------------- 1. positional curves
+#
+# Underdog supplies the ORDERING inside each position -- Jamie's judgement,
+# backed by years of watching it: sharp money, continuously repriced, and it
+# moves first. What Underdog cannot supply is how THIS league values one
+# position against another, because it is best ball: 18 rounds, a FLEX we don't
+# have, and no kicker or defense at all.
+#
+# So the re-weighting is done with PBAFFL's own positional price curves. They
+# encode our format directly -- RB1 goes for $66 here while QB1 goes for $36,
+# precisely because we start no FLEX and must roster a K and a DEF. Underdog
+# says WHO is the 5th-best RB; league history says what the 5th RB costs.
+POS_HIST = pd.read_sql(f"""
+    SELECT season, position, price FROM draft_picks
+    WHERE season BETWEEN {PRICE_SEASONS[0]} AND {PRICE_SEASONS[1]}
+      AND position IN ('QB','RB','WR','TE','K','DEF')
+""", con)
+POS_HIST["pos_rank"] = POS_HIST.groupby(["season", "position"])["price"] \
+    .rank(ascending=False, method="first").astype(int)
+
+pos_curve = {}
+for pos, g in POS_HIST.groupby("position"):
+    depth = int(g["pos_rank"].max())
+    raw = g.groupby("pos_rank")["price"].median().reindex(range(1, depth + 1))
+    sm = raw.rolling(window=3, center=True, min_periods=1).median().ffill().fillna(1)
+    iso = IsotonicRegression(increasing=False, y_min=1)
+    pos_curve[pos] = pd.Series(
+        iso.fit_transform(list(sm.index), sm.values), index=sm.index).clip(lower=1)
+
+
+def price_for(pos, rank):
+    """What the Nth-most-expensive player at this position costs in PBAFFL."""
+    cv = pos_curve.get(pos)
+    if cv is None or not len(cv):
+        return 1
+    return int(round(cv.iloc[min(int(rank), len(cv)) - 1]))
+
+
+# kept for the diagnostic printout below
 hist = pd.read_sql(f"""
     SELECT p.season, p.player_key, p.adp, d.price
     FROM v_preseason p
@@ -77,12 +114,27 @@ iso = IsotonicRegression(increasing=False, y_min=1)
 curve = pd.Series(iso.fit_transform(list(RANKS), smooth.values), index=RANKS).clip(lower=1)
 
 # ---------------------------------------------------------------- 2. 2026
-adp = pd.read_sql("""
+# Underdog for the QB/RB/WR/TE ordering; FFC for K and DEF, which Underdog does
+# not draft at all. Each player is then priced off his own position's curve.
+ud = pd.read_sql("""
     SELECT player_name, player_key, position, nfl_team, adp
-    FROM v_preseason WHERE season = 2026 ORDER BY adp
+    FROM preseason_adp
+    WHERE season = 2026 AND source = 'underdog' AND scoring_format = 'half-ppr'
 """, con)
+kd = pd.read_sql("""
+    SELECT player_name, player_key, position, nfl_team, adp
+    FROM preseason_adp
+    WHERE season = 2026 AND source = 'ffc' AND scoring_format = 'half-ppr'
+      AND position IN ('K','DEF')
+""", con)
+adp = pd.concat([ud, kd], ignore_index=True).drop_duplicates("player_key")
+
+adp["pos_rank"] = adp.groupby("position")["adp"].rank(method="first").astype(int)
+adp["est_price"] = [price_for(r.position, r.pos_rank) for r in adp.itertuples()]
+# board order is by what the player will cost, not by raw ADP, because the
+# positions are on different price scales
+adp = adp.sort_values(["est_price", "adp"], ascending=[False, True]).reset_index(drop=True)
 adp["adp_rank"] = range(1, len(adp) + 1)
-adp["est_price"] = adp["adp_rank"].map(curve).fillna(1).round().astype(int)
 
 # NOT calibrated up to the $2,400 pool, deliberately. Rank-matched prices land
 # where history says (rank 1 = $69 against an all-time league max of $74), but
@@ -102,9 +154,10 @@ if missing:
          "est_price": 2} for p in missing])], ignore_index=True)
     print(f"  (no market data for {missing}; using $2 placeholders)")
 
-print("2026 expected auction prices (FFC redraft ADP primary, rank-matched to history)")
-print(pool.head(14)[["adp_rank", "player_name", "position", "nfl_team", "adp",
-                     "est_price"]].to_string(index=False))
+print("2026 prices: Underdog ordering within position, priced on this "
+      "league's own positional curves (FFC supplies K/DEF)")
+print(pool.head(14)[["adp_rank", "player_name", "position", "pos_rank", "nfl_team",
+                     "adp", "est_price"]].to_string(index=False))
 print(f"\ntotal estimated value on the board: ${pool['est_price'].sum():,} "
       f"(league has ${BUDGET * 12:,} to spend)")
 

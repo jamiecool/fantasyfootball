@@ -111,22 +111,20 @@
 
 <main>
   <section class="panel" id="p-board">
-    <div class="row" id="tiles"></div>
-    <div class="card">
-      <h2>Price curve</h2>
-      <p class="note">What each ADP slot costs, from the 2023–25 ADP→price mapping.
-         Hover for the player at that rank.</p>
-      <div id="curve"></div>
-    </div>
     <div class="card">
       <h2>The board</h2>
-      <p class="note">PAR = projected points above the last starter at the position.
-         PAR/$ is value per dollar — the column to sort on. Click any header to sort.</p>
+      <p class="note"><b>rank</b> is the positional rank, weighted <b>75% market ADP / 25%
+         projection</b> — the board's job is what the room will pay, and two independent
+         markets agree with each other far more (ρ 0.95) than either agrees with any single
+         projection model (0.65–0.72), so ADP carries it. <b>mkt</b> and <b>proj</b> show the
+         two inputs. <b>trend</b> is Underdog ADP movement since its last update — positive
+         means the market is moving toward him. Click any header to sort.</p>
       <div class="filters">
         <input type="search" id="q" placeholder="filter players…">
         <select id="posf"><option value="">all positions</option></select>
+        <select id="teamf"><option value="">all NFL teams</option></select>
       </div>
-      <div class="scroll"><table id="boardT"></table></div>
+      <div class="scroll" style="max-height:78vh"><table id="boardT"></table></div>
     </div>
   </section>
 
@@ -188,6 +186,7 @@
         <input type="search" id="lq" placeholder="filter players…">
         <select id="lteam"><option value="">all teams</option></select>
         <select id="lpos"><option value="">all positions</option></select>
+        <select id="lnfl"><option value="">all NFL teams</option></select>
       </div>
       <div class="scroll"><table id="lastT"></table></div>
     </div>
@@ -229,79 +228,43 @@ document.getElementById('themeBtn').onclick = () => {
   draw();
 };
 
-/* ---------- tiles ---------- */
-const s = D.stats;
-document.getElementById('tiles').innerHTML = [
-  [s.board_players, 'players priced'],
-  [s.picks.toLocaleString(), 'historical picks'],
-  [s.seasons, 'seasons'],
-  [s.adp_vs_reality, 'ADP vs actual finish (ρ)']
-].map(([v, k]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
-
 /* ---------- board table ---------- */
 let sortK = 'adp_rank', sortA = true;
 const posSel = document.getElementById('posf');
 [...new Set(D.board.map(r => r.position))].forEach(p =>
   posSel.insertAdjacentHTML('beforeend', `<option>${p}</option>`));
+const teamSel = document.getElementById('teamf');
+[...new Set(D.board.map(r => r.nfl_team))].filter(Boolean).sort().forEach(t =>
+  teamSel.insertAdjacentHTML('beforeend', `<option>${t}</option>`));
 function boardTable() {
   const q = document.getElementById('q').value.toLowerCase(), pf = posSel.value;
+  const tf = teamSel.value;
   let rows = D.board.filter(r => (!q || r.player_name.toLowerCase().includes(q)) &&
-                                 (!pf || r.position === pf));
+                                 (!pf || r.position === pf) &&
+                                 (!tf || r.nfl_team === tf));
   rows.sort((a, b) => (a[sortK] > b[sortK] ? 1 : -1) * (sortA ? 1 : -1));
-  const cols = [['adp_rank','#'],['player_name','player'],['position','pos'],['nfl_team','tm'],
-                ['adp','ADP'],['est_price','$'],['proj_points','proj'],['par','PAR'],['ppd','PAR/$']];
+  const cols = [['adp_rank','#'],['player_name','player'],['est_price','$'],
+                ['blendrank','rank'],['posrank','mkt'],['projrank','proj'],
+                ['move','trend'],['nfl_team','tm'],['adp','ADP']];
   document.getElementById('boardT').innerHTML =
     '<thead><tr>' + cols.map(([k,l],i) =>
-      `<th class="${i<4?'l':''}" data-k="${k}">${l}</th>`).join('') + '</tr></thead><tbody>' +
+      `<th class="${(i<2||i===3||i===7)?'l':''}" data-k="${k}">${l}</th>`).join('') + '</tr></thead><tbody>' +
     rows.map(r => `<tr>
-      <td class="l">${r.adp_rank}</td>
+      <td class="l" style="color:var(--muted)">${r.adp_rank}</td>
       <td class="l">${r.player_name}</td>
-      <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}</span></td>
-      <td class="l">${r.nfl_team}</td><td>${r.adp}</td>
-      <td><b>$${r.est_price}</b></td><td>${Math.round(r.proj_points)}</td>
-      <td>${r.par}</td><td>${r.ppd}</td></tr>`).join('') + '</tbody>';
+      <td><b>$${r.est_price}</b></td>
+      <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
+      <td style="color:var(--muted)">${r.posrank}</td>
+      <td style="color:var(--muted)">${r.projrank}</td>
+      <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
+      <td class="l">${r.nfl_team}</td><td>${r.adp}</td></tr>`).join('') + '</tbody>';
   document.querySelectorAll('#boardT th').forEach(th => th.onclick = () => {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
 document.getElementById('q').oninput = boardTable;
-posSel.onchange = boardTable;
+posSel.onchange = teamSel.onchange = boardTable;
 
 /* ---------- charts ---------- */
-function lineChart(host, pts, xk, yk, fmt) {
-  const W = 860, H = 250, m = {t: 10, r: 16, b: 30, l: 46};
-  const xs = pts.map(p => p[xk]), ys = pts.map(p => p[yk]);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs), y1 = Math.max(...ys);
-  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
-  const Y = v => H - m.b - v / y1 * (H - m.t - m.b);
-  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%'});
-  for (let i = 0; i <= 4; i++) { const v = y1 * i / 4;
-    svg.append(el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v),
-      stroke: cv('--grid'), 'stroke-width': 1}));
-    const t = el('text', {x: m.l - 8, y: Y(v) + 4, fill: cv('--muted'),
-      'font-size': 11, 'text-anchor': 'end'}); t.textContent = fmt(v); svg.append(t); }
-  svg.append(el('path', {d: pts.map((p, i) => (i ? 'L' : 'M') + X(p[xk]) + ',' + Y(p[yk])).join(' '),
-    fill: 'none', stroke: cv('--s1'), 'stroke-width': 2, 'stroke-linejoin': 'round'}));
-  [x0, Math.round((x0 + x1) / 2), x1].forEach(v => {
-    const t = el('text', {x: X(v), y: H - 9, fill: cv('--muted'), 'font-size': 11,
-      'text-anchor': 'middle'}); t.textContent = v; svg.append(t); });
-  const hit = el('rect', {x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b,
-    fill: 'transparent'});
-  const dot = el('circle', {r: 4.5, fill: cv('--s1'), stroke: cv('--surface'),
-    'stroke-width': 2, opacity: 0});
-  hit.addEventListener('mousemove', e => {
-    const bb = svg.getBoundingClientRect();
-    const vx = x0 + ((e.clientX - bb.left) / bb.width * W - m.l) / (W - m.l - m.r) * (x1 - x0);
-    const p = pts.reduce((a, c) => Math.abs(c[xk] - vx) < Math.abs(a[xk] - vx) ? c : a);
-    dot.setAttribute('cx', X(p[xk])); dot.setAttribute('cy', Y(p[yk]));
-    dot.setAttribute('opacity', 1);
-    const nm = D.board.find(r => r.adp_rank === p[xk]);
-    showTip(e, `<b>#${p[xk]}</b> ${nm ? nm.player_name : ''}<br>${fmt(p[yk])}`);
-  });
-  hit.addEventListener('mouseleave', () => { hideTip(); dot.setAttribute('opacity', 0); });
-  svg.append(hit, dot);
-  host.replaceChildren(svg);
-}
-
 function tierChart() {
   const data = D.tiervalue, W = 860, H = 250, m = {t: 12, r: 16, b: 34, l: 46};
   const y1 = Math.max(3.4, ...data.map(d => d.ratio));
@@ -460,6 +423,11 @@ function fillSeasonFilters() {
   [...new Set(seasonRows().map(r => r.franchise))].sort()
     .forEach(v => t.insertAdjacentHTML('beforeend', `<option>${v}</option>`));
   if ([...t.options].some(o => o.value === keepT)) t.value = keepT;
+  const n = document.getElementById('lnfl'), keepN = n.value;
+  n.innerHTML = '<option value="">all NFL teams</option>';
+  [...new Set(seasonRows().map(r => r.nfl_team))].filter(Boolean).sort()
+    .forEach(v => n.insertAdjacentHTML('beforeend', `<option>${v}</option>`));
+  if ([...n.options].some(o => o.value === keepN)) n.value = keepN;
   if (!p.options.length || p.options.length === 1) {
     [...new Set(seasonRows().map(r => r.position))]
       .forEach(v => p.insertAdjacentHTML('beforeend', `<option>${v}</option>`));
@@ -476,6 +444,7 @@ function fillSeasonFilters() {
   fillSeasonFilters();
   document.getElementById('lteam').onchange = lastTable;
   document.getElementById('lpos').onchange = lastTable;
+  document.getElementById('lnfl').onchange = lastTable;
   document.getElementById('lq').oninput = lastTable;
 })();
 
@@ -513,9 +482,11 @@ function lastTeamTable() {
 function lastTable() {
   const q = document.getElementById('lq').value.toLowerCase();
   const tf = document.getElementById('lteam').value, pf = document.getElementById('lpos').value;
+  const nf = document.getElementById('lnfl').value;
   let rows = seasonRows().filter(r =>
     (!q || r.player_name.toLowerCase().includes(q)) &&
-    (!tf || r.franchise === tf) && (!pf || r.position === pf));
+    (!tf || r.franchise === tf) && (!pf || r.position === pf) &&
+    (!nf || r.nfl_team === nf));
   rows.sort((a, b) => (a[lSortK] > b[lSortK] ? 1 : -1) * (lSortA ? 1 : -1));
   const cols = [['price', '$'], ['player_name', 'player'], ['position', 'pos'],
                 ['nfl_team', 'tm'], ['franchise', 'drafted by'], ['exp_label', 'exp'],
@@ -550,7 +521,6 @@ function lastTable() {
 
 function draw() {
   boardTable(); drawLast();
-  lineChart(document.getElementById('curve'), D.curve, 'adp_rank', 'est_price', v => '$' + Math.round(v));
   tierChart(); startableChart(); posShare(); scatter();
 }
 draw();
