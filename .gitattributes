@@ -1,0 +1,13 @@
+# Session notes are append-only and never need a real merge -- keep both sides
+# rather than stopping the world over two people writing on the same day.
+notes/log/*.md merge=union
+
+# Normalise line endings so a Windows and a non-Windows checkout do not show
+# every file as modified.
+* text=auto
+
+# Treat these as binary: diffing them is noise and merging them is meaningless.
+*.xlsx binary
+*.mhtml binary
+rawdata/2025rawhtml/*.html -diff
+rawdata/scoringrules/*.html -diff
