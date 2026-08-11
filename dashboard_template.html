@@ -125,6 +125,8 @@
   .rule.low{border-left-color:var(--s4)}
   .rule.rejected{border-left-color:var(--div-neg);opacity:.72}
   .rule h3{margin:0 0 5px;font-size:13.5px;font-weight:650;line-height:1.4}
+  .rnum{display:inline-block;min-width:20px;margin-right:8px;color:var(--muted);
+        font-weight:600;font-variant-numeric:tabular-nums;font-size:12px}
   .rule .why{color:var(--ink2);font-size:12.5px;margin:0 0 7px}
   .rule .meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:11px}
   .pill{border-radius:999px;padding:1px 9px;font-weight:650;font-size:10.5px;
@@ -872,8 +874,10 @@ function drawStrategy() {
     .sort(function (a, b) { return CONF_ORDER[a.conf] - CONF_ORDER[b.conf] || a.id - b.id; });
 
   document.getElementById('strList').innerHTML = rows.map(function (r) {
-    return '<div class="rule ' + r.conf + '">' +
-      '<h3>' + r.rule + '</h3>' +
+    // the number is the rule's identity -- rules cross-reference each other
+    // ("see rule 16") and get discussed by number, so it has to be visible
+    return '<div class="rule ' + r.conf + '" id="rule-' + r.id + '">' +
+      '<h3><span class="rnum">' + r.id + '</span>' + r.rule + '</h3>' +
       '<p class="why">' + r.why + '</p>' +
       '<div class="meta">' +
         '<span class="pill ' + r.conf + '">' + r.conf + '</span>' +
