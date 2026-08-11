@@ -373,6 +373,18 @@
 
   <section class="panel" id="p-anl" hidden>
     <div class="card">
+      <h2>Where the dead money is, position by position</h2>
+      <p class="note">Return per dollar of production above replacement, by price band.
+        <b>1.0 means the band paid for itself.</b> Bars are 95% bootstrap intervals; a band
+        only counts as settled when its whole interval sits clear of 1.0. Log scale, because
+        these are ratios &mdash; 2&times; above and 0.5&times; below are the same size of
+        effect, and a linear axis would let the cheap bands crush everything else.</p>
+      <div id="dzChart"></div>
+      <div class="legend" id="dzLeg"></div>
+      <div class="scroll" style="max-height:52vh;margin-top:14px"><table id="dzT"></table></div>
+    </div>
+
+    <div class="card">
       <h2>Did each price tier return its share of the value?</h2>
       <p class="note">Share of value delivered ÷ share of money spent, over 1,514 skill
          picks across nine seasons. Above 1.0 means the tier returned more than it cost.
@@ -590,17 +602,18 @@ function boardTable() {
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
   };
   const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
-                ['nfl_team','tm'],['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
+                ['nfl_team','team'],['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
   // Only the shaded column is pinned to its content width. A colour block as
   // wide as its share of the table reads as emphasis it has not earned; the
   // rest of the columns keep sharing the slack so the layout stays balanced.
-  const TIGHT = {gap: 1};
+  const SHADED_W = '104px';                 // team and vs Yahoo, matched
+  const TIGHT = {gap: SHADED_W, nfl_team: SHADED_W};
   const vcls = t => t > 0 ? 'o' + t : t < 0 ? 'om' + (-t) : 'o0';
   document.getElementById('boardT').innerHTML =
     // leading counter is positional and renumbers with the sort, same as past drafts
     '<thead><tr><th class="l" style="cursor:default">#</th>' + cols.map(([k,l],i) =>
       `<th class="${(i===1||i===2||i===3)?'l':''}" data-k="${k}"` +
-      `${TIGHT[k] ? ' style="width:1%"' : ''}>${l}</th>`).join('') +
+      `${TIGHT[k] ? ' style="width:' + TIGHT[k] + '"' : ''}>${l}</th>`).join('') +
     '</tr></thead><tbody>' +
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
@@ -625,7 +638,7 @@ function boardTable() {
   const swatch = pairs => pairs.map(([c, l]) =>
     `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('');
   document.getElementById('bdLeg').innerHTML =
-    '<span><b>tm</b> — Vegas on the offence:</span>' +
+    '<span><b>team</b> — Vegas on the offence:</span>' +
     swatch([['o3', 'strong'], ['o0', 'average'], ['om3', 'weak']]) +
     '<span style="color:var(--axis)">|</span>' +
     '<span><b>vs Yahoo</b> — rank against the room:</span>' +
@@ -1426,9 +1439,103 @@ function drawVegas() {
       <td><b>${r.implied_total}</b></td></tr>`).join('') + '</tbody>';
 }
 
+/* ---------- dead zones by position ---------- */
+function deadZones() {
+  const rows = D.deadzones || [];
+  if (!rows.length) return;
+  const BANDS = D.deadzone_bands, POSL = ['QB', 'RB', 'WR', 'TE'];
+  const W = 980, PH = 210, PW = W / 2, m = {t: 26, r: 18, b: 40, l: 54};
+  const H = PH * 2;
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%'});
+  // ratios are log-natural: 2x better and 2x worse should look equally far
+  // from 1.0, which a linear axis does not do
+  const LO = 0.2, HI = 7;
+  const Y = (v, top) => top + m.t + (Math.log(HI) - Math.log(Math.max(v, LO)))
+                        / (Math.log(HI) - Math.log(LO)) * (PH - m.t - m.b);
+
+  POSL.forEach((pos, pi) => {
+    const left = (pi % 2) * PW, top = Math.floor(pi / 2) * PH;
+    const bw = (PW - m.l - m.r) / BANDS.length;
+    const lab = el('text', {x: left + m.l, y: top + 16, fill: cv('--ink'),
+      'font-size': 15, 'font-weight': 650});
+    lab.textContent = pos;
+    svg.append(lab);
+    // gridlines
+    [0.25, 0.5, 1, 2, 4].forEach(v => {
+      const y = Y(v, top), one = v === 1;
+      svg.append(el('line', {x1: left + m.l, x2: left + PW - m.r, y1: y, y2: y,
+        stroke: cv(one ? '--axis' : '--grid'), 'stroke-width': one ? 2 : 1,
+        'stroke-dasharray': one ? '6 4' : ''}));
+      const tx = el('text', {x: left + m.l - 8, y: y + 4, fill: cv('--muted'),
+        'font-size': 12, 'text-anchor': 'end'});
+      tx.textContent = v + '\u00d7';
+      svg.append(tx);
+    });
+    BANDS.forEach((band, bi) => {
+      const r = rows.find(x => x.position === pos && x.band === band);
+      const cx = left + m.l + bi * bw + bw / 2;
+      const bt = el('text', {x: cx, y: top + PH - m.b + 20, fill: cv('--muted'),
+        'font-size': 12, 'text-anchor': 'middle'});
+      bt.textContent = band;
+      svg.append(bt);
+      if (!r) {
+        const na = el('text', {x: cx, y: Y(1, top) + 5, fill: cv('--muted'),
+          'font-size': 12, 'text-anchor': 'middle'});
+        na.textContent = 'n/a';
+        svg.append(na);
+        return;
+      }
+      const settled = r.verdict !== 'unclear';
+      const col = cv(r.verdict === 'dead' ? '--div-neg'
+                   : r.verdict === 'good' ? '--div-pos' : '--muted');
+      // interval first, then the point estimate on top
+      svg.append(el('line', {x1: cx, x2: cx, y1: Y(r.hi, top), y2: Y(r.lo, top),
+        stroke: col, 'stroke-width': settled ? 3 : 2, opacity: settled ? 0.95 : 0.5,
+        'stroke-linecap': 'round'}));
+      [r.lo, r.hi].forEach(v => svg.append(el('line',
+        {x1: cx - 5, x2: cx + 5, y1: Y(v, top), y2: Y(v, top),
+         stroke: col, 'stroke-width': settled ? 3 : 2, opacity: settled ? 0.95 : 0.5})));
+      const dot = el('circle', {cx: cx, cy: Y(r.est, top), r: settled ? 6 : 4.5,
+        fill: settled ? col : cv('--surface'), stroke: col, 'stroke-width': 2.5});
+      svg.append(dot);
+      dot.addEventListener('mousemove', e => showTip(e,
+        `<b>${pos} ${band}</b><br>${r.est.toFixed(2)}\u00d7 per dollar<br>` +
+        `95% CI ${r.lo.toFixed(2)}\u2013${r.hi.toFixed(2)}<br>` +
+        `${r.n} picks \u00b7 ${r.par_per_pick} PAR each<br>` +
+        (r.verdict === 'dead' ? '<b>dead money</b>'
+         : r.verdict === 'good' ? '<b>pays for itself</b>' : 'cannot be called')));
+      dot.addEventListener('mouseleave', hideTip);
+    });
+  });
+  document.getElementById('dzChart').replaceChildren(svg);
+
+  document.getElementById('dzLeg').innerHTML =
+    '<span><i style="background:' + cv('--div-neg') + '"></i>dead \u2014 whole interval below 1.0</span>' +
+    '<span><i style="background:' + cv('--div-pos') + '"></i>pays \u2014 whole interval above 1.0</span>' +
+    '<span><i style="background:' + cv('--muted') + ';opacity:.5"></i>interval crosses 1.0, cannot be called</span>';
+
+  document.getElementById('dzT').innerHTML =
+    '<thead><tr><th class="l" style="cursor:default">#</th><th class="l">pos</th>' +
+    '<th class="l">band</th><th>picks</th><th>per $</th><th class="l">95% CI</th>' +
+    '<th>PAR / pick</th><th title="points bought per extra dollar inside the band">' +
+    'slope</th><th class="l">verdict</th></tr></thead><tbody>' +
+    rows.map((r, i) => {
+      const cls = r.verdict === 'dead' ? 'dm2' : r.verdict === 'good' ? 'd2' : '';
+      return `<tr>
+        <td class="l" style="color:var(--muted)">${i + 1}</td>
+        <td class="l"><span class="pos" style="background:var(${POSC[r.position] || '--muted'})">${r.position}</span></td>
+        <td class="l">${r.band}</td><td>${r.n}</td>
+        <td class="${cls}" style="font-weight:650">${r.est.toFixed(2)}</td>
+        <td class="l" style="color:var(--ink2)">${r.lo.toFixed(2)}\u2013${r.hi.toFixed(2)}</td>
+        <td>${r.par_per_pick}</td>
+        <td style="color:var(--ink2)">${(r.slope == null || !isFinite(r.slope)) ? '\u2014' : Number(r.slope).toFixed(1)}</td>
+        <td class="l" style="color:var(--ink2)">${r.verdict === 'unclear' ? '\u2014' : r.verdict}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
 function draw() {
   boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL(); drawVegas();
-  tierChart(); startableChart(); posShare(); scatter();
+  tierChart(); startableChart(); posShare(); scatter(); deadZones();
 }
 draw();
 </script>

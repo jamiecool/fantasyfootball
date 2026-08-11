@@ -328,6 +328,14 @@ D["vegas_weeks"] = pd.read_sql(
        FROM vegas_team_week WHERE season = 2026 ORDER BY week, implied_total DESC""",
     con).to_dict("records")
 
+# ---- 12. dead zones by position (see analyze_dead_zones.py) ----------------
+_dz = os.path.join(OUT, "analysis", "dead_zones.csv")
+# .where on a float column hands NaN straight back, which serialises to the
+# JS literal NaN and renders as "NaN" -- cast to object first so it is null
+D["deadzones"] = (pd.read_csv(_dz).astype(object).where(lambda d: d.notna(), None)
+                  .to_dict("records") if os.path.exists(_dz) else [])
+D["deadzone_bands"] = ["$1-2", "$3-5", "$6-10", "$11-20", "$21-35", "$36+"]
+
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p
     JOIN final_ranks f ON f.season=p.season AND f.player_key=p.player_key

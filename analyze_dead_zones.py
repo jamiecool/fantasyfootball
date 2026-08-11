@@ -47,7 +47,7 @@ print("=" * 88)
 print("PER-DOLLAR RETURN BY POSITION AND BAND, with bootstrap intervals")
 print("=" * 88)
 print("  1.00 = the band paid for itself. Intervals resample within position.\n")
-dead = {}
+dead, ROWS = {}, []
 for pos in ["QB", "RB", "WR", "TE"]:
     s = p[p.position == pos]
     print(f"  {pos}   ({len(s)} picks)")
@@ -70,6 +70,14 @@ for pos in ["QB", "RB", "WR", "TE"]:
             worst, worst_band = est, b
         verdict = ("DEAD (interval clears 1.0)" if hi < 1
                    else "good (interval clears 1.0)" if lo > 1 else "")
+        slope = (np.polyfit(sub.price, sub.pts, 1)[0]
+                 if sub.price.nunique() >= 3 else float("nan"))
+        ROWS.append({"position": pos, "band": b, "n": len(sub),
+                     "est": round(float(est), 3), "lo": round(float(lo), 3),
+                     "hi": round(float(hi), 3),
+                     "par_per_pick": round(float(sub.par.mean()), 1),
+                     "slope": None if np.isnan(slope) else round(float(slope), 2),
+                     "verdict": "dead" if hi < 1 else "good" if lo > 1 else "unclear"})
         print(f"    {b:8} {len(sub):>4} {est:7.2f} {f'{lo:.2f}-{hi:.2f}':>14}  "
               f"{sub.par.mean():9.0f}  {verdict}")
     dead[pos] = (worst_band, worst)
@@ -108,3 +116,14 @@ for pos in ["QB", "RB", "WR", "TE"]:
         cells.append(f"{slope:10.1f}")
     print(f"  {pos:4}" + "".join(cells))
 print("\n  points bought per extra dollar, within band. Near zero = dead money.")
+
+# ------------------------------------------------------------------ persist
+OUT = os.path.join(ROOT, "cleandata", "analysis")
+os.makedirs(OUT, exist_ok=True)
+out = pd.DataFrame(ROWS)
+out.to_csv(os.path.join(OUT, "dead_zones.csv"), index=False)
+print()
+print(f"wrote {len(out)} rows -> cleandata/analysis/dead_zones.csv")
+print(f"  {(out.verdict == 'dead').sum()} bands confirmed dead, "
+      f"{(out.verdict == 'good').sum()} confirmed good, "
+      f"{(out.verdict == 'unclear').sum()} cannot be called")
