@@ -144,6 +144,23 @@
   .star:hover{color:var(--s4)}
   .star.on{color:var(--s4)}
   .star:focus-visible{outline:2px solid var(--s1);border-radius:3px}
+  /* Note marker. Always visible once a note exists; otherwise it only appears
+     on row hover, so an empty board is not a wall of affordances. */
+  .note-i{background:none;border:0;padding:0 0 0 6px;margin:0;cursor:pointer;
+          font-size:14px;line-height:1;color:var(--s1);vertical-align:-1px;
+          opacity:0;transition:opacity .12s}
+  .note-i.has{opacity:1}
+  tr:hover .note-i,.slot:hover .note-i{opacity:.55}
+  tr:hover .note-i.has,.slot:hover .note-i.has,.note-i:hover{opacity:1}
+  .note-i:focus-visible{outline:2px solid var(--s1);border-radius:3px;opacity:1}
+  .noteCard{max-width:560px}
+  .noteCard textarea{width:100%;min-height:150px;background:var(--plane);
+        color:var(--ink);border:1px solid var(--border);border-radius:9px;
+        padding:11px 13px;font:inherit;font-size:15px;line-height:1.55;resize:vertical}
+  .noteCard textarea:focus{outline:none;border-color:var(--s1)}
+  .noteBar{display:flex;gap:9px;align-items:center;margin-top:12px}
+  .noteBar .spacer{flex:1}
+  .btn.danger{color:var(--bad);border-color:var(--bad)}
   .toggle{margin-left:auto}
   /* --- NFL stats + player profile --- */
   .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;
@@ -263,6 +280,20 @@
     </div>
   </section>
 
+  <div class="modal" id="nModal" hidden>
+    <div class="modalCard noteCard">
+      <h2 id="nTitle">Note</h2>
+      <p class="pHead" id="nSub"></p>
+      <textarea id="nText" placeholder="What do you want to remember about him on draft night?"></textarea>
+      <div class="noteBar">
+        <button class="btn" id="nSave">Save</button>
+        <button class="btn" id="nCancel">Cancel</button>
+        <span class="spacer"></span>
+        <button class="btn danger" id="nDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="pModal" hidden>
     <div class="modalCard">
       <button class="btn mini modalX" id="pClose">close ✕</button>
@@ -360,6 +391,71 @@ try { targets = new Set(JSON.parse(localStorage.getItem(TARGET_KEY)) || []); } c
 const saveTargets = () => {
   try { localStorage.setItem(TARGET_KEY, JSON.stringify([...targets])); } catch (e) {}
 };
+/* ---------- per-player notes ----------
+   Same player_key as targets and profile links, so a note follows the player
+   across every table rather than being tied to one spelling of his name. */
+const NOTE_KEY = 'pbaffl_notes_v1';
+let notes = {};
+try { notes = JSON.parse(localStorage.getItem(NOTE_KEY)) || {}; } catch (e) { notes = {}; }
+const saveNotes = () => {
+  try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {}
+};
+const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function noteHtml(key) {
+  if (!key) return '';
+  const has = !!(notes[key] || '').trim();
+  return `<button class="note-i${has ? ' has' : ''}" data-note="${key}" ` +
+         `aria-label="${has ? 'edit note' : 'add note'}">✎</button>`;
+}
+
+function bindNotes(root) {
+  (root || document).querySelectorAll('button[data-note]').forEach(b => {
+    const k = b.dataset.note;
+    b.onclick = ev => { ev.stopPropagation(); hideTip(); openNote(k); };
+    // hovering the marker reads the note without opening anything
+    b.onmouseenter = ev => {
+      const t = (notes[k] || '').trim();
+      if (t) showTip(ev, '<div style="max-width:320px;white-space:normal;' +
+                         'line-height:1.5">' + esc(t).replace(/\n/g, '<br>') + '</div>');
+    };
+    b.onmousemove = ev => { if ((notes[k] || '').trim()) showTip(ev, tip.innerHTML); };
+    b.onmouseleave = hideTip;
+  });
+}
+
+let noteKey = null;
+function openNote(key) {
+  noteKey = key;
+  const row = D.board.find(r => r.player_key === key);
+  document.getElementById('nTitle').textContent = row ? row.player_name : 'Note';
+  document.getElementById('nSub').textContent = row
+    ? `${row.position}${row.blendrank} · ${row.nfl_team} · board price $${row.est_price}` : '';
+  const ta = document.getElementById('nText');
+  ta.value = notes[key] || '';
+  document.getElementById('nModal').hidden = false;
+  ta.focus();
+}
+
+function closeNote() { document.getElementById('nModal').hidden = true; noteKey = null; }
+
+function commitNote(text) {
+  if (!noteKey) return;
+  const t = (text || '').trim();
+  if (t) notes[noteKey] = t; else delete notes[noteKey];
+  saveNotes(); closeNote(); boardTable(); drawPlan();
+}
+
+document.getElementById('nSave').onclick = () =>
+  commitNote(document.getElementById('nText').value);
+document.getElementById('nCancel').onclick = closeNote;
+document.getElementById('nDelete').onclick = () => commitNote('');
+document.getElementById('nModal').onclick = e => { if (e.target.id === 'nModal') closeNote(); };
+document.getElementById('nText').onkeydown = e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commitNote(e.target.value);
+  if (e.key === 'Escape') closeNote();
+};
+
 function starHtml(key) {
   if (!key) return '';                       // no key (DEF, some rookies) -> no star
   const on = targets.has(key);
@@ -474,7 +570,7 @@ function boardTable() {
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td><b>$${r.est_price}</b></td>
-      <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}</td>
+      <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}${noteHtml(r.player_key)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
       <td class="l">${r.nfl_team}</td>
       <td class="${gcls(r)}" style="${r.yahoo_rank ? '' : 'color:var(--muted)'}" title="${r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish'}">${r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—'}</td>
@@ -482,6 +578,7 @@ function boardTable() {
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
   bindStars(document.getElementById('boardT'));
+  bindNotes(document.getElementById('boardT'));
   const tb = document.getElementById('tgtOnly');
   tb.classList.toggle('on', tgtOnly);
   tb.setAttribute('aria-pressed', tgtOnly);
@@ -820,7 +917,7 @@ function planBar() {
 function slotRow(lab, r, cls) {
   return '<div class="slot ' + cls + (r ? '' : ' empty') + '">' +
     '<span class="lab">' + lab + '</span>' +
-    '<span class="nm">' + (r ? starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) +
+    '<span class="nm">' + (r ? starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + noteHtml(r.player_key) +
       ' <span style="color:var(--muted)">' + r.position + r.blendrank + ' &middot; ' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
     '<span class="pr">' + (r ? '$' + r.est_price : '') + '</span>' +
     (r ? '<button class="btn mini" data-drop="' + r.player_name + '">&times;</button>' : '') +
@@ -843,6 +940,7 @@ function planRoster() {
   host.innerHTML = html;
   bindLinks(host);
   bindStars(host);
+  bindNotes(host);
   host.querySelectorAll('[data-drop]').forEach(function (b) {
     b.onclick = function () {
       cur().picks = cur().picks.filter(function (n) { return n !== b.dataset.drop; });
@@ -868,7 +966,7 @@ function planPool() {
     '<th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
     rows.map(function (r, i) {
       return '<tr><td class="l" style="color:var(--muted)">' + (i + 1) + '</td>' +
-        '<td class="l">' + starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + '</td>' +
+        '<td class="l">' + starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + noteHtml(r.player_key) + '</td>' +
         '<td><b>$' + r.est_price + '</b></td>' +
         '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
         r.position + r.blendrank + '</span></td>' +
@@ -878,6 +976,7 @@ function planPool() {
     }).join('') + '</tbody>';
   bindLinks(document.getElementById('planPool'));
   bindStars(document.getElementById('planPool'));
+  bindNotes(document.getElementById('planPool'));
   document.querySelectorAll('#planPool [data-add]').forEach(function (b) {
     b.onclick = function () {
       const n = b.dataset.add;
