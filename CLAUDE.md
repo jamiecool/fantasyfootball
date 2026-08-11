@@ -1009,7 +1009,34 @@ real to validate against.
 
 Local files `yahoo_credentials.json` / `yahoo_token.json` are gitignored — never commit.
 
-## Where we left off (end of session, 2026-08-09/10)
+## Where we left off (2026-08-10, second session)
+
+The dashboard is the working surface now: `python build_dashboard.py` then
+`python -m http.server 8000 --directory cleandata`, open
+<http://localhost:8000/dashboard.html>. Tabs: **2026 board · Past drafts · Draft plan ·
+Strategy · Analytics**.
+
+**Strategy tab** renders `strategy_rules.py` — 15 rules, colour-coded by confidence,
+filterable. That file is *content*: edit it, rebuild, done. Confidence is set by sample
+size, and anything under ~25 observations is capped at "low" no matter how clean the
+estimate looks. Rejected rules stay visible so they aren't re-adopted by accident.
+
+**Jamie's QB belief was tested and promoted to high confidence.** He proposed the QB9–15
+band; history backs it hard — $22 per top-5 QB season obtained versus $59 buying QB1–3,
+across 63 picks. It came from his intuition, not the analysis, which is the model for
+how the rest should get tested.
+
+### Next session
+
+- More beliefs from Jamie → test each the way the QB range was tested → promote, demote
+  or reject with a confidence and an `n`.
+- The agreed analysis plan, none of which is blocked by Yahoo: **fetch weekly data →
+  build the H2H season simulator (P(top 6) × P(title)) → validate it by retrodicting
+  2025 → then settle the VBD baseline and the ceiling-vs-floor question.**
+- Draft plan tab exists and works; a live in-draft tracker would be the next addition
+  once the draft is scheduled.
+
+## Earlier notes (first session, 2026-08-09/10)
 
 Data pipeline is **done and on GitHub** (private: `jamiecool/fantasyfootball`). Nine
 seasons normalised, 2026 board priced, five findings established and three nulls.

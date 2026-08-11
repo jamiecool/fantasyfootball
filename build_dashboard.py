@@ -16,6 +16,8 @@ import sqlite3
 import numpy as np
 import pandas as pd
 
+from strategy_rules import RULES
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "cleandata")
 con = sqlite3.connect(os.path.join(OUT, "fantasy.db"))
@@ -193,6 +195,9 @@ D["league_pos_share"] = {r.position: round(100 * r.s / _ps.s.sum(), 1)
 
 D["seasons_list"] = SEASONS
 D["last_season"] = SEASONS[0]
+
+# ---- 9. strategy rules (content lives in strategy_rules.py) ---------------
+D["rules"] = RULES
 
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p

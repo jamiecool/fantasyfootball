@@ -49,7 +49,7 @@
   .card{background:var(--surface);border:1px solid var(--border);border-radius:11px;
         padding:16px 18px;margin-bottom:16px}
   .card h2{font-size:14px;margin:0 0 2px;font-weight:650}
-  .card p.note{color:var(--ink2);margin:0 0 12px;font-size:12.5px;max-width:70ch}
+  .card p.note{color:var(--ink2);margin:0 0 12px;font-size:12.5px}
   .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
   .tile{background:var(--surface);border:1px solid var(--border);border-radius:11px;
         padding:13px 16px;min-width:132px;flex:1}
@@ -118,6 +118,22 @@
        margin:0 0 6px -6px;width:100%;max-width:320px}
   .nameEdit:hover{border-color:var(--border)}
   .nameEdit:focus{outline:none;border-color:var(--s1);background:var(--plane)}
+  .rule{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+        padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--muted)}
+  .rule.high{border-left-color:var(--div-pos)}
+  .rule.medium{border-left-color:var(--s1)}
+  .rule.low{border-left-color:var(--s4)}
+  .rule.rejected{border-left-color:var(--div-neg);opacity:.72}
+  .rule h3{margin:0 0 5px;font-size:13.5px;font-weight:650;line-height:1.4}
+  .rule .why{color:var(--ink2);font-size:12.5px;margin:0 0 7px}
+  .rule .meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-size:11px}
+  .pill{border-radius:999px;padding:1px 9px;font-weight:650;font-size:10.5px;
+        text-transform:uppercase;letter-spacing:.03em;color:#fff}
+  .pill.high{background:var(--div-pos)} .pill.medium{background:var(--s1)}
+  .pill.low{background:var(--s4)} .pill.rejected{background:var(--div-neg)}
+  .tagn{color:var(--muted)}
+  .area{color:var(--ink2);font-weight:600}
+  .btn.on{border-color:var(--s1);color:var(--ink);font-weight:650}
   .toggle{margin-left:auto}
 </style>
 </head>
@@ -132,6 +148,7 @@
   <button class="tab" role="tab" aria-selected="true"  data-p="board">2026 board</button>
   <button class="tab" role="tab" aria-selected="false" data-p="last" id="lastTab">Past drafts</button>
   <button class="tab" role="tab" aria-selected="false" data-p="plan">Draft plan</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="str">Strategy</button>
   <button class="tab" role="tab" aria-selected="false" data-p="anl">Analytics</button>
 </div>
 
@@ -195,6 +212,11 @@
       <h2>Compare</h2>
       <div class="scroll" style="max-height:none"><table id="planCmp"></table></div>
     </div>
+  </section>
+
+  <section class="panel" id="p-str" hidden>
+    <div class="filters" id="strFilter"></div>
+    <div id="strList"></div>
   </section>
 
   <section class="panel" id="p-anl" hidden>
@@ -743,8 +765,45 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
   };
 })();
 
+
+/* ---------- strategy rules ---------- */
+const CONF_ORDER = { high: 0, medium: 1, low: 2, rejected: 3 };
+let strFilter = '';
+
+function drawStrategy() {
+  const counts = {};
+  D.rules.forEach(function (r) { counts[r.conf] = (counts[r.conf] || 0) + 1; });
+  const tabs = [['', 'all', D.rules.length]].concat(
+    ['high', 'medium', 'low', 'rejected']
+      .filter(function (k) { return counts[k]; })
+      .map(function (k) { return [k, k, counts[k]]; }));
+  document.getElementById('strFilter').innerHTML = tabs.map(function (t) {
+    return '<button class="btn' + (strFilter === t[0] ? ' on' : '') +
+      '" data-conf="' + t[0] + '">' + t[1] + ' <span class="tagn">' + t[2] + '</span></button>';
+  }).join('');
+  document.querySelectorAll('#strFilter [data-conf]').forEach(function (b) {
+    b.onclick = function () { strFilter = b.dataset.conf; drawStrategy(); };
+  });
+
+  const rows = D.rules
+    .filter(function (r) { return !strFilter || r.conf === strFilter; })
+    .slice()
+    .sort(function (a, b) { return CONF_ORDER[a.conf] - CONF_ORDER[b.conf] || a.id - b.id; });
+
+  document.getElementById('strList').innerHTML = rows.map(function (r) {
+    return '<div class="rule ' + r.conf + '">' +
+      '<h3>' + r.rule + '</h3>' +
+      '<p class="why">' + r.why + '</p>' +
+      '<div class="meta">' +
+        '<span class="pill ' + r.conf + '">' + r.conf + '</span>' +
+        '<span class="area">' + r.area + '</span>' +
+        '<span class="tagn">' + r.n + '</span>' +
+      '</div></div>';
+  }).join('') || '<p class="note">nothing at this confidence level.</p>';
+}
+
 function draw() {
-  boardTable(); drawLast(); drawPlan();
+  boardTable(); drawLast(); drawPlan(); drawStrategy();
   tierChart(); startableChart(); posShare(); scatter();
 }
 draw();
