@@ -593,8 +593,10 @@ function scatter() {
   document.getElementById('scatter').replaceChildren(svg);
   const top = [...rows].sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 30);
   document.getElementById('mktT').innerHTML =
-    '<thead><tr><th class="l">player</th><th class="l">pos</th><th>FFC</th><th>Underdog</th><th>gap</th></tr></thead><tbody>' +
-    top.map(r => `<tr><td class="l">${pLink(r.player_name, r.player_key, 0)}</td>
+    '<thead><tr><th class="l" style="cursor:default">#</th>' +
+    '<th class="l">player</th><th class="l">pos</th><th>FFC</th><th>Underdog</th><th>gap</th></tr></thead><tbody>' +
+    top.map((r, i) => `<tr><td class="l" style="color:var(--muted)">${i + 1}</td>
+      <td class="l">${pLink(r.player_name, r.player_key, 0)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}</span></td>
       <td>${r.ffc}</td><td>${r.underdog}</td>
       <td class="${r.gap > 0 ? 'dn' : 'up'}">${r.gap > 0 ? '+' : ''}${r.gap}</td></tr>`).join('') + '</tbody>';
@@ -658,9 +660,11 @@ function lastTiles() {
 function lastTeamTable() {
   const rows = [...(D.draft_teams[lSeason] || [])];
   document.getElementById('lastTeamT').innerHTML =
-    `<thead><tr><th class="l">team</th><th>rank</th><th>W-L</th><th>points for</th>
+    `<thead><tr><th class="l" style="cursor:default">#</th>
+       <th class="l">team</th><th>rank</th><th>W-L</th><th>points for</th>
        <th>spend</th><th>top bid</th><th>draft pts</th><th>startable</th></tr></thead><tbody>` +
-    rows.map(r => `<tr>
+    rows.map((r, i) => `<tr>
+      <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td class="l">${r.franchise}</td>
       <td>${r.rank || '—'}</td>
       <td>${r.wins !== '' ? r.wins + '-' + r.losses : '—'}</td>
@@ -808,9 +812,11 @@ function planPool() {
            (!pf || r.position === pf) && (!hide || !taken[r.player_name]);
   }).slice(0, 300);
   document.getElementById('planPool').innerHTML =
-    '<thead><tr><th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
-    rows.map(function (r) {
-      return '<tr><td class="l">' + pLink(r.player_name, r.player_key, 0) + '</td>' +
+    '<thead><tr><th class="l" style="cursor:default">#</th>' +
+    '<th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
+    rows.map(function (r, i) {
+      return '<tr><td class="l" style="color:var(--muted)">' + (i + 1) + '</td>' +
+        '<td class="l">' + pLink(r.player_name, r.player_key, 0) + '</td>' +
         '<td><b>$' + r.est_price + '</b></td>' +
         '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
         r.position + r.blendrank + '</span></td>' +
@@ -1062,27 +1068,29 @@ function drawNFL() {
     const x = f(a), y = f(b);
     // in the mixed view rank restarts per position, so group by position first
     if (nSort === 'rank' && !pos && a.position !== b.position)
-      return a.position.localeCompare(b.position);
+      return a.position.localeCompare(b.position);   // group RBs with RBs
     return (typeof x === 'string' ? x.localeCompare(y) : x - y) * (nAsc ? 1 : -1);
   });
 
   const head = '<thead><tr>' +
-    `<th data-k="rank" title="rank within position over the selected weeks">#</th>` +
-    '<th data-k="name" class="l">Player</th><th data-k="position" class="l">Pos</th>' +
+    // positional counter: renumbers with whatever sort and filter are active,
+    // so it is never sortable in its own right
+    '<th class="l" style="cursor:default">#</th>' +
+    '<th data-k="name" class="l">Player</th>' +
+    '<th data-k="rank" class="l" title="rank within position over the selected weeks">Pos</th>' +
     '<th data-k="team" class="l">Tm</th><th data-k="g">G</th>' +
     cols.map(c => `<th data-k="${c}">${NLAB[c] || c}</th>`).join('') +
     '<th data-k="pts">Pts</th><th data-k="ppg">PPG</th>' +
     '<th data-k="price" title="what PBAFFL paid for him that year">$</th>' +
     '</tr></thead>';
 
-  $n('nT').innerHTML = head + '<tbody>' + rows.slice(0, 1500).map(r =>
+  $n('nT').innerHTML = head + '<tbody>' + rows.slice(0, 1500).map((r, i) =>
     '<tr>' +
-    // rank is WITHIN position, so in the mixed view show it as RB1 / QB1 --
-    // a bare column of 1,1,2,3,2 reads like a bug
-    `<td class="fin">${pos ? r.rank : r.position + r.rank}</td>` +
+    `<td class="l" style="color:var(--muted)">${i + 1}</td>` +
     `<td class="l">${pLink(r.name, r.key, season)}</td>` +
+    // rank is WITHIN position and belongs on the badge, same as the board
     `<td class="l"><span class="pos" style="background:var(${POSC[r.position] || '--muted'})">` +
-      `${r.position}</span></td>` +
+      `${r.position}${r.rank}</span></td>` +
     `<td class="l">${r.team}</td><td>${r.a.g}</td>` +
     cols.map(c => `<td>${get(r, c)}</td>`).join('') +
     `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td><td>${r.a.ppg.toFixed(1)}</td>` +
