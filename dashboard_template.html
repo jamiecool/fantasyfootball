@@ -593,13 +593,22 @@ function boardTable() {
   // real argument, 3 ranks apart at WR95 is rounding. And suppress the shade past
   // roughly twice the startable depth, where neither source carries signal --
   // otherwise the $1 tail lights up green on pure noise and reads as value.
-  // Shade PROPORTIONALLY: 20 overall ranks apart at the top of the board is a
-  // real disagreement, 20 apart at pick 200 is noise. Unshaded where Yahoo has
-  // no ADP at all (they only publish ~222 players).
+  // Shade on the ABSOLUTE gap in overall ranks.
+  //
+  // This was proportional to board rank, which is right when the gap is a
+  // POSITION rank -- three apart at WR5 is an argument, three apart at WR95 is
+  // rounding. Against Yahoo's OVERALL rank it is wrong, and visibly so: Chuba
+  // Hubbard at -13 (rel 0.150) shaded while Jonathon Brooks at +14 (rel 0.149)
+  // did not, a knife-edge on the denominator rather than anything about the
+  // players. Fourteen places apart is fourteen actual players either way.
+  //
+  // The depth problem the proportional rule was solving does not exist here:
+  // this column is already blank past the ~222 players Yahoo publishes, so
+  // everyone shaded is genuinely draftable. Steps come off the distribution --
+  // median |gap| is 10, p75 is 28, p90 is 56.
   const gcls = r => {
     if (!r.yahoo_rank) return 'd0';
-    const rel = r.gap / Math.max(r.adp_rank, 12);
-    const a = Math.abs(rel), step = a >= 0.60 ? 3 : a >= 0.30 ? 2 : a >= 0.15 ? 1 : 0;
+    const a = Math.abs(r.gap), step = a >= 50 ? 3 : a >= 25 ? 2 : a >= 10 ? 1 : 0;
     const d = r.gap >= 0 ? step : -step;
     return d === 3 ? 'd3' : d === 2 ? 'd2' : d === 1 ? 'd1'
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
