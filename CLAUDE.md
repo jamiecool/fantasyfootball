@@ -1009,6 +1009,47 @@ real to validate against.
 
 Local files `yahoo_credentials.json` / `yahoo_token.json` are gitignored — never commit.
 
+## Where we left off (2026-08-11, third session)
+
+Added **week-by-week stats** — the piece the whole simulation plan was waiting on.
+
+- `fetch_nflverse_weekly.py` → `rawdata/nflverse/stats_player_week_YYYY.csv`, 2017-2025.
+  These are **gitignored** (~70MB); the season files stay tracked.
+- `player_weeks` table: **55,861 game lines**, scored through `league_points()` — the
+  same function `final_ranks` uses, so a game log cannot drift from a season total.
+  The build asserts this: **0 of 5,700 player-seasons mismatch.**
+- Verified against known 2024 stat lines — Chase 127/1708/17, Barkley's 2005 rushing
+  yards, Allen's 3731/28/6 — all exact.
+- New **NFL stats** tab: any week range, position-aware columns, sortable, plus what
+  PBAFFL paid for that player that year. Click a name for a profile: tiles, a weekly
+  bar chart, the game log, and every season on record with price and buyer.
+
+**Trap avoided, same family as the Michael Thomas bug.** 2017 had an RB Chris Thompson
+(WAS) and a WR Chris Thompson (HOU). Deduping name collisions *per week* spliced the two
+into one game log that outscored either man. Name collisions have to be resolved **once
+per season** — rank whole seasons, keep that `player_id`'s weeks.
+
+**Boom/bust thresholds are derived, not assumed** — each position's own p85/p25 among
+starter-quality weeks, so a TE isn't judged on a QB's scale:
+
+| | QB | RB | WR | TE | K |
+|---|---|---|---|---|---|
+| boom ≥ | 28.2 | 23.1 | 20.1 | 16.4 | 14.0 |
+| bust ≤ | 14.2 | 7.9 | 6.4 | 4.7 | 6.0 |
+
+**Known gap:** nflverse covers QB/RB/WR/TE/K only — **no team defences**. Stated in the
+tab so it doesn't read as a bug.
+
+### Next session
+
+- The H2H season simulator is now unblocked: weekly data exists. Build it →
+  **P(top 6) × P(win weeks 15-17)** → validate by retrodicting 2025 → then settle the
+  VBD baseline and the ceiling-vs-floor question.
+- Week-level variance is now measurable, which is the real test of rule 11 (pay the
+  certainty premium less readily). A threshold objective should reward ceiling — that
+  claim is still theory and can now be checked.
+- More beliefs from Jamie → test → promote/demote/reject with a confidence and an `n`.
+
 ## Where we left off (2026-08-10, second session)
 
 The dashboard is the working surface now: `python build_dashboard.py` then

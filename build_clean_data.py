@@ -413,6 +413,23 @@ PAT_VALUE = SCORING.get("point after attempt made", 1)
 NFLV = os.path.join(ROOT, "rawdata", "nflverse")
 
 
+def league_points(d):
+    """League fantasy points for a stat frame -- season totals or single games.
+
+    One function so the game log can never drift from the season totals: both
+    the week table and final_ranks score through this.
+    """
+    num = lambda c: pd.to_numeric(d.get(c), errors="coerce").fillna(0)
+    # nflverse fantasy_points scores receptions at 0, so adding the league's
+    # per-reception value yields this league's scoring exactly
+    pts = num("fantasy_points") + num("receptions") * PPR_RATE
+    # kickers are absent from fantasy_points; score them from the rulebook
+    kick = num("pat_made") * PAT_VALUE
+    for col, rule, fallback in FG_BANDS:
+        kick = kick + num(col) * SCORING.get(rule, fallback)
+    return pts.where(d["position"] != "K", kick).round(2)
+
+
 def season_results(year, drafted_keys=frozenset()):
     path = os.path.join(NFLV, f"stats_player_reg_{year}.csv")
     if not os.path.exists(path):
@@ -425,15 +442,7 @@ def season_results(year, drafted_keys=frozenset()):
     d = d[d["position"].isin(["QB", "RB", "WR", "TE", "K"])
           | d["_key"].isin(drafted_keys)].copy()
     num = lambda c: pd.to_numeric(d.get(c), errors="coerce").fillna(0)
-
-    # offence: nflverse fantasy_points scores receptions at 0, so add the
-    # league's per-reception value to get this league's scoring exactly
-    pts = num("fantasy_points") + num("receptions") * PPR_RATE
-    # kickers are absent from fantasy_points; score them from the rulebook
-    kick = num("pat_made") * PAT_VALUE
-    for col, rule, fallback in FG_BANDS:
-        kick = kick + num(col) * SCORING.get(rule, fallback)
-    d["points"] = pts.where(d["position"] != "K", kick).round(2)
+    d["points"] = league_points(d)
 
     out = pd.DataFrame({
         "season": year,
@@ -474,6 +483,94 @@ if len(final_ranks):
                                "games", "points", "points_per_game", "points_std",
                                "points_ppr", "receptions"]]
     tables["final_ranks"] = final_ranks.reset_index(drop=True)
+
+# --- week-by-week stat lines, 2017-2025 (see fetch_nflverse_weekly.py) ------
+# One row per player per game, scored through league_points() -- the same
+# function final_ranks uses, so a game log always sums to the season total.
+#
+# Season totals hide two things a head-to-head league pays for. First, WHEN the
+# points came: weeks 15-17 are this league's playoffs, and a player's record
+# there is a separate question from his season. Second, HOW they came: two
+# players with the same total are not equally valuable if one delivers it evenly
+# and the other in three explosions -- you start a player once a week, and a
+# 40-point week banks no more than the win it buys.
+WEEK_STATS = [
+    ("completions", "cmp"), ("attempts", "att"), ("passing_yards", "pass_yd"),
+    ("passing_tds", "pass_td"), ("passing_interceptions", "int"),
+    ("carries", "car"), ("rushing_yards", "rush_yd"), ("rushing_tds", "rush_td"),
+    ("targets", "tgt"), ("receptions", "rec"), ("receiving_yards", "rec_yd"),
+    ("receiving_tds", "rec_td"), ("special_teams_tds", "st_td"),
+    ("fg_made", "fg"), ("fg_att", "fg_att"), ("fg_long", "fg_long"),
+    ("pat_made", "pat"),
+]
+
+
+def week_results(year, drafted_keys=frozenset()):
+    path = os.path.join(NFLV, f"stats_player_week_{year}.csv")
+    if not os.path.exists(path):
+        return None
+    d = pd.read_csv(path, low_memory=False)
+    # weekly files carry POST rows too (weeks 19-22); fantasy seasons end at 18
+    if "season_type" in d.columns:
+        d = d[d["season_type"] == "REG"].copy()
+    d["_key"] = d["player_display_name"].map(player_key)
+    d = d[d["position"].isin(["QB", "RB", "WR", "TE", "K"])
+          | d["_key"].isin(drafted_keys)].copy()
+    num = lambda c: pd.to_numeric(d.get(c), errors="coerce").fillna(0)
+
+    out = pd.DataFrame({
+        "season": year,
+        "week": num("week").astype(int),
+        "player_name": d["player_display_name"].map(clean_str),
+        "player_key": d["_key"],
+        "position": d["position"],
+        "nfl_team": d.get("team", d.get("recent_team", "")).astype(str).str.upper(),
+        "opponent": d.get("opponent_team", "").astype(str).str.upper(),
+        "points": league_points(d),
+    })
+    for src, dest in WEEK_STATS:
+        out[dest] = num(src).astype(int)
+    # nflverse splits fumbles lost by how they were lost; fantasy_points already
+    # counts all three, so this column is for display, not for scoring
+    out["fum_lost"] = (num("sack_fumbles_lost") + num("rushing_fumbles_lost")
+                       + num("receiving_fumbles_lost")).astype(int)
+    out["two_pt"] = (num("passing_2pt_conversions") + num("rushing_2pt_conversions")
+                     + num("receiving_2pt_conversions")).astype(int)
+    # Same name-collision problem as final_ranks (WR and DB Michael Thomas),
+    # but it has to be resolved ONCE PER SEASON, not per week. 2017 had both an
+    # RB Chris Thompson (WAS) and a WR Chris Thompson (HOU); picking the higher
+    # scorer week by week spliced the two into one game log that outscored
+    # either man. Rank whole seasons, keep that player_id's weeks, and the log
+    # follows one person -- and sums to his final_ranks total by construction.
+    out["player_id"] = d["player_id"].astype(str).values
+    tot = out.groupby(["player_key", "player_id"])["points"].sum().reset_index()
+    keep = tot.sort_values("points", ascending=False) \
+              .drop_duplicates(subset=["player_key"], keep="first")
+    out = out.merge(keep[["player_key", "player_id"]], on=["player_key", "player_id"])
+    return out.sort_values(["week", "points"], ascending=[True, False])
+
+
+wk = [week_results(y, drafted_by_season.get(y, frozenset())) for y in range(2017, 2026)]
+player_weeks = pd.concat([w for w in wk if w is not None], ignore_index=True) \
+    if any(w is not None for w in wk) else pd.DataFrame()
+if len(player_weeks):
+    # A game log that does not sum to the season total is a broken game log.
+    # Check it rather than assume it: both sides run league_points(), but they
+    # run it over different files, and the dedupe rules differ.
+    _chk = player_weeks.groupby(["season", "player_key"])["points"].sum().round(1)
+    _ref = final_ranks.set_index(["season", "player_key"])["points"].round(1)
+    _both = _chk.to_frame("weekly").join(_ref.rename("season_total"), how="inner")
+    _bad = _both[(_both["weekly"] - _both["season_total"]).abs() > 0.5]
+    _pct = 100 * len(_bad) / max(len(_both), 1)
+    print(f"\nplayer_weeks: {len(player_weeks):,} game lines, "
+          f"{player_weeks['season'].nunique()} seasons; "
+          f"weekly sum vs season total mismatched for {len(_bad)}/{len(_both)} "
+          f"player-seasons ({_pct:.2f}%)")
+    if _pct > 2:
+        print("  WARNING: game logs do not reconcile to season totals")
+        print(_bad.head(10).to_string())
+    tables["player_weeks"] = player_weeks.reset_index(drop=True)
+
 try:
     adp = pd.read_excel(os.path.join(SRC, "2021 Draft Results.xlsx"), sheet_name="Sheet1 (2)")
     adp = adp.iloc[:, 5:10]

@@ -9,6 +9,12 @@ cleandata/dashboard.html
 #   cleandata/README.md          schema documentation
 #   cleandata/franchise_map.csv  hand-editable input
 
+# Week-by-week nflverse stats: ~70MB of CSV that fetch_nflverse_weekly.py
+# reproduces from a versioned GitHub release. The season files ARE tracked --
+# they are 10x smaller and underpin final_ranks. Note the tradeoff: if nflverse
+# revises a release, a future re-fetch may not reproduce today's numbers exactly.
+rawdata/nflverse/stats_player_week_*.csv
+
 # Excel lock files (created while a workbook is open)
 ~$*.xls*
 

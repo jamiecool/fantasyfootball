@@ -199,6 +199,65 @@ D["last_season"] = SEASONS[0]
 # ---- 9. strategy rules (content lives in strategy_rules.py) ---------------
 D["rules"] = RULES
 
+# ---- 10. NFL stats: every game line, scored under THIS league --------------
+# Published stat sites show points under their own default scoring, which is not
+# this league's -- interceptions here are -2, not -1, and receptions are 0.5.
+# These come from build_clean_data.py's league_points(), so the number in the
+# game log is the number the player actually banked for whoever started him.
+#
+# Nested player-season -> games rather than a flat row list: the flat form
+# repeats a player index on all 55k rows for no gain. Points are rounded to 1dp
+# and stats are ints, which is what keeps this near 2.5MB instead of 8.
+WK_COLS = ["cmp", "att", "pass_yd", "pass_td", "int", "car", "rush_yd", "rush_td",
+           "tgt", "rec", "rec_yd", "rec_td", "st_td", "fum_lost", "two_pt",
+           "fg", "fg_att", "fg_long", "pat"]
+pw = pd.read_sql("SELECT * FROM player_weeks", con)
+_price = pd.read_sql("""SELECT season, player_key, price, franchise
+                        FROM draft_picks""", con)
+_price = {(r.season, r.player_key): (int(r.price), r.franchise)
+          for r in _price.itertuples()}
+_rank = pd.read_sql("""SELECT season, player_key, pos_rank, overall_rank
+                       FROM final_ranks""", con)
+_rank = {(r.season, r.player_key): (int(r.pos_rank), int(r.overall_rank))
+         for r in _rank.itertuples()}
+
+TEAMS = sorted(set(pw["opponent"].dropna().astype(str)) | set(pw["nfl_team"].dropna().astype(str)))
+TIDX = {t: i for i, t in enumerate(TEAMS)}
+ps_rows = []
+for (season, key), g in pw.groupby(["season", "player_key"], sort=False):
+    g = g.sort_values("week")
+    first = g.iloc[0]
+    price, franchise = _price.get((season, key), (None, ""))
+    pos_rank, ovr = _rank.get((season, key), (None, None))
+    games = [[int(r.week), TIDX.get(r.opponent, -1), round(float(r.points), 1)]
+             + [int(getattr(r, c)) for c in WK_COLS] for r in g.itertuples()]
+    ps_rows.append([first.player_name, first.position, first.nfl_team, int(season),
+                    price, franchise, pos_rank, ovr, games])
+# heaviest scorers first so the default view needs no sort pass
+ps_rows.sort(key=lambda r: -sum(x[2] for x in r[8]))
+
+# Boom / bust thresholds, derived rather than assumed. 20 points is a big week
+# for a tight end and a mediocre one for a quarterback, so a single cutoff would
+# paint QB logs green and TE logs red for nothing. Measure the weekly
+# distribution of STARTER-QUALITY players at each position -- boom is the top
+# 15% of their weeks, bust the bottom 25% -- and every position is judged
+# against the players you would actually have started there.
+STARTABLE_N = {"QB": 12, "RB": 24, "WR": 36, "TE": 12, "K": 12}
+_startable = {(s, k) for (s, k), (pr, _o) in _rank.items()}
+_pr = {(s, k): pr for (s, k), (pr, _o) in _rank.items()}
+pw["_pr"] = [_pr.get((r.season, r.player_key), 999) for r in pw.itertuples()]
+_st = pw[pw["_pr"] <= pw["position"].map(STARTABLE_N).fillna(0)]
+THRESH = {p: [round(float(g["points"].quantile(0.85)), 1),
+              round(float(g["points"].quantile(0.25)), 1)]
+          for p, g in _st.groupby("position") if len(g) >= 200}
+print("\nboom/bust thresholds from starter-quality weeks (p85 / p25):")
+for p, (b, u) in sorted(THRESH.items()):
+    n = int((_st["position"] == p).sum())
+    print(f"  {p:3} boom >= {b:5.1f}   bust <= {u:5.1f}   ({n:,} weeks)")
+
+D["wk"] = {"cols": WK_COLS, "teams": TEAMS, "ps": ps_rows, "thresh": THRESH,
+           "seasons": sorted({int(s) for s in pw["season"].unique()}, reverse=True)}
+
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p
     JOIN final_ranks f ON f.season=p.season AND f.player_key=p.player_key
@@ -213,7 +272,9 @@ D["stats"] = {
 }
 
 html = open(os.path.join(ROOT, "dashboard_template.html"), encoding="utf-8").read()
-html = html.replace("__DATA__", json.dumps(D, default=str))
+# compact separators -- 55k game lines make the default ", " / ": " padding
+# worth ~2MB of pure whitespace
+html = html.replace("__DATA__", json.dumps(D, default=str, separators=(",", ":")))
 path = os.path.join(OUT, "dashboard.html")
 with open(path, "w", encoding="utf-8") as f:
     f.write(html)

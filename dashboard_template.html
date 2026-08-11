@@ -135,6 +135,32 @@
   .area{color:var(--ink2);font-weight:600}
   .btn.on{border-color:var(--s1);color:var(--ink);font-weight:650}
   .toggle{margin-left:auto}
+  /* --- NFL stats + player profile --- */
+  .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;
+       text-align:left;border-bottom:1px dotted var(--axis)}
+  .lnk:hover{color:var(--s1);border-bottom-color:var(--s1)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;
+         display:flex;align-items:flex-start;justify-content:center;padding:34px 16px;
+         overflow:auto}
+  .modal[hidden]{display:none}
+  .modalCard{background:var(--surface);border:1px solid var(--border);border-radius:13px;
+             padding:18px 20px;max-width:1000px;width:100%;position:relative;
+             box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  .modalX{position:absolute;top:13px;right:15px}
+  .modalCard h2{font-size:17px;margin:0 0 3px;font-weight:650}
+  .modalCard h3{font-size:12.5px;margin:18px 0 7px;font-weight:650;color:var(--ink2)}
+  .pHead{color:var(--ink2);font-size:12.5px;margin:0 0 4px}
+  /* Weekly points bars. A season total hides the shape that a head-to-head
+     league actually pays for, so the log gets a picture as well as a table. */
+  .glog{display:flex;align-items:flex-end;gap:2px;height:74px;margin:6px 0 2px}
+  .glog i{flex:1;min-width:5px;background:var(--s1);border-radius:3px 3px 0 0;
+          display:block;position:relative}
+  .glog i.boom{background:var(--div-pos)}
+  .glog i.bust{background:var(--div-neg)}
+  .glog i.bye{background:var(--grid);border-radius:0}
+  .glogx{display:flex;gap:2px;font-size:9px;color:var(--muted);
+         font-variant-numeric:tabular-nums}
+  .glogx span{flex:1;min-width:5px;text-align:center}
 </style>
 </head>
 <body>
@@ -147,6 +173,7 @@
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" aria-selected="true"  data-p="board">2026 board</button>
   <button class="tab" role="tab" aria-selected="false" data-p="last" id="lastTab">Past drafts</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="nfl">NFL stats</button>
   <button class="tab" role="tab" aria-selected="false" data-p="plan">Draft plan</button>
   <button class="tab" role="tab" aria-selected="false" data-p="str">Strategy</button>
   <button class="tab" role="tab" aria-selected="false" data-p="anl">Analytics</button>
@@ -184,6 +211,43 @@
       <div class="scroll" style="max-height:none"><table id="lastTeamT"></table></div>
     </div>
   </section>
+  <section class="panel" id="p-nfl" hidden>
+    <div class="card">
+      <h2>NFL stats — scored under PBAFFL rules</h2>
+      <p class="note">Half-PPR with this league's <b>&minus;2 interceptions</b>, not Yahoo's
+        &minus;1 default, so these totals differ from any published stat page. Set a week
+        range to ask a narrower question — <b>weeks 15&ndash;17</b> is our playoffs.
+        Click a player for his game log. Built from nflverse play-by-play, which covers
+        QB/RB/WR/TE/K only — <b>team defences are not in this dataset</b>.</p>
+      <div class="filters">
+        <select id="nSeason" style="font-weight:650"></select>
+        <select id="nPos">
+          <option value="">all positions</option>
+          <option>QB</option><option>RB</option><option>WR</option>
+          <option>TE</option><option>K</option>
+        </select>
+        <span class="meter">weeks</span>
+        <select id="nW1"></select>
+        <span class="meter">&ndash;</span>
+        <select id="nW2"></select>
+        <button class="btn mini" id="nFull">full season</button>
+        <button class="btn mini" id="nPlayoff">wks 15&ndash;17</button>
+        <input type="search" id="nQ" placeholder="filter players…">
+        <label class="chk"><input type="checkbox" id="nPG"> per game</label>
+        <span class="spacer" style="flex:1"></span>
+        <span class="meter" id="nCount"></span>
+      </div>
+      <div class="scroll" style="max-height:74vh"><table id="nT"></table></div>
+    </div>
+  </section>
+
+  <div class="modal" id="pModal" hidden>
+    <div class="modalCard">
+      <button class="btn mini modalX" id="pClose">close ✕</button>
+      <div id="pBody"></div>
+    </div>
+  </div>
+
     <section class="panel" id="p-plan" hidden>
     <div class="planbar">
       <select id="planSel"></select>
@@ -802,8 +866,222 @@ function drawStrategy() {
   }).join('') || '<p class="note">nothing at this confidence level.</p>';
 }
 
+/* ---------- NFL stats: any week range, this league's scoring ---------- */
+const WK = D.wk, SI = {};
+WK.cols.forEach(function (c, i) { SI[c] = i + 3; });   // game row: [wk, opp, pts, ...stats]
+const WK_MAX = 18;
+
+// Column sets by position. Showing a kicker's target share or a receiver's
+// completions is noise, and footballguys gets this right: the position picks
+// the columns.
+const NCOLS = {
+  QB: ['cmp', 'att', 'pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
+  RB: ['car', 'rush_yd', 'rush_td', 'tgt', 'rec', 'rec_yd', 'rec_td', 'fum_lost'],
+  WR: ['tgt', 'rec', 'rec_yd', 'rec_td', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
+  TE: ['tgt', 'rec', 'rec_yd', 'rec_td', 'fum_lost'],
+  K:  ['fg', 'fg_att', 'fg_long', 'pat'],
+  '': ['pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'rec', 'rec_yd', 'rec_td'],
+};
+const NLAB = {cmp:'Cmp', att:'Att', pass_yd:'PaYd', pass_td:'PaTD', int:'INT',
+  car:'Car', rush_yd:'RuYd', rush_td:'RuTD', tgt:'Tgt', rec:'Rec', rec_yd:'ReYd',
+  rec_td:'ReTD', fum_lost:'FL', fg:'FG', fg_att:'FGA', fg_long:'Lng', pat:'PAT',
+  st_td:'STTD', two_pt:'2PT'};
+// fg_long is a season best, not a running total -- summing it invents 200-yard kicks
+const NMAX = {fg_long: 1};
+
+/** Totals for one player-season over [w1, w2]. */
+function nAgg(p, w1, w2) {
+  const o = {g: 0, pts: 0};
+  for (const k in SI) o[k] = 0;
+  for (const gm of p[8]) {
+    if (gm[0] < w1 || gm[0] > w2) continue;
+    o.g++; o.pts += gm[2];
+    for (const k in SI) o[k] = NMAX[k] ? Math.max(o[k], gm[SI[k]]) : o[k] + gm[SI[k]];
+  }
+  o.pts = Math.round(o.pts * 10) / 10;
+  o.ppg = o.g ? Math.round(o.pts / o.g * 10) / 10 : 0;
+  return o;
+}
+
+let nSort = 'pts', nAsc = false;
+const $n = id => document.getElementById(id);
+
+(function nInit() {
+  WK.seasons.forEach(s => $n('nSeason').insertAdjacentHTML('beforeend',
+    `<option value="${s}">${s} season</option>`));
+  for (let w = 1; w <= WK_MAX; w++) {
+    $n('nW1').insertAdjacentHTML('beforeend', `<option value="${w}">wk ${w}</option>`);
+    $n('nW2').insertAdjacentHTML('beforeend', `<option value="${w}">wk ${w}</option>`);
+  }
+  $n('nW1').value = 1; $n('nW2').value = WK_MAX;
+  ['nSeason', 'nPos', 'nW1', 'nW2', 'nQ', 'nPG'].forEach(id =>
+    $n(id).addEventListener('input', () => {
+      // keep the range coherent rather than silently returning nothing
+      if (+$n('nW1').value > +$n('nW2').value) {
+        if (id === 'nW1') $n('nW2').value = $n('nW1').value;
+        else $n('nW1').value = $n('nW2').value;
+      }
+      drawNFL();
+    }));
+  $n('nFull').onclick = () => { $n('nW1').value = 1; $n('nW2').value = WK_MAX; drawNFL(); };
+  $n('nPlayoff').onclick = () => { $n('nW1').value = 15; $n('nW2').value = 17; drawNFL(); };
+  $n('pClose').onclick = () => $n('pModal').hidden = true;
+  $n('pModal').onclick = e => { if (e.target.id === 'pModal') $n('pModal').hidden = true; };
+  addEventListener('keydown', e => { if (e.key === 'Escape') $n('pModal').hidden = true; });
+})();
+
+function drawNFL() {
+  const season = +$n('nSeason').value, pos = $n('nPos').value;
+  const w1 = +$n('nW1').value, w2 = +$n('nW2').value;
+  const q = $n('nQ').value.toLowerCase(), pg = $n('nPG').checked;
+
+  let rows = WK.ps
+    .filter(p => p[3] === season && (!pos || p[1] === pos) &&
+                 (!q || p[0].toLowerCase().includes(q)))
+    .map(p => ({p: p, name: p[0], position: p[1], team: p[2], price: p[4],
+                by: p[5], a: nAgg(p, w1, w2)}))
+    .filter(r => r.a.g > 0);
+
+  // Rank within position FOR THIS RANGE -- the whole point of a week filter is
+  // that "WR7 in weeks 15-17" is a different player from "WR7 on the season".
+  const seen = {};
+  rows.slice().sort((a, b) => b.a.pts - a.a.pts).forEach(r => {
+    seen[r.position] = (seen[r.position] || 0) + 1; r.rank = seen[r.position];
+  });
+
+  const cols = NCOLS[pos] || NCOLS[''];
+  // "per game" divides the counting stats only. Pts stays a total and PPG stays
+  // a rate, so the toggle never leaves two columns showing the same number.
+  const get = (r, k) => {
+    const v = r.a[k];
+    if (!pg || NMAX[k]) return v;              // a season-best long is not a rate
+    return (v / r.a.g).toFixed(1);
+  };
+  rows.sort((a, b) => {
+    const f = r => nSort === 'name' ? r.name : nSort === 'position' ? r.position
+      : nSort === 'team' ? r.team : nSort === 'rank' ? r.rank
+      : nSort === 'price' ? (r.price == null ? -1 : r.price)
+      : nSort === 'g' ? r.a.g : (nSort === 'pts' || nSort === 'ppg') ? r.a[nSort]
+      : +get(r, nSort);
+    const x = f(a), y = f(b);
+    // in the mixed view rank restarts per position, so group by position first
+    if (nSort === 'rank' && !pos && a.position !== b.position)
+      return a.position.localeCompare(b.position);
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * (nAsc ? 1 : -1);
+  });
+
+  const head = '<thead><tr>' +
+    `<th data-k="rank" title="rank within position over the selected weeks">#</th>` +
+    '<th data-k="name" class="l">Player</th><th data-k="position" class="l">Pos</th>' +
+    '<th data-k="team" class="l">Tm</th><th data-k="g">G</th>' +
+    cols.map(c => `<th data-k="${c}">${NLAB[c] || c}</th>`).join('') +
+    '<th data-k="pts">Pts</th><th data-k="ppg">PPG</th>' +
+    '<th data-k="price" title="what PBAFFL paid for him that year">$</th>' +
+    '</tr></thead>';
+
+  $n('nT').innerHTML = head + '<tbody>' + rows.slice(0, 1500).map(r =>
+    '<tr>' +
+    // rank is WITHIN position, so in the mixed view show it as RB1 / QB1 --
+    // a bare column of 1,1,2,3,2 reads like a bug
+    `<td class="fin">${pos ? r.rank : r.position + r.rank}</td>` +
+    `<td class="l"><button class="lnk" data-nm="${r.name.replace(/"/g, '&quot;')}" ` +
+      `data-ss="${season}">${r.name}</button></td>` +
+    `<td class="l"><span class="pos" style="background:var(${POSC[r.position] || '--muted'})">` +
+      `${r.position}</span></td>` +
+    `<td class="l">${r.team}</td><td>${r.a.g}</td>` +
+    cols.map(c => `<td>${get(r, c)}</td>`).join('') +
+    `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td><td>${r.a.ppg.toFixed(1)}</td>` +
+    `<td title="${r.by || ''}">${r.price == null ? '—' : '$' + r.price}</td>` +
+    '</tr>').join('') + '</tbody>';
+
+  $n('nCount').textContent = rows.length.toLocaleString() + ' players · weeks ' +
+    w1 + '–' + w2 + (rows.length > 1500 ? ' · showing top 1,500' : '');
+  $n('nT').querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
+    const k = th.dataset.k;
+    nAsc = nSort === k ? !nAsc : (k === 'name' || k === 'rank' || k === 'team');
+    nSort = k; drawNFL();
+  });
+  $n('nT').querySelectorAll('button[data-nm]').forEach(b =>
+    b.onclick = () => showPlayer(b.dataset.nm, +b.dataset.ss));
+}
+
+/* ---------- player profile ---------- */
+function showPlayer(name, season) {
+  const all = WK.ps.filter(p => p[0] === name).sort((a, b) => b[3] - a[3]);
+  if (!all.length) return;
+  const p = all.find(x => x[3] === season) || all[0];
+  const pos = p[1], th = WK.thresh[pos] || [99, -99];
+  const a = nAgg(p, 1, WK_MAX);
+  const boom = p[8].filter(g => g[2] >= th[0]).length;
+  const bust = p[8].filter(g => g[2] <= th[1]).length;
+  const cols = NCOLS[pos] || NCOLS[''];
+  const best = Math.max.apply(null, p[8].map(g => g[2]).concat([1]));
+
+  // one bar per week 1-18 so byes and missed games read as gaps, not as a
+  // compressed run of games -- availability is part of what you bought
+  const byWk = {}; p[8].forEach(g => byWk[g[0]] = g);
+  let bars = '', xlab = '';
+  for (let w = 1; w <= WK_MAX; w++) {
+    const g = byWk[w];
+    if (!g) { bars += `<i class="bye" style="height:2px" title="wk ${w} — no game"></i>`; }
+    else {
+      const cls = g[2] >= th[0] ? 'boom' : g[2] <= th[1] ? 'bust' : '';
+      const h = Math.max(2, Math.round(g[2] / best * 72));
+      bars += `<i class="${cls}" style="height:${h}px" title="wk ${w} vs ${WK.teams[g[1]] || '?'} — ${g[2]} pts"></i>`;
+    }
+    xlab += `<span>${w}</span>`;
+  }
+
+  const log = '<table><thead><tr><th>Wk</th><th class="l">Opp</th>' +
+    cols.map(c => `<th>${NLAB[c] || c}</th>`).join('') + '<th>Pts</th></tr></thead><tbody>' +
+    p[8].map(g => {
+      const cls = g[2] >= th[0] ? 'd2' : g[2] <= th[1] ? 'dm2' : '';
+      return `<tr><td>${g[0]}</td><td class="l">${WK.teams[g[1]] || '—'}</td>` +
+        cols.map(c => `<td>${g[SI[c]]}</td>`).join('') +
+        `<td class="${cls}" style="font-weight:650">${g[2]}</td></tr>`;
+    }).join('') + '</tbody>';
+
+  const career = '<table><thead><tr><th>Year</th><th class="l">Tm</th><th>G</th>' +
+    '<th>Pts</th><th>PPG</th><th>Pos rk</th><th>Boom</th><th>Bust</th>' +
+    '<th>PBAFFL $</th><th class="l">Bought by</th></tr></thead><tbody>' +
+    all.map(x => {
+      const ax = nAgg(x, 1, WK_MAX), tx = WK.thresh[x[1]] || [99, -99];
+      const bm = x[8].filter(g => g[2] >= tx[0]).length;
+      const bs = x[8].filter(g => g[2] <= tx[1]).length;
+      return `<tr${x[3] === p[3] ? ' style="font-weight:650"' : ''}>` +
+        `<td><button class="lnk" data-yr="${x[3]}">${x[3]}</button></td>` +
+        `<td class="l">${x[2]}</td><td>${ax.g}</td><td>${ax.pts}</td><td>${ax.ppg}</td>` +
+        `<td>${x[6] == null ? '—' : x[1] + x[6]}</td><td>${bm}</td><td>${bs}</td>` +
+        `<td>${x[4] == null ? '—' : '$' + x[4]}</td><td class="l">${x[5] || '—'}</td></tr>`;
+    }).join('') + '</tbody>';
+
+  $n('pBody').innerHTML =
+    `<h2>${name}</h2>` +
+    `<p class="pHead"><span class="pos" style="background:var(${POSC[pos] || '--muted'})">${pos}</span> ` +
+      `&nbsp;${p[2]} · ${p[3]} season · ${all.length} season${all.length > 1 ? 's' : ''} on record</p>` +
+    '<div class="row" style="margin:12px 0 4px">' +
+      `<div class="tile"><div class="v">${a.pts}</div><div class="k">points, ${p[3]}</div></div>` +
+      `<div class="tile"><div class="v">${a.ppg}</div><div class="k">per game (${a.g} played)</div></div>` +
+      `<div class="tile"><div class="v">${p[6] == null ? '—' : pos + p[6]}</div><div class="k">finish at position</div></div>` +
+      `<div class="tile"><div class="v">${boom}</div><div class="k">boom weeks (≥ ${th[0]})</div></div>` +
+      `<div class="tile"><div class="v">${bust}</div><div class="k">bust weeks (≤ ${th[1]})</div></div>` +
+      `<div class="tile"><div class="v">${p[4] == null ? '—' : '$' + p[4]}</div><div class="k">${p[4] == null ? 'undrafted here' : 'paid by ' + p[5]}</div></div>` +
+    '</div>' +
+    `<h3>Week by week, ${p[3]} — boom green, bust red, grey = no game</h3>` +
+    `<div class="glog">${bars}</div><div class="glogx">${xlab}</div>` +
+    `<p class="note" style="margin-top:8px">Boom and bust are ${pos}'s own p85 / p25 weekly ` +
+      `scores among starter-quality ${pos}s — 20 points is a big week for a tight end and a ` +
+      `mediocre one for a quarterback, so each position is judged against its own.</p>` +
+    `<h3>Game log, ${p[3]}</h3><div class="scroll" style="max-height:320px">${log}</table></div>` +
+    `<h3>Every season on record</h3><div class="scroll" style="max-height:300px">${career}</table></div>`;
+
+  $n('pBody').querySelectorAll('button[data-yr]').forEach(b =>
+    b.onclick = () => showPlayer(name, +b.dataset.yr));
+  $n('pModal').hidden = false;
+}
+
 function draw() {
-  boardTable(); drawLast(); drawPlan(); drawStrategy();
+  boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL();
   tierChart(); startableChart(); posShare(); scatter();
 }
 draw();
