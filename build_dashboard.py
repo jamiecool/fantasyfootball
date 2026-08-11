@@ -23,6 +23,21 @@ OUT = os.path.join(ROOT, "cleandata")
 con = sqlite3.connect(os.path.join(OUT, "fantasy.db"))
 D = {}
 
+# Optional tables come from LIVE feeds, which build_all.py only runs with
+# --refresh. A fresh clone therefore has a database without them, and an
+# unguarded read there is the difference between a new collaborator getting a
+# working dashboard and getting a stack trace.
+_HAVE = {r[0] for r in con.execute(
+    "SELECT name FROM sqlite_master WHERE type='table'")}
+
+
+def optional(table, sql, columns):
+    """Query `table` if it exists, else an empty frame with these columns."""
+    if table in _HAVE:
+        return pd.read_sql(sql, con)
+    print(f"  (no {table} table -- run: python build_all.py --refresh)")
+    return pd.DataFrame(columns=columns)
+
 # ---- 1. the 2026 board: price, projection, value ---------------------------
 proj = pd.read_sql("""SELECT player_key, player_name, position, nfl_team,
                              proj_points FROM projections WHERE season = 2026""", con)
@@ -54,8 +69,11 @@ b["blendrank"] = b["posrank"]
 # We draft in the Yahoo app, so Yahoo's ADP is the room's anchor. Where our
 # board and Yahoo disagree is where the room is likely to misprice a player
 # relative to what he should cost here.
-ydf = pd.read_sql("""SELECT player_key, yahoo_rank, average_cost, percent_drafted
-                     FROM yahoo_adp""", con).drop_duplicates("player_key")
+ydf = optional("yahoo_adp",
+               "SELECT player_key, yahoo_rank, average_cost, percent_drafted"
+               " FROM yahoo_adp",
+               ["player_key", "yahoo_rank", "average_cost", "percent_drafted"]
+               ).drop_duplicates("player_key")
 b = b.merge(ydf, on="player_key", how="left")
 b["yahoo_rank"] = b["yahoo_rank"].fillna(0).astype(int)
 b["yahoo_cost"] = b["average_cost"].fillna(0).round(1)
@@ -63,7 +81,9 @@ b["yahoo_cost"] = b["average_cost"].fillna(0).round(1)
 # Explicitly NOT part of pricing or ordering -- ADP already contains this, and
 # rule 4 says the market beats our re-derivation of it. It rides along as a
 # visual check while scanning the board: is this a good player on a good team?
-vt = pd.read_sql("SELECT * FROM vegas_team", con)
+vt = optional("vegas_team", "SELECT * FROM vegas_team",
+              ["team", "pts_per_game", "playoff_pts", "week_15", "week_16",
+               "week_17", "vegas_rank"])
 
 
 def vegas_tiers(df):
@@ -322,7 +342,10 @@ D["wk"] = {"cols": WK_COLS, "teams": TEAMS, "ps": ps_rows, "thresh": THRESH,
            "seasons": sorted({int(s) for s in pw["season"].unique()}, reverse=True)}
 
 # ---- 11. Vegas page --------------------------------------------------------
-_vt = vegas_tiers(pd.read_sql("SELECT * FROM vegas_team ORDER BY vegas_rank", con))
+_vt = optional("vegas_team", "SELECT * FROM vegas_team ORDER BY vegas_rank",
+               ["team", "pts_per_game", "playoff_pts", "week_15", "week_16",
+                "week_17", "vegas_rank"])
+_vt = vegas_tiers(_vt) if len(_vt) else _vt.assign(playoff_avg=0, yr_tier=0, post_tier=0)
 _bd = pd.DataFrame(D["board"])
 # how many draftable players each offence actually supplies, so the page answers
 # "who does this get me" rather than just ranking teams
@@ -337,10 +360,12 @@ _vt = _vt.merge(_cnt, left_on="team", right_index=True, how="left")          .me
 _vt["draftable"] = _vt["draftable"].fillna(0).astype(int)
 _vt["top_players"] = _vt["top_players"].fillna("—")
 D["vegas"] = _vt.fillna(0).to_dict("records")
-D["vegas_weeks"] = pd.read_sql(
-    """SELECT week, team, opponent, is_home, spread_line, total_line, implied_total
-       FROM vegas_team_week WHERE season = 2026 ORDER BY week, implied_total DESC""",
-    con).to_dict("records")
+D["vegas_weeks"] = optional(
+    "vegas_team_week",
+    "SELECT week, team, opponent, is_home, spread_line, total_line, implied_total"
+    " FROM vegas_team_week WHERE season = 2026 ORDER BY week, implied_total DESC",
+    ["week", "team", "opponent", "is_home", "spread_line", "total_line",
+     "implied_total"]).to_dict("records")
 
 # ---- 12. dead zones by position (see analyze_dead_zones.py) ----------------
 _dz = os.path.join(OUT, "analysis", "dead_zones.csv")

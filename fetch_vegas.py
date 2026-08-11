@@ -33,6 +33,8 @@ import urllib.request
 import pandas as pd
 from bs4 import BeautifulSoup
 
+from snapshots import snapshot_path
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.join(ROOT, "rawdata", "vegas")
 GAMES = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
@@ -134,8 +136,9 @@ try:
         raise ValueError(f"only parsed {len(rows)} teams, expected 32")
     sharp = pd.DataFrame(rows)
     sharp["fetched_at"] = time.strftime("%Y-%m-%d")
-    sharp.to_csv(os.path.join(DEST, "sharp_implied_2026.csv"), index=False)
-    print(f"  {len(sharp)} teams -> sharp_implied_2026.csv")
+    _out = snapshot_path(DEST, "sharp_implied_2026", "csv")
+    sharp.to_csv(_out, index=False)
+    print(f"  {len(sharp)} teams -> {os.path.basename(_out)}")
     print(f"  columns: {[c for c in sharp.columns if c not in ('season','nickname','fetched_at')]}")
     ppg = next((c for c in sharp.columns if "pts" in c and "per" in c), None)
     if ppg:

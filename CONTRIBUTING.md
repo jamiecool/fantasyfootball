@@ -1,0 +1,83 @@
+# Working on this together
+
+Two people, one small repo, and a draft in a few weeks. This is mostly about not
+stepping on each other.
+
+## The loop
+
+```bash
+git pull --rebase
+git checkout -b <topic>          # e.g. te-tier-analysis, board-filters
+# work
+python build_all.py              # must pass before you push
+git push -u origin <topic>       # then open a PR
+```
+
+Rebase rather than merge on pull — the history stays readable, which matters when
+you are trying to work out why a number changed.
+
+`main` should always build. If `build_all.py` fails on `main`, that is the priority.
+
+## Files that conflict badly, and what to do
+
+**`cleandata/` — never commit anything from it.** It is all generated and all
+gitignored: the database, the CSVs, the parquet, the 4MB dashboard. If you find
+yourself resolving a conflict in there, something has gone wrong with the ignore
+rules. Regenerate instead of merging.
+
+**Live-feed snapshots are dated, so they never collide.** `fetch_yahoo_adp.py` and
+friends write `<name>__YYYY-MM-DD.json`; the loaders glob for the newest. Two people
+fetching on the same day write the same content to the same filename, which merges
+trivially; on different days they write different files. This also gives us a history
+of how ADP moved, which we do not otherwise have — the reason Underdog's edge rests on
+Jamie's judgement rather than a measurement is that nobody kept the daily snapshots.
+
+**`notes/log/` is one file per person per session.** Name it `YYYY-MM-DD-<you>.md`.
+Never edit someone else's. `CLAUDE.md` stays as the durable index — decisions, traps,
+findings — and changes there should be deliberate rather than a running diary.
+
+**`dashboard_template.html` is the one real hazard.** 1,600 lines, and it is the
+highest-churn file in the repo. Not yet split into partials. If you are both touching
+the dashboard, say which tab you are in first — the `drawX()` functions are reasonably
+separable, so conflicts are usually resolvable if you stay inside your own.
+
+**`strategy_rules.py` is an append-to-a-list file.** Two people adding rules will
+collide on the tail and can duplicate an `id`. Take the next free id, add at the end,
+and if you both hit it the resolution is mechanical. Worth splitting into one file per
+rule if it becomes a habit.
+
+## Conventions worth keeping
+
+**Confidence is set by sample size, not by how clean the estimate looks.** Two findings
+were retracted early for resting on thin position × tier cells. Anything under ~25
+observations is capped at "low" however tidy it reads, and a claim whose interval spans
+the decision boundary cannot carry a recommendation. Rejected rules stay visible so
+they are not re-adopted by accident.
+
+**Report the interval, do not use it to quietly drop a finding.** WR $21–35 and RB
+$11–20 return the same 0.75× per dollar; only WR got written up, because WR has more
+picks. That described our sample size, not the league. If you can only call one, say
+that.
+
+**No projection touches pricing.** They are the weakest input we have and they live in
+analytics. If you want to change that, the bar is evidence, not preference.
+
+**Assert the shape of anything parsed.** A regex silently dropped rows from the 2025
+draft HTML; a stat source served the wrong season and was only caught because a total
+contradicted a known injury. Row counts, join rates, and reconciliation checks belong
+in the script, printed on every run.
+
+**Say what a number cannot support.** Most of the value in `CLAUDE.md` is the list of
+things that turned out to be wrong.
+
+## Secrets
+
+`yahoo_credentials.json` and `yahoo_token.json` are gitignored and must never be
+committed. The repo is private partly because the data contains leaguemates' real team
+names and their full spending history from a private league — worth remembering before
+making it public or pasting output anywhere.
+
+## Getting oriented
+
+Read `README.md` for the pipeline, then `CLAUDE.md` for why things are the way they
+are. The "traps already hit" section is the fastest way to avoid repeating one.

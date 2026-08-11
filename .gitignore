@@ -15,6 +15,13 @@ cleandata/dashboard.html
 # revises a release, a future re-fetch may not reproduce today's numbers exactly.
 rawdata/nflverse/stats_player_week_*.csv
 
+# nflverse games.csv: a 2.1MB full mirror re-downloaded on every fetch_vegas run,
+# so it churns the whole file each time. Same call as the weekly stat lines --
+# the script reproduces it, and a wholesale rewrite is the worst thing to have
+# two people editing. team_week_implied.csv is derived from it.
+rawdata/vegas/games.csv
+rawdata/vegas/team_week_implied.csv
+
 # Excel lock files (created while a workbook is open)
 ~$*.xls*
 

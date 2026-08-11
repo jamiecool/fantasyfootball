@@ -1,95 +1,87 @@
-# PBAFFL auction draft analysis
+# PBAFFL — auction draft analysis
 
-Nine seasons (2017–2025) of a 12-team **auction** fantasy football league,
-normalized into a queryable database and analysed for league-specific market
-inefficiencies.
+Nine seasons of a 12-team half-PPR **auction** league, normalised into a queryable
+database, plus a localhost dashboard used live during the draft.
 
-The premise: player rankings are a solved problem with far more investment behind
-them than a side project can add. What *isn't* solved is (a) one specific league's
-own pricing history and (b) auction drafts generally, which get a small fraction of
-the community attention snake drafts do. That's where the edge is.
+The league: $200 budget, 16 roster spots, starters are 1 QB / 2 RB / 3 WR / 1 TE /
+1 K / 1 DEF with **no FLEX**, half-PPR with a non-default **−2 interceptions**.
+Strict redraft, and an IR slot that everyone uses.
 
-## Quick start
+## Get it running
+
+Python 3.11+. Then:
 
 ```bash
-pip install pandas numpy beautifulsoup4 lxml openpyxl pyarrow
-
-python build_clean_data.py      # rawdata/ -> cleandata/fantasy.db  (offline)
-python analyze_price_value.py   # what a dollar bought, by position and tier
-python analyze_upside.py        # where league-winning seasons come from
+pip install pandas numpy scikit-learn beautifulsoup4 openpyxl pyarrow
+python build_all.py          # rebuilds everything from what is in rawdata/
+python serve.py              # http://localhost:8000/dashboard.html
 ```
 
-`build_clean_data.py` needs no network — everything it reads is in `rawdata/`. The
-three `fetch_*.py` scripts refresh those inputs and *do* hit the network.
+`build_all.py` takes about 80 seconds offline. The first run downloads ~80MB of
+nflverse stat lines; after that they are cached and skipped.
 
-```python
-import pandas as pd, sqlite3
-con = sqlite3.connect("cleandata/fantasy.db")
-pd.read_sql("SELECT * FROM v_player_season WHERE season = 2025", con)
+Every generated artefact is gitignored — the database, the CSVs, the dashboard.
+That is deliberate: they are all reproducible from `rawdata/`, and a 4MB HTML file
+regenerated on every build is not something two people can share in git.
+
+```bash
+python build_all.py --list           # the stages, in order
+python build_all.py --refresh        # re-fetch live feeds (ADP, Yahoo, Vegas) first
+python build_all.py --from build_dashboard.py   # resume after a failure
 ```
 
-## What's in the database
+**Live feeds do not run by default.** ADP moves daily in preseason, and silently
+re-fetching mid-analysis makes results irreproducible. Ask for it with `--refresh`.
 
-| table | rows | what it is |
-| --- | --- | --- |
-| `draft_picks` | 1,695 | every pick, 2017–2025: price, position, fantasy team, **nomination order** |
-| `final_ranks` | 5,700 | end-of-season results scored under this league's exact rules |
-| `preseason_adp` | 5,348 | market expectation going in (FFC 2017–25, Underdog current) |
-| `scoring_rules` / `league_settings` / `roster_slots` | 33 / 36 / 8 | the league rulebook, parsed |
-| `standings` | 12 | season outcomes (2025 only — Yahoo doesn't expose earlier) |
-| `franchise_seasons`, `players`, `seasons`, `franchises` | — | rollups |
+## What is where
 
-Key views: **`v_player_season`** (expectation vs outcome vs price paid, one row per
-player-season), `v_draft_value`, `v_preseason`, `v_position_spend`, `v_season_outcome`.
+| | |
+|---|---|
+| `rawdata/` | inputs. Nine years of Yahoo exports, plus fetched market data |
+| `cleandata/fantasy.db` | SQLite, the thing to query. **Generated** |
+| `cleandata/dashboard.html` | the draft-day tool. **Generated** |
+| `fetch_*.py` | one per external source |
+| `build_*.py` | transforms, in the order `build_all.py` runs them |
+| `analyze_*.py` | investigations; each prints its findings and some persist a CSV |
+| `strategy_rules.py` | the rules we act on, with evidence and an honest confidence |
+| `CLAUDE.md` | project memory — decisions, traps, findings. Read it before analysing |
 
-Full schema and caveats: [`cleandata/README.md`](cleandata/README.md).
+## The dashboard
 
-## Method notes
+Six tabs. **2026 board** is the draft-day surface: expected price, a market/fair-value
+toggle, target stars, per-player notes, and colour flags for Vegas team strength and
+disagreement with Yahoo. **Past drafts** is nine seasons of every pick and how it
+turned out. **NFL stats** is 55,861 game lines scored under our rules, with any week
+range and a player profile. **Vegas**, **Draft plan** and **Strategy** are what they
+sound like.
 
-- **Scoring is the league's own**, not a generic preset: half-PPR with a non-default
-  −2 per interception. Verified two ways — parsed from the league rulebook, and
-  independently inferred by scoring three ways and correlating against Yahoo's own
-  published final ranks (half-PPR won at rho **0.9999**).
-- **Fantasy points are computed from raw NFL stat lines**
-  ([nflverse](https://github.com/nflverse/nflverse-data)), not scraped from anyone's
-  rankings — a published ranking bakes in whoever's scoring settings produced it.
-- **Prices for 52 of the 2025 picks are reconstructed**, not observed: those players
-  were drafted then dropped, so Yahoo no longer stored the price. They were recovered
-  from a rank/price curve plus the per-team budget identity, and hold-out tested at a
-  median error of ~$1.75. Flagged as `price_source = 'estimated'` throughout.
+## Where the numbers come from
 
-## Selected findings
+The board's price is built in two halves, and the split matters:
 
-Scoring under this league's rules, over 1,695 picks:
+- **Ordering within a position** is Underdog's. Sharp, best-ball, repriced continuously.
+- **Cross-position weighting** is PBAFFL's own price history, 2023–25. Underdog cannot
+  supply it — best ball has 18 rounds, a FLEX we do not have, and no K or DEF. RB1 goes
+  for $66 here while QB1 goes for $36, and that gap *is* our format.
 
-**Elite production at WR and RB cannot be bought cheaply.** In nine seasons, the 154
-wide receivers bought at $1–2 and the 94 bought at $3–5 produced **zero** top-3 WR
-seasons between them. RB is nearly as stark. The reverse holds at TE and QB — a $6–10
-TE finished top-3 nineteen percent of the time.
+**No projection enters the price.** Preseason ADP predicts final finish at rho 0.42,
+which is roughly the ceiling for anyone; two independent markets agree with each other
+at 0.95 while either agrees with a projection model at 0.65–0.72. The model is the
+outlier, so it stays out of pricing and lives in analytics only.
 
-**Points above replacement per dollar:** K 4.86 · QB 2.74 · TE 2.14 · WR 1.65 · **RB
-1.38**. RB is the worst return at every tier, and mid-tier RB ($11–20) is the single
-worst place to put money in the draft — while the league drafts **2.42 RBs per RB
-slot**, more than any other position.
+## Reading the analysis honestly
 
-**Two useful nulls:** budget concentration doesn't predict roster quality
-(r = +0.02 over 106 team-seasons), and nomination timing doesn't move value
-(±1.5%). So neither "stars and scrubs vs balanced" nor draft-phase timing is where
-the edge lives — cross-position allocation is.
+Findings carry a confidence set by **sample size**, not by how clean the estimate
+looks. Two were retracted early for resting on thin position × tier cells, so anything
+under ~25 observations is capped at "low" however tidy it reads, and a claim whose
+interval spans the decision boundary cannot carry a recommendation. Rejected rules stay
+visible in `strategy_rules.py` so they are not re-adopted by accident.
 
-## Layout
+`CLAUDE.md` has a running list of traps already hit — name-collision joins, thin cells
+at the top of the board, hindsight substitution in roster scoring. Worth reading before
+adding an analysis, because most of them are easy to hit twice.
 
-```
-rawdata/            source documents, committed for provenance
-  historicalresults/  nine Yahoo draft workbooks, one shape each
-  2025rawhtml/        saved Yahoo pages for the 2025 price reconstruction
-  nflverse/           season stat lines 2017-2025
-  adp/ underdog/      preseason market data
-  scoringrules/       the league's Scoring & Settings page
-  standings/          season outcomes (hand-entered)
-cleandata/          generated; rebuild with build_clean_data.py
-CLAUDE.md           working context: decisions, findings, and traps already hit
-```
+## Contributing
 
-`CLAUDE.md` is the project's working memory — worth reading before extending any of
-this, particularly the "traps already hit" section.
+See [CONTRIBUTING.md](CONTRIBUTING.md) — it covers the branch workflow and, more
+usefully, which files conflict badly and how the repo is arranged to avoid it.

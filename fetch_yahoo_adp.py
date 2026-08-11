@@ -24,6 +24,8 @@ import time
 import urllib.error
 import urllib.request
 
+from snapshots import snapshot_path
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.join(ROOT, "rawdata", "yahoo")
 SEASON = 2026
@@ -113,7 +115,7 @@ meta = {"source": "yahoo public draft analysis (pub-api-ro)",
         "season": SEASON, "game_key": GAME_KEY,
         "fetched_at": time.strftime("%Y-%m-%d"), "rows": len(rows),
         "with_adp": len(ranked)}
-out = os.path.join(DEST, f"yahoo_adp_{SEASON}.json")
+out = snapshot_path(DEST, f"yahoo_adp_{SEASON}", "json")
 with open(out, "w", encoding="utf-8") as f:
     json.dump({"meta": meta, "players": rows}, f, indent=1)
 

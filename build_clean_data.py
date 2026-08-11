@@ -20,6 +20,8 @@ import unicodedata
 import pandas as pd
 from bs4 import BeautifulSoup
 
+from snapshots import latest_snapshot, snapshot_date
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "rawdata", "historicalresults")
 RAW25 = os.path.join(ROOT, "rawdata", "2025rawhtml")
@@ -846,8 +848,8 @@ if proj_rows:
 # an actual auction DOLLAR figure rather than a pick number.
 YDIR = os.path.join(ROOT, "rawdata", "yahoo")
 yahoo_meta = []
-ypath = os.path.join(YDIR, "yahoo_adp_2026.json")
-if os.path.exists(ypath):
+ypath = latest_snapshot(YDIR, "yahoo_adp_2026", "json")
+if ypath:
     blob = json.load(open(ypath, encoding="utf-8"))
     yahoo_meta.append(blob.get("meta", {}))
     yr = pd.DataFrame(blob["players"])
@@ -890,8 +892,8 @@ if os.path.exists(ypath):
 # a visual check on "good players from good teams" while scanning the board.
 VDIR = os.path.join(ROOT, "rawdata", "vegas")
 vegas_meta = []
-_sharp = os.path.join(VDIR, "sharp_implied_2026.csv")
-if os.path.exists(_sharp):
+_sharp = latest_snapshot(VDIR, "sharp_implied_2026", "csv")
+if _sharp:
     v = pd.read_csv(_sharp)
     # Sharp abbreviates the Rams "LA"; every other source here says "LAR"
     v["team"] = v["team"].replace({"LA": "LAR", "LAR": "LAR"})
