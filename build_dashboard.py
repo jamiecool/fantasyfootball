@@ -39,22 +39,31 @@ rep = {p: (b[b.position == p].nlargest(n, "proj_points").proj_points.min()
 b["par"] = (b["proj_points"] - b["position"].map(rep)).clip(lower=0).round(1)
 b["ppd"] = (b["par"] / b["est_price"]).round(2)
 
-# The board's job is "what will the room pay", so ADP carries the ranking and
-# projections only nudge it. Weight reflects what we measured: two independent
-# markets agree with each other at rho 0.95 while either agrees with Sleeper's
-# model at only 0.65-0.72, so the model is the outlier and gets the small share.
-ADP_WEIGHT = 0.75
+# STRAIGHT MARKET ORDERING. This used to blend 75% market rank with 25% of
+# Sleeper's projection rank; Jamie's call to drop the model entirely, and the
+# measurement agrees -- two independent markets agree with each other at rho
+# 0.95 while either agrees with Sleeper at 0.65-0.72, so the model was the
+# outlier. The badge is now purely Underdog's ordering within position.
 b = b.sort_values("adp_rank")
-b["posrank"] = b.groupby("position").cumcount() + 1          # market rank, QB3
+b["posrank"] = b.groupby("position").cumcount() + 1          # market rank, WR8
 b["projrank"] = b.groupby("position")["proj_points"].rank(
-    ascending=False, method="first").fillna(0).astype(int)   # model rank
-b["blend"] = (ADP_WEIGHT * b["posrank"] + (1 - ADP_WEIGHT) * b["projrank"])
-b["blendrank"] = b.groupby("position")["blend"].rank(method="first").astype(int)
+    ascending=False, method="first").fillna(0).astype(int)   # kept for analytics only
+b["blendrank"] = b["posrank"]
+
+# ---- Yahoo: the market our leaguemates actually stare at while bidding ------
+# We draft in the Yahoo app, so Yahoo's ADP is the room's anchor. Where our
+# board and Yahoo disagree is where the room is likely to misprice a player
+# relative to what he should cost here.
+ydf = pd.read_sql("""SELECT player_key, yahoo_rank, average_cost, percent_drafted
+                     FROM yahoo_adp""", con).drop_duplicates("player_key")
+b = b.merge(ydf, on="player_key", how="left")
+b["yahoo_rank"] = b["yahoo_rank"].fillna(0).astype(int)
+b["yahoo_cost"] = b["average_cost"].fillna(0).round(1)
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
-     "blendrank", "move", "nfl_team", "adp", "est_price",
-     "proj_points"]].fillna(0).to_dict("records")
+     "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
+     "yahoo_rank", "yahoo_cost"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks

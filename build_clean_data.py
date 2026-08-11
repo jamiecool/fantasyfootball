@@ -87,6 +87,7 @@ def split_player(raw):
 
 # NFL relocations, so a club joins to itself across seasons
 NFL_MOVES = {"OAK": "LV", "SD": "LAC", "STL": "LAR"}
+NFL_MOVES_LOWER = {k.lower(): v.lower() for k, v in NFL_MOVES.items()}
 
 
 # --------------------------------------------------------------------------
@@ -838,6 +839,51 @@ if proj_rows:
     tables["projections"] = pj.sort_values(
         ["season", "proj_rank"]).reset_index(drop=True)
 
+# --- Yahoo draft analysis (see fetch_yahoo_adp.py) --------------------------
+# The market this league actually drafts in. Underdog stays the source for
+# ORDERING -- it is sharper and reprices faster -- but Yahoo is what our
+# leaguemates have on screen while bidding, and it is the only source that gives
+# an actual auction DOLLAR figure rather than a pick number.
+YDIR = os.path.join(ROOT, "rawdata", "yahoo")
+yahoo_meta = []
+ypath = os.path.join(YDIR, "yahoo_adp_2026.json")
+if os.path.exists(ypath):
+    blob = json.load(open(ypath, encoding="utf-8"))
+    yahoo_meta.append(blob.get("meta", {}))
+    yr = pd.DataFrame(blob["players"])
+    yr["player_key"] = yr["player_name"].map(player_key)
+    # Yahoo names defences by nickname ("Rams"); we key them def_<abbr>. Rebuild
+    # the key from the team abbreviation, which Yahoo does supply.
+    _def = yr["position"] == "DEF"
+    yr.loc[_def, "player_key"] = ("def_" + yr.loc[_def, "nfl_team"].str.lower()
+                                  .replace(NFL_MOVES_LOWER))
+    # Yahoo writes suffixes into the full name ("James Cook III") where our other
+    # sources do not, so a raw key misses real players. Retry the unmatched
+    # against a suffix-stripped key before giving up on them.
+    SUFFIX = re.compile(r"(ii|iii|iv|jr|sr)$")
+    yr["player_key_alt"] = yr["player_key"].str.replace(SUFFIX, "", regex=True)
+    yr = yr[yr["average_pick"].notna()].copy()
+    yr = yr.sort_values("average_pick")
+    yr["yahoo_rank"] = range(1, len(yr) + 1)
+    yr["season"] = 2026
+    tables["yahoo_adp"] = yr[[
+        "season", "player_name", "player_key", "player_key_alt", "position",
+        "nfl_team", "yahoo_rank", "average_pick", "average_cost",
+        "percent_drafted", "preseason_average_cost", "projected_auction_value",
+        "status", "injury_note"]].reset_index(drop=True)
+    # report the join rate against the board rather than assume it
+    try:
+        _bd = pd.read_csv(os.path.join(ROOT, "cleandata", "analysis", "board_2026.csv"))
+        _keys = set(_bd["player_key"])
+        _hit = yr["player_key"].isin(_keys) | yr["player_key_alt"].isin(_keys)
+        print(f"\nyahoo_adp: {len(yr)} players with an ADP; "
+              f"{_hit.sum()} ({100*_hit.mean():.0f}%) join to the 2026 board")
+        _miss = yr[~_hit].head(6)["player_name"].tolist()
+        if len(_miss):
+            print(f"  unmatched sample: {_miss}")
+    except Exception as e:                               # noqa: BLE001
+        print("  (board join check skipped:", e, ")")
+
 # --- data freshness ---------------------------------------------------------
 # Most of this dataset is historical and never goes stale. Current-season ADP
 # does: it moves daily through the summer. This table makes staleness a query
@@ -888,6 +934,23 @@ for meta in proj_meta:
         "refresh_command": "python fetch_projections.py && python build_clean_data.py",
         "note": f"{sum((meta.get('counts') or {}).values())} players; "
                 "revised through preseason as camps and injuries land"
+                + (f"; {age}d old at last build" if age is not None else ""),
+    })
+for meta in yahoo_meta:
+    fetched = meta.get("fetched_at", "")
+    age = None
+    if fetched:
+        try:
+            age = (_today - _dt.strptime(fetched, "%Y-%m-%d").date()).days
+        except ValueError:
+            age = None
+    fresh.append({
+        "dataset": f"yahoo_adp (season {meta.get('season')})",
+        "source": meta.get("source", "yahoo"), "as_of": "",
+        "fetched_on": fetched, "stale_after_days": 3,
+        "refresh_command": "python fetch_yahoo_adp.py && python build_clean_data.py",
+        "note": f"{meta.get('with_adp')} players with an ADP; the room's own anchor, "
+                "moves daily in preseason"
                 + (f"; {age}d old at last build" if age is not None else ""),
     })
 tables["data_freshness"] = pd.DataFrame(fresh)
