@@ -5,10 +5,33 @@ This file is the durable memory: decisions, traps, findings, and reference mater
 Keep it current — append findings as they're established, and correct entries that
 turn out to be wrong rather than leaving both versions.
 
-## ⚠ First thing each session: check ADP freshness
+## ⚠ FIRST: does `cleandata/fantasy.db` exist?
+
+```bash
+python build_all.py          # ~85s. Only needed if cleandata/fantasy.db is missing.
+python serve.py              # http://localhost:8000/dashboard.html
+```
+
+**Everything generated is gitignored** — the database, the analysis CSVs, the 4MB
+dashboard — so a fresh clone has none of it and nothing below will work until
+`build_all.py` has run once. It is idempotent; running it again is harmless.
+
+Live feeds (ADP, Yahoo, Vegas) do **not** run without `--refresh`, deliberately:
+a rebuild should be reproducible, and re-fetching mid-analysis silently changes
+numbers underneath a comparison.
+
+Orientation, in this order: **`README.md`** for the pipeline and where the numbers
+come from, **`CONTRIBUTING.md`** for the conventions and which files conflict, then
+this file for why things are the way they are. The "Traps already hit" and
+"FINDINGS STATUS AUDIT" sections below are the two most load-bearing.
+
+New session notes go in `notes/log/YYYY-MM-DD-<name>.md`, one file per person per
+session. This file stays the durable index — decisions, traps, findings — not a diary.
+
+## ⚠ Then: check ADP freshness
 
 Current-season ADP moves daily through the preseason. Everything else here is
-historical and never goes stale.
+historical and never goes stale. (Needs the database, so run `build_all.py` first.)
 
 ```bash
 python -c "import sqlite3;print(*sqlite3.connect('cleandata/fantasy.db').execute('SELECT dataset,as_of,fetched_on,stale_after_days FROM data_freshness'),sep='\n')"
