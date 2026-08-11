@@ -162,6 +162,15 @@
          font-variant-numeric:tabular-nums}
   .glogx span{flex:1;min-width:5px;text-align:center}
 </style>
+<script>
+  // Runs before first paint, so a stored dark theme never flashes light. This
+  // has to live in <head> -- doing it with the rest of the JS at end of body
+  // means the page has already painted in the wrong theme.
+  try {
+    var t = localStorage.getItem('pbaffl_theme_v1');
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) { /* storage blocked (private mode) -- fall back to system theme */ }
+</script>
 </head>
 <body>
 <header>
@@ -344,8 +353,11 @@ document.querySelectorAll('.tab[data-p]').forEach(b => b.onclick = () => {
 document.getElementById('themeBtn').onclick = () => {
   const cur = document.documentElement.getAttribute('data-theme');
   const dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme:dark)').matches;
-  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
-  draw();
+  const next = dark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  // persist so the choice survives a refresh; the <head> script re-applies it
+  try { localStorage.setItem('pbaffl_theme_v1', next); } catch (e) { /* storage blocked */ }
+  draw();   // charts read their colours from CSS vars at draw time, so redraw
 };
 
 /* ---------- board table ---------- */
