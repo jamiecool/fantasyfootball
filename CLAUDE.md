@@ -24,6 +24,15 @@ python fetch_underdog_adp.py && python build_clean_data.py
 Don't refresh silently mid-analysis — ADP shifting underneath a comparison makes
 results irreproducible. Mention it, refresh, then proceed.
 
+## Working practice
+
+- **Never `git push` unless Jamie asks in that message.** Committing locally without
+  being asked is fine. Approval for one push does not carry forward — not even within
+  the same session on the same repo. Commit, say what's waiting, let him call it.
+- `yahoo_credentials.json` and `yahoo_token.json` are gitignored and must never be
+  committed. The repo is **private** — it holds leaguemates' real team names and their
+  full spending history from a private league.
+
 ## The project
 
 Jamie plays in **PBAFFL** (Yahoo league 792831), a 12-team **auction** league he's been
