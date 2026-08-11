@@ -1070,7 +1070,7 @@ history exists behind it, so 2026 rookies and DEF stay plain text rather than de
 ## Where we left off (2026-08-10, second session)
 
 The dashboard is the working surface now: `python build_dashboard.py` then
-`python -m http.server 8000 --directory cleandata`, open
+`python serve.py`, open
 <http://localhost:8000/dashboard.html>. Tabs: **2026 board · Past drafts · Draft plan ·
 Strategy · Analytics**.
 

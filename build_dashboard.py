@@ -6,7 +6,7 @@ Charts are inline SVG drawn by a small amount of vanilla JS.
 
 Run:
     python build_dashboard.py
-    python -m http.server 8000 --directory cleandata
+    python serve.py
     # then open http://localhost:8000/dashboard.html
 """
 import json
@@ -283,5 +283,7 @@ with open(path, "w", encoding="utf-8") as f:
     f.write(html)
 print(f"wrote {path}")
 print("\nserve it with:")
-print("  python -m http.server 8000 --directory cleandata")
+print("  python serve.py")
 print("  open http://localhost:8000/dashboard.html")
+print("\n(serve.py disables caching; plain http.server lets Chrome answer F5")
+print(" from memory, so a rebuilt dashboard silently does not appear)")

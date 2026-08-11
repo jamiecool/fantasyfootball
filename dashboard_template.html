@@ -419,11 +419,16 @@ function boardTable() {
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
   };
   const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
-                ['nfl_team','tm'],['gap','proj vs mkt'],['move','trend'],['adp','ADP']];
+                ['nfl_team','tm'],['gap','vs mkt'],['move','trend'],['adp','ADP']];
+  // Only the shaded column is pinned to its content width. A colour block as
+  // wide as its share of the table reads as emphasis it has not earned; the
+  // rest of the columns keep sharing the slack so the layout stays balanced.
+  const TIGHT = {gap: 1};
   document.getElementById('boardT').innerHTML =
     // leading counter is positional and renumbers with the sort, same as past drafts
     '<thead><tr><th class="l" style="cursor:default">#</th>' + cols.map(([k,l],i) =>
-      `<th class="${(i===1||i===2||i===3)?'l':''}" data-k="${k}">${l}</th>`).join('') +
+      `<th class="${(i===1||i===2||i===3)?'l':''}" data-k="${k}"` +
+      `${TIGHT[k] ? ' style="width:1%"' : ''}>${l}</th>`).join('') +
     '</tr></thead><tbody>' +
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
@@ -437,7 +442,7 @@ function boardTable() {
   bindLinks(document.getElementById('boardT'));
   // Shade is never the only encoding -- the signed number sits in the same cell.
   document.getElementById('bdLeg').innerHTML =
-    '<span>proj vs mkt:</span>' +
+    '<span>vs mkt (projection against the room):</span>' +
     [['d3', 'model higher'], ['d0', 'agree'], ['dm3', 'model lower']].map(([c, l]) =>
       `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('') +
     '<span style="color:var(--muted)">a flag to look at, not a buy signal — the room ' +
