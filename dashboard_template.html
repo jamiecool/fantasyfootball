@@ -161,15 +161,18 @@
   .noteBar{display:flex;gap:9px;align-items:center;margin-top:12px}
   .noteBar .spacer{flex:1}
   .btn.danger{color:var(--bad);border-color:var(--bad)}
-  /* Offence strength is a MAGNITUDE, so it gets a single-hue sequential ramp,
-     light to dark. The diverging green/red on this same table means something
-     else entirely (disagreement with Yahoo) and the two must not be confused.
-     One hue is also inherently colourblind-safe. */
-  .v4{background:color-mix(in srgb,var(--s1) 42%,transparent)}
-  .v3{background:color-mix(in srgb,var(--s1) 26%,transparent)}
-  .v2{background:color-mix(in srgb,var(--s1) 13%,transparent)}
-  .v1{background:transparent}
-  .v0{background:transparent}
+  /* Offence quality, diverging around league average: green above, red below.
+     Same poles as the vs-Yahoo column, which does mean the palette is doing two
+     jobs on one table -- the numbers differ in kind (a rate here, a signed rank
+     gap there) and both are always printed, so colour is never the only cue.
+     Green/red sits in the CVD warn band, hence the always-visible number. */
+  .o3{background:color-mix(in srgb,var(--div-pos) 50%,transparent)}
+  .o2{background:color-mix(in srgb,var(--div-pos) 30%,transparent)}
+  .o1{background:color-mix(in srgb,var(--div-pos) 14%,transparent)}
+  .o0{background:transparent}
+  .om1{background:color-mix(in srgb,var(--div-neg) 14%,transparent)}
+  .om2{background:color-mix(in srgb,var(--div-neg) 30%,transparent)}
+  .om3{background:color-mix(in srgb,var(--div-neg) 50%,transparent)}
   .vbar{display:inline-block;height:9px;border-radius:3px;background:var(--s1);
         vertical-align:-1px;min-width:2px}
   .toggle{margin-left:auto}
@@ -587,13 +590,13 @@ function boardTable() {
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
   };
   const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
-                ['nfl_team','tm'],['pts_per_game','off/g'],['playoff_pts','wk15-17'],
+                ['nfl_team','tm'],['pts_per_game','off/g'],['playoff_avg','wk15-17'],
                 ['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
   // Only the shaded column is pinned to its content width. A colour block as
   // wide as its share of the table reads as emphasis it has not earned; the
   // rest of the columns keep sharing the slack so the layout stays balanced.
   const TIGHT = {gap: 1, pts_per_game: 1, playoff_pts: 1};
-  const vcls = t => 'v' + (t || 0);
+  const vcls = t => t > 0 ? 'o' + t : t < 0 ? 'om' + (-t) : 'o0';
   document.getElementById('boardT').innerHTML =
     // leading counter is positional and renumbers with the sort, same as past drafts
     '<thead><tr><th class="l" style="cursor:default">#</th>' + cols.map(([k,l],i) =>
@@ -607,7 +610,7 @@ function boardTable() {
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
       <td class="l">${r.nfl_team}</td>
       <td class="${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game, ${r.vegas_rank} of 32` : 'no team'}">${r.pts_per_game || '\u2014'}</td>
-      <td class="${vcls(r.post_tier)}" title="${r.vegas_rank ? `${r.playoff_pts} points across weeks 15-17, our playoff window` : 'no team'}">${r.playoff_pts || '\u2014'}</td>
+      <td class="${vcls(r.post_tier)}" title="${r.vegas_rank ? `${r.playoff_avg} a game across weeks 15-17, our playoff window (${r.playoff_pts} total)` : 'no team'}">${r.playoff_avg || '\u2014'}</td>
       <td class="${gcls(r)}" style="${r.yahoo_rank ? '' : 'color:var(--muted)'}" title="${r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish'}">${r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—'}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
@@ -628,8 +631,8 @@ function boardTable() {
     'leaguemates are anchored to — green is where the room may let him go cheap. ' +
     'Hover for Yahoo’s average auction cost.</span>' +
     '<span style="flex-basis:100%;height:0"></span>' +
-    '<span>offence (Vegas):</span>' +
-    [['v4', 'top 8'], ['v3', '9-16'], ['v2', '17-24'], ['v1', 'bottom 8']].map(([c, l]) =>
+    '<span>offence (Vegas), points per game:</span>' +
+    [['o3', 'well above average'], ['o0', 'average'], ['om3', 'well below']].map(([c, l]) =>
       `<span><i class="${c}" style="border:1px solid var(--border)"></i>${l}</span>`).join('') +
     '<span style="color:var(--muted)">already priced into ADP \u2014 a sanity check while ' +
     'scanning, not a reason to bid. Sorting is unaffected.</span>';
@@ -1384,10 +1387,10 @@ function drawVegas() {
   const v = D.vegas || [];
   if (!v.length) return;
   const maxPPG = Math.max.apply(null, v.map(r => r.pts_per_game));
-  const tier = (r, k) => 'v' + (r[k] || 0);
+  const tier = (r, k) => (r[k] > 0 ? 'o' + r[k] : r[k] < 0 ? 'om' + (-r[k]) : 'o0');
   document.getElementById('vegT').innerHTML =
     '<thead><tr><th class="l" style="cursor:default">#</th><th class="l">team</th>' +
-    '<th>pts / game</th><th></th><th>wk 15-17</th><th>wk 15</th><th>wk 16</th>' +
+    '<th>pts / game</th><th></th><th>wk 15-17 /g</th><th>wk 15</th><th>wk 16</th>' +
     '<th>wk 17</th><th>draftable</th><th class="l">most expensive on our board</th>' +
     '</tr></thead><tbody>' +
     v.map((r, i) => `<tr>
@@ -1395,7 +1398,7 @@ function drawVegas() {
       <td class="l"><b>${r.team}</b></td>
       <td class="${tier(r, 'yr_tier')}">${r.pts_per_game}</td>
       <td style="width:130px"><i class="vbar" style="width:${Math.round(100 * r.pts_per_game / maxPPG)}%"></i></td>
-      <td class="${tier(r, 'post_tier')}">${r.playoff_pts}</td>
+      <td class="${tier(r, 'post_tier')}">${r.playoff_avg}</td>
       <td style="color:var(--ink2)">${r.week_15}</td>
       <td style="color:var(--ink2)">${r.week_16}</td>
       <td style="color:var(--ink2)">${r.week_17}</td>

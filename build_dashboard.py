@@ -64,25 +64,42 @@ b["yahoo_cost"] = b["average_cost"].fillna(0).round(1)
 # rule 4 says the market beats our re-derivation of it. It rides along as a
 # visual check while scanning the board: is this a good player on a good team?
 vt = pd.read_sql("SELECT * FROM vegas_team", con)
-vt["yr_tier"] = pd.qcut(vt["pts_per_game"].rank(method="first"), 4,
-                        labels=[1, 2, 3, 4]).astype(int)      # 4 = best offence
-vt["post_tier"] = pd.qcut(vt["playoff_pts"].rank(method="first"), 4,
-                          labels=[1, 2, 3, 4]).astype(int)
-b = b.merge(vt[["team", "pts_per_game", "playoff_pts", "yr_tier", "post_tier",
-                "vegas_rank"]].rename(columns={"team": "nfl_team"}),
+
+
+def vegas_tiers(df):
+    """Diverging tiers -3..+3 around the league, and a PER-GAME playoff number.
+
+    playoff_pts as published is the sum of weeks 15, 16 and 17, which is not
+    comparable to the points-per-game column sitting next to it. Averaging the
+    three makes both columns the same unit, so 26.1 season against 26.3 playoff
+    reads directly.
+    """
+    wk = [c for c in ("week_15", "week_16", "week_17") if c in df.columns]
+    df["playoff_avg"] = (df[wk].mean(axis=1) if wk
+                         else df["playoff_pts"] / 3).round(1)
+    for src, dest in (("pts_per_game", "yr_tier"), ("playoff_avg", "post_tier")):
+        # 7 buckets so the middle of the league reads as neutral rather than
+        # being forced into a colour it has not earned
+        df[dest] = pd.qcut(df[src].rank(method="first"), 7,
+                           labels=[-3, -2, -1, 0, 1, 2, 3]).astype(int)
+    return df
+
+
+vt = vegas_tiers(vt)
+b = b.merge(vt[["team", "pts_per_game", "playoff_pts", "playoff_avg", "yr_tier",
+                "post_tier", "vegas_rank"]].rename(columns={"team": "nfl_team"}),
             on="nfl_team", how="left")
-for c, d in [("pts_per_game", 0.0), ("playoff_pts", 0.0),
+for c, d in [("pts_per_game", 0.0), ("playoff_pts", 0.0), ("playoff_avg", 0.0),
              ("yr_tier", 0), ("post_tier", 0), ("vegas_rank", 0)]:
     b[c] = b[c].fillna(d)
-b["yr_tier"] = b["yr_tier"].astype(int)
-b["post_tier"] = b["post_tier"].astype(int)
-b["vegas_rank"] = b["vegas_rank"].astype(int)
+for c in ("yr_tier", "post_tier", "vegas_rank"):
+    b[c] = b[c].astype(int)
 
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
      "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
-     "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts",
+     "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts", "playoff_avg",
      "yr_tier", "post_tier", "vegas_rank"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
@@ -291,13 +308,7 @@ D["wk"] = {"cols": WK_COLS, "teams": TEAMS, "ps": ps_rows, "thresh": THRESH,
            "seasons": sorted({int(s) for s in pw["season"].unique()}, reverse=True)}
 
 # ---- 11. Vegas page --------------------------------------------------------
-_vt = pd.read_sql("SELECT * FROM vegas_team ORDER BY vegas_rank", con)
-# Same quartile tiers the board uses, computed here too so the page and the
-# board cannot drift apart (the page was silently rendering an absent tier).
-_vt["yr_tier"] = pd.qcut(_vt["pts_per_game"].rank(method="first"), 4,
-                         labels=[1, 2, 3, 4]).astype(int)
-_vt["post_tier"] = pd.qcut(_vt["playoff_pts"].rank(method="first"), 4,
-                           labels=[1, 2, 3, 4]).astype(int)
+_vt = vegas_tiers(pd.read_sql("SELECT * FROM vegas_team ORDER BY vegas_rank", con))
 _bd = pd.DataFrame(D["board"])
 # how many draftable players each offence actually supplies, so the page answers
 # "who does this get me" rather than just ranking teams
