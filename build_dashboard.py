@@ -95,12 +95,26 @@ for c, d in [("pts_per_game", 0.0), ("playoff_pts", 0.0), ("playoff_avg", 0.0),
 for c in ("yr_tier", "post_tier", "vegas_rank"):
     b[c] = b[c].astype(int)
 
+# ---- fair value (see build_fair_prices.py) ---------------------------------
+# What each player is worth if every dollar bought the same production above
+# replacement, as against est_price which is what the room will actually pay.
+_fp = os.path.join(OUT, "analysis", "fair_prices_2026.csv")
+if os.path.exists(_fp):
+    fair = pd.read_csv(_fp)[["player_key", "fair_price", "fair_gap", "exp_par"]]
+    b = b.merge(fair.drop_duplicates("player_key"), on="player_key", how="left")
+else:
+    b["fair_price"], b["fair_gap"], b["exp_par"] = b["est_price"], 0, 0.0
+b["fair_price"] = b["fair_price"].fillna(b["est_price"]).astype(int)
+b["fair_gap"] = b["fair_gap"].fillna(0).astype(int)
+b["exp_par"] = b["exp_par"].fillna(0).round(0).astype(int)
+
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
      "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
      "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts", "playoff_avg",
-     "yr_tier", "post_tier", "vegas_rank"]].fillna(0).to_dict("records")
+     "yr_tier", "post_tier", "vegas_rank",
+     "fair_price", "fair_gap", "exp_par"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks

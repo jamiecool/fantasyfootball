@@ -241,6 +241,7 @@
         <select id="posf"><option value="">all positions</option></select>
         <select id="teamf"><option value="">all NFL teams</option></select>
         <button class="btn" id="tgtOnly" aria-pressed="false">☆ targets only</button>
+        <button class="btn" id="fairBtn" aria-pressed="false">$ market price</button>
       </div>
       <div class="scroll" style="max-height:78vh"><table id="boardT"></table></div>
     </div>
@@ -564,6 +565,8 @@ markTheme();
 
 /* ---------- board table ---------- */
 let sortK = 'adp_rank', sortA = true, tgtOnly = false;
+// false = what the room will pay; true = what he is worth on realised value
+let fairMode = false;
 const posSel = document.getElementById('posf');
 [...new Set(D.board.map(r => r.position))].forEach(p =>
   posSel.insertAdjacentHTML('beforeend', `<option>${p}</option>`));
@@ -601,13 +604,24 @@ function boardTable() {
     return d === 3 ? 'd3' : d === 2 ? 'd2' : d === 1 ? 'd1'
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
   };
-  const cols = [['est_price','$'],['player_name','player'],['blendrank','pos'],
-                ['nfl_team','team'],['gap','vs Yahoo'],['move','trend'],['adp','ADP']];
+  // In fair mode the $ column shows the valuation, and the comparison column
+  // switches from 'what does Yahoo think' to 'what did repricing change'.
+  const priceKey = fairMode ? 'fair_price' : 'est_price';
+  const cmpKey = fairMode ? 'fair_gap' : 'gap';
+  const cols = [[priceKey, fairMode ? 'worth' : '$'],['player_name','player'],
+                ['blendrank','pos'],['nfl_team','team'],
+                [cmpKey, fairMode ? 'vs board' : 'vs Yahoo'],
+                ['move','trend'],['adp','ADP']];
   // Only the shaded column is pinned to its content width. A colour block as
   // wide as its share of the table reads as emphasis it has not earned; the
   // rest of the columns keep sharing the slack so the layout stays balanced.
-  const SHADED_W = '104px';                 // team and vs Yahoo, matched
-  const TIGHT = {gap: SHADED_W, nfl_team: SHADED_W};
+  const SHADED_W = '104px';                 // team and the comparison, matched
+  const TIGHT = {gap: SHADED_W, fair_gap: SHADED_W, nfl_team: SHADED_W};
+  // dollars of mispricing, not ranks, so the steps are in dollars
+  const fcls = g => { const a = Math.abs(g),
+    d = (a >= 8 ? 3 : a >= 5 ? 2 : a >= 2 ? 1 : 0) * (g < 0 ? -1 : 1);
+    return d === 3 ? 'd3' : d === 2 ? 'd2' : d === 1 ? 'd1'
+         : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3'; };
   const vcls = t => t > 0 ? 'o' + t : t < 0 ? 'om' + (-t) : 'o0';
   document.getElementById('boardT').innerHTML =
     // leading counter is positional and renumbers with the sort, same as past drafts
@@ -617,11 +631,11 @@ function boardTable() {
     '</tr></thead><tbody>' +
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
-      <td><b>$${r.est_price}</b></td>
+      <td title="${fairMode ? `the room will pay about $${r.est_price}` : `worth about $${r.fair_price} on what this band has returned`}"><b>$${fairMode ? r.fair_price : r.est_price}</b></td>
       <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}${noteHtml(r.player_key)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
       <td class="l ${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game \u2014 ${r.vegas_rank} of 32, and ${r.playoff_avg} a game in weeks 15-17` : ''}">${r.nfl_team}</td>
-      <td class="${gcls(r)}" style="${r.yahoo_rank ? '' : 'color:var(--muted)'}" title="${r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish'}">${r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—'}</td>
+      <td class="${fairMode ? fcls(r.fair_gap) : gcls(r)}" style="${(fairMode || r.yahoo_rank) ? '' : 'color:var(--muted)'}" title="${fairMode ? `market $${r.est_price}, worth $${r.fair_price} on ${r.exp_par} expected points above replacement` : (r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish')}">${fairMode ? ((r.fair_gap > 0 ? '+$' : r.fair_gap < 0 ? '-$' : '') + (r.fair_gap ? Math.abs(r.fair_gap) : '0')) : (r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—')}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
@@ -641,17 +655,40 @@ function boardTable() {
     '<span><b>team</b> — Vegas on the offence:</span>' +
     swatch([['o3', 'strong'], ['o0', 'average'], ['om3', 'weak']]) +
     '<span style="color:var(--axis)">|</span>' +
-    '<span><b>vs Yahoo</b> — rank against the room:</span>' +
-    swatch([['d3', 'they sleep on him'], ['d0', 'agree'], ['dm3', 'they hype him']]) +
-    '<span style="flex-basis:100%;height:0"></span>' +
-    '<span style="color:var(--muted)">Both are already inside ADP, so they are sanity ' +
-    'checks while scanning, not reasons to bid. Neither affects sorting. Hover either ' +
-    'for the underlying numbers.</span>';
+    (fairMode
+      ? '<span><b>vs board</b> — what repricing changed:</span>' +
+        swatch([['d3', 'worth more than market'], ['d0', 'priced right'],
+                ['dm3', 'worth less than market']]) +
+        '<span style="flex-basis:100%;height:0"></span>' +
+        '<span style="color:var(--muted)"><b>Worth</b> is what a player at this price ' +
+        'and position has historically returned, with the $1-a-spot cost of filling ' +
+        '16 roster slots taken out first. It knows the BAND, not the man — every $1 ' +
+        'quarterback prices at $9 because that is what $1 quarterbacks have averaged. ' +
+        'Read it as where the money is mispriced, not as a player rating.</span>'
+      : '<span><b>vs Yahoo</b> — rank against the room:</span>' +
+        swatch([['d3', 'they sleep on him'], ['d0', 'agree'], ['dm3', 'they hype him']]) +
+        '<span style="flex-basis:100%;height:0"></span>' +
+        '<span style="color:var(--muted)">Both are already inside ADP, so they are sanity ' +
+        'checks while scanning, not reasons to bid. Neither affects sorting. Hover either ' +
+        'for the underlying numbers.</span>');
   document.querySelectorAll('#boardT th[data-k]').forEach(th => th.onclick = () => {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
 document.getElementById('q').oninput = boardTable;
 document.getElementById('tgtOnly').onclick = () => { tgtOnly = !tgtOnly; boardTable(); };
+document.getElementById('fairBtn').onclick = () => {
+  fairMode = !fairMode;
+  const b = document.getElementById('fairBtn');
+  b.classList.toggle('on', fairMode);
+  b.setAttribute('aria-pressed', fairMode);
+  b.textContent = fairMode ? '$ fair value' : '$ market price';
+  // sorting by a price column should follow the column you are looking at
+  if (sortK === 'est_price' || sortK === 'fair_price')
+    sortK = fairMode ? 'fair_price' : 'est_price';
+  if (sortK === 'gap' || sortK === 'fair_gap')
+    sortK = fairMode ? 'fair_gap' : 'gap';
+  boardTable();
+};
 posSel.onchange = teamSel.onchange = boardTable;
 
 /* ---------- charts ---------- */
