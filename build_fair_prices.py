@@ -25,9 +25,12 @@ which is VBD *after* paying for the spots. That single correction is what stops
 it from manufacturing $90 studs the way the rejected version did.
 
 Expected PAR comes from an isotonic fit of PAR against price, per position, over
-nine seasons -- the same smoothing used for the price curve and for
-build_best_roster.py, and for the same reason: raw price cells at the top of the
-board rest on a handful of picks.
+THE SAME 2023-25 WINDOW build_2026_board.py prices on. Valuing on nine seasons
+while pricing on three meant the two halves of the board described different
+markets -- RB returned under 1.0 for seven straight seasons then flipped to 1.01
+and 1.08 in 2024-25, so the long window docked every RB for a market that has
+moved on. Isotonic rather than raw cells for the usual reason: the top of the
+board rests on a handful of picks.
 
 Run:  python build_fair_prices.py
 """
@@ -62,6 +65,22 @@ for (s, pos), g in fr.groupby(["season", "position"]):
         repl[(s, pos)] = row.points.iloc[0] if len(row) else 0
 p["par"] = [max(0.0, x.pts - repl.get((x.season, x.position), 0)) for x in p.itertuples()]
 
+# SAME WINDOW AS THE PRICE CURVE. build_2026_board.py fits est_price on 2023-25
+# only, because the positional market has moved -- RB fell from 48.6% of spend
+# in 2020 to 35.8% in 2024. Valuing on nine seasons while pricing on three meant
+# the two halves of the board were describing different markets, and it showed:
+# RB returned below 1.0 for seven straight seasons and then flipped to 1.01 and
+# 1.08 in 2024-25, so the long window was docking every RB for a market that no
+# longer exists.
+PAR_SEASONS = (2023, 2025)
+full = p
+p = p[p.season.between(*PAR_SEASONS)].copy()
+print(f"fitting PAR on {PAR_SEASONS[0]}-{PAR_SEASONS[1]} to match the price curve "
+      f"({len(p)} picks of {len(full)})")
+_thin = [pos for pos, g in p.groupby("position") if len(g) < 40]
+if _thin:
+    print(f"  thin after the cut, treat their curves with suspicion: {_thin}")
+
 CURVE = {}
 for pos, sub in p.groupby("position"):
     if len(sub) < 25 or sub.price.nunique() < 4:
@@ -71,7 +90,7 @@ for pos, sub in p.groupby("position"):
     iso.fit(sub.price.to_numpy(float), sub.par.to_numpy(float))
     CURVE[pos] = iso.predict
 
-print("expected PAR at each price, fitted over 9 seasons:")
+print("expected PAR at each price, fitted over the matched window:")
 pts = (1, 3, 8, 15, 25, 40, 60)
 print("  " + " " * 5 + "".join("%8s" % ("$" + str(v)) for v in pts))
 for pos in ["QB", "RB", "WR", "TE", "K", "DEF"]:
@@ -109,6 +128,28 @@ chk = board.loc[board["draftable"], "fair_price"].sum()
 print(f"\nfair prices sum to ${chk:,} against a ${POOL:,} pool "
       f"({100 * chk / POOL:.0f}%); market prices sum to "
       f"${board.loc[board['draftable'], 'est_price'].sum():,}")
+
+# what the window change costs or gives back, position by position
+_alt = {}
+for pos, sub in full.groupby("position"):
+    if len(sub) >= 25 and sub.price.nunique() >= 4:
+        _i = IsotonicRegression(increasing=True, out_of_bounds="clip")
+        _i.fit(sub.price.to_numpy(float), sub.par.to_numpy(float))
+        _alt[pos] = _i.predict
+board["par_9yr"] = [float(_alt[r.position]([r.est_price])[0]) if r.position in _alt
+                    else 0.0 for r in board.itertuples()]
+board.loc[~board["draftable"] | NO_DATA, "par_9yr"] = 0.0
+_t9 = board.loc[board["draftable"] & ~NO_DATA, "par_9yr"].sum()
+board["fair_9yr"] = (1 + surplus * board["par_9yr"] / _t9).round(0).astype(int)
+board.loc[NO_DATA, "fair_9yr"] = board.loc[NO_DATA, "est_price"]
+_cmp = board[board.draftable].groupby("position").agg(
+    market=("est_price", "sum"), nine=("fair_9yr", "sum"), three=("fair_price", "sum"))
+_cmp["9yr vs mkt"] = (_cmp.nine - _cmp.market).astype(int)
+_cmp["3yr vs mkt"] = (_cmp.three - _cmp.market).astype(int)
+print("\n" + "=" * 76)
+print("WHAT MATCHING THE WINDOW CHANGED, by position")
+print("=" * 76)
+print(_cmp[["market", "9yr vs mkt", "3yr vs mkt"]].to_string())
 
 cols = ["player_key", "player_name", "position", "nfl_team", "est_price",
         "fair_price", "fair_gap", "exp_par", "draftable"]
