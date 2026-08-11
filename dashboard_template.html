@@ -91,6 +91,33 @@
   .filters{display:flex;gap:8px;align-items:center;margin-bottom:11px;flex-wrap:wrap}
   input[type=search],select{background:var(--plane);color:var(--ink);border:1px solid var(--border);
        border-radius:7px;padding:5px 9px;font:inherit;font-size:12.5px}
+  .planbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .planbar .spacer{flex:1}
+  .btn{background:var(--surface);color:var(--ink);border:1px solid var(--border);
+       border-radius:7px;padding:5px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+  .btn:hover{background:var(--plane)}
+  .btn.mini{padding:1px 7px;font-size:11px;line-height:1.5}
+  .meter{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+  .meter b{color:var(--ink);font-size:14px}
+  .plangrid{display:grid;grid-template-columns:minmax(340px,1fr) minmax(340px,1fr);
+            gap:16px;align-items:start}
+  @media (max-width:900px){.plangrid{grid-template-columns:1fr}}
+  .slot{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid var(--grid)}
+  .slot .lab{width:38px;color:var(--muted);font-size:11px;font-weight:650}
+  .slot .nm{flex:1;font-size:12.5px}
+  .slot .pr{font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums}
+  .slot.empty .nm{color:var(--muted);font-style:italic}
+  .slot.bench{opacity:.85}
+  .chk{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:5px}
+  .bar{height:7px;border-radius:4px;background:var(--grid);overflow:hidden;
+       width:150px;display:inline-block;vertical-align:-1px;margin:0 7px}
+  .bar i{display:block;height:100%;background:var(--s1)}
+  .bar i.over{background:var(--bad)}
+  .nameEdit{background:transparent;border:1px solid transparent;border-radius:7px;
+       color:var(--ink);font:inherit;font-size:14px;font-weight:650;padding:2px 6px;
+       margin:0 0 6px -6px;width:100%;max-width:320px}
+  .nameEdit:hover{border-color:var(--border)}
+  .nameEdit:focus{outline:none;border-color:var(--s1);background:var(--plane)}
   .toggle{margin-left:auto}
 </style>
 </head>
@@ -103,22 +130,15 @@
 
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" aria-selected="true"  data-p="board">2026 board</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="value">Value by price</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="hist">League history</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="mkt">Market disagreement</button>
   <button class="tab" role="tab" aria-selected="false" data-p="last" id="lastTab">Past drafts</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="plan">Draft plan</button>
+  <button class="tab" role="tab" aria-selected="false" data-p="anl">Analytics</button>
 </div>
 
 <main>
   <section class="panel" id="p-board">
     <div class="card">
       <h2>The board</h2>
-      <p class="note"><b>rank</b> is the positional rank, weighted <b>75% market ADP / 25%
-         projection</b> — the board's job is what the room will pay, and two independent
-         markets agree with each other far more (ρ 0.95) than either agrees with any single
-         projection model (0.65–0.72), so ADP carries it. <b>mkt</b> and <b>proj</b> show the
-         two inputs. <b>trend</b> is Underdog ADP movement since its last update — positive
-         means the market is moving toward him. Click any header to sort.</p>
       <div class="filters">
         <input type="search" id="q" placeholder="filter players…">
         <select id="posf"><option value="">all positions</option></select>
@@ -128,7 +148,56 @@
     </div>
   </section>
 
-  <section class="panel" id="p-value" hidden>
+        <section class="panel" id="p-last" hidden>
+    <div class="card">
+      <h2 id="lastH">Every pick</h2>
+      <div class="legend" id="dvLeg"></div>
+      <div class="filters">
+        <select id="lseason" style="font-weight:650"></select>
+        <input type="search" id="lq" placeholder="filter players…">
+        <select id="lteam"><option value="">all teams</option></select>
+        <select id="lpos"><option value="">all positions</option></select>
+        <select id="lnfl"><option value="">all NFL teams</option></select>
+      </div>
+      <div class="scroll"><table id="lastT"></table></div>
+    </div>
+    <div class="row" id="lastTiles"></div>
+    <div class="card">
+      <h2>By team</h2>
+      <div class="scroll" style="max-height:none"><table id="lastTeamT"></table></div>
+    </div>
+  </section>
+    <section class="panel" id="p-plan" hidden>
+    <div class="planbar">
+      <select id="planSel"></select>
+      <button class="btn" id="planNew">+ new</button>
+      <button class="btn" id="planCopy">duplicate</button>
+      <button class="btn" id="planDel">delete</button>
+      <span class="spacer"></span>
+      <span id="planMeter" class="meter"></span>
+    </div>
+    <div class="plangrid">
+      <div class="card">
+        <input id="planName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        <div id="planRoster"></div>
+      </div>
+      <div class="card">
+        <h2>Add players</h2>
+        <div class="filters">
+          <input type="search" id="pq" placeholder="search…">
+          <select id="ppos"><option value="">all pos</option></select>
+          <label class="chk"><input type="checkbox" id="phide" checked> hide drafted</label>
+        </div>
+        <div class="scroll" style="max-height:62vh"><table id="planPool"></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Compare</h2>
+      <div class="scroll" style="max-height:none"><table id="planCmp"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-anl" hidden>
     <div class="card">
       <h2>Did each price tier return its share of the value?</h2>
       <p class="note">Share of value delivered ÷ share of money spent, over 1,514 skill
@@ -145,18 +214,12 @@
       <div class="legend" id="stLeg"></div>
       <div id="startable"></div>
     </div>
-  </section>
-
-  <section class="panel" id="p-hist" hidden>
     <div class="card">
       <h2>Share of league spend by position</h2>
       <p class="note">Percent of the $2,400 pool spent at each position, by season.</p>
       <div class="legend" id="psLeg"></div>
       <div id="posshare"></div>
     </div>
-  </section>
-
-  <section class="panel" id="p-mkt" hidden>
     <div class="card">
       <h2>FFC vs Underdog ADP</h2>
       <p class="note">Each dot is a player. The diagonal is agreement. Dots above it are
@@ -168,35 +231,6 @@
       <h2>Biggest disagreements</h2>
       <p class="note">Sorted by absolute gap. These are the players whose price is least trustworthy.</p>
       <div class="scroll"><table id="mktT"></table></div>
-    </div>
-  </section>
-
-  <section class="panel" id="p-last" hidden>
-    <div class="card">
-      <h2 id="lastH">Every pick</h2>
-      <p class="note"><b>Exp</b> is the median finish this league has historically got from
-         that price band, over nine seasons. <b>vs exp</b> is the gap in positional ranks — positive means the pick
-         beat its price. <b>Shading is by production gained, not rank</b>: a rank gap means
-         far more at the top of a position (RB1→RB6 is 80 points; RB50→RB55 is 6), so the
-         colour uses points measured in median-starter units. Hover any cell for the value. Rows marked <i>est</i> had their price reconstructed
-         (drafted then dropped, so Yahoo no longer stored what was paid).</p>
-      <div class="legend" id="dvLeg"></div>
-      <div class="filters">
-        <select id="lseason" style="font-weight:650"></select>
-        <input type="search" id="lq" placeholder="filter players…">
-        <select id="lteam"><option value="">all teams</option></select>
-        <select id="lpos"><option value="">all positions</option></select>
-        <select id="lnfl"><option value="">all NFL teams</option></select>
-      </div>
-      <div class="scroll"><table id="lastT"></table></div>
-    </div>
-    <div class="row" id="lastTiles"></div>
-    <div class="card">
-      <h2>By team</h2>
-      <p class="note">What each franchise spent and what the drafted players returned.
-         Points-for is the team's actual season total; draft points are what these
-         16 picks scored, which ignores in-season moves.</p>
-      <div class="scroll" style="max-height:none"><table id="lastTeamT"></table></div>
     </div>
   </section>
 </main>
@@ -519,8 +553,198 @@ function lastTable() {
     lSortA = lSortK === th.dataset.k ? !lSortA : true; lSortK = th.dataset.k; lastTable(); });
 }
 
+
+/* ---------- draft planner ---------- */
+const PLAN_KEY = 'pbaffl_plans_v1';
+const BUD = D.budget, SPOTS = D.spots, NEED = D.starters;
+const BENCH_SLOTS = SPOTS - Object.values(NEED).reduce((a, b) => a + b, 0);
+const byName = {};
+D.board.forEach(r => { byName[r.player_name] = r; });
+
+let plans = [], active = 0;
+try { plans = JSON.parse(localStorage.getItem(PLAN_KEY)) || []; } catch (e) { plans = []; }
+if (!plans.length) plans = [{ name: 'Plan A', picks: [] }];
+const savePlans = () => localStorage.setItem(PLAN_KEY, JSON.stringify(plans));
+const cur = () => plans[active];
+
+/* Every derived number for a roster, in one place, used by the panel and the
+   comparison alike so the two can never disagree. */
+function planStats(p) {
+  const rows = p.picks.map(n => byName[n]).filter(Boolean);
+  const spend = rows.reduce((a, r) => a + r.est_price, 0);
+  const need = Object.assign({}, NEED), starters = [], bench = [];
+  // fill required slots most-expensive-first, overflow to the bench
+  rows.slice().sort((a, b) => b.est_price - a.est_price).forEach(r => {
+    if (need[r.position] > 0) { need[r.position]--; starters.push(r); } else bench.push(r);
+  });
+  const missing = Object.keys(need).filter(k => need[k] > 0).map(k => [k, need[k]]);
+  const byPos = {};
+  rows.forEach(r => { byPos[r.position] = (byPos[r.position] || 0) + r.est_price; });
+  const top3 = rows.slice().sort((a, b) => b.est_price - a.est_price)
+    .slice(0, 3).reduce((a, r) => a + r.est_price, 0);
+  return {
+    rows: rows, starters: starters, bench: bench, spend: spend, missing: missing,
+    byPos: byPos, top3: top3, left: BUD - spend, slots: SPOTS - rows.length,
+    projStart: Math.round(starters.reduce((a, r) => a + (r.proj_points || 0), 0)),
+    legal: missing.length === 0 && rows.length <= SPOTS && spend <= BUD
+  };
+}
+
+function planBar() {
+  const sel = document.getElementById('planSel');
+  sel.innerHTML = plans.map(function (p, i) {
+    return '<option value="' + i + '"' + (i === active ? ' selected' : '') + '>' + p.name + '</option>';
+  }).join('');
+  const s = planStats(cur());
+  const pct = Math.min(100, 100 * s.spend / BUD);
+  document.getElementById('planMeter').innerHTML =
+    '<b>$' + s.spend + '</b> / $' + BUD +
+    '<span class="bar"><i class="' + (s.spend > BUD ? 'over' : '') + '" style="width:' + pct + '%"></i></span>' +
+    '$' + s.left + ' left &middot; ' + s.rows.length + '/' + SPOTS + ' picks &middot; ' +
+    (s.legal ? '<span class="up">lineup complete</span>'
+             : '<span class="dn">need ' + s.missing.map(function (m) { return m[1] + ' ' + m[0]; }).join(', ') + '</span>');
+  const nm = document.getElementById('planName');
+  if (document.activeElement !== nm) nm.value = cur().name;
+}
+
+function slotRow(lab, r, cls) {
+  return '<div class="slot ' + cls + (r ? '' : ' empty') + '">' +
+    '<span class="lab">' + lab + '</span>' +
+    '<span class="nm">' + (r ? r.player_name +
+      ' <span style="color:var(--muted)">' + r.position + r.blendrank + ' &middot; ' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
+    '<span class="pr">' + (r ? '$' + r.est_price : '') + '</span>' +
+    (r ? '<button class="btn mini" data-drop="' + r.player_name + '">&times;</button>' : '') +
+    '</div>';
+}
+
+function planRoster() {
+  const s = planStats(cur());
+  const pool = s.starters.slice();
+  let html = '';
+  Object.keys(NEED).forEach(function (pos) {
+    for (let i = 0; i < NEED[pos]; i++) {
+      const idx = pool.findIndex(function (r) { return r.position === pos; });
+      html += slotRow(pos, idx >= 0 ? pool.splice(idx, 1)[0] : null, 'start');
+    }
+  });
+  html += '<div class="slot" style="border:0;padding-top:10px"><span class="lab">BENCH</span><span class="nm"></span></div>';
+  for (let i = 0; i < BENCH_SLOTS; i++) html += slotRow('', s.bench[i] || null, 'bench');
+  const host = document.getElementById('planRoster');
+  host.innerHTML = html;
+  host.querySelectorAll('[data-drop]').forEach(function (b) {
+    b.onclick = function () {
+      cur().picks = cur().picks.filter(function (n) { return n !== b.dataset.drop; });
+      savePlans(); drawPlan();
+    };
+  });
+}
+
+function planPool() {
+  const q = document.getElementById('pq').value.toLowerCase();
+  const pf = document.getElementById('ppos').value;
+  const hide = document.getElementById('phide').checked;
+  const taken = {};
+  cur().picks.forEach(function (n) { taken[n] = 1; });
+  const rows = D.board.filter(function (r) {
+    return (!q || r.player_name.toLowerCase().indexOf(q) >= 0) &&
+           (!pf || r.position === pf) && (!hide || !taken[r.player_name]);
+  }).slice(0, 300);
+  document.getElementById('planPool').innerHTML =
+    '<thead><tr><th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
+    rows.map(function (r) {
+      return '<tr><td class="l">' + r.player_name + '</td>' +
+        '<td><b>$' + r.est_price + '</b></td>' +
+        '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
+        r.position + r.blendrank + '</span></td>' +
+        '<td>' + r.nfl_team + '</td>' +
+        '<td><button class="btn mini" data-add="' + r.player_name + '">' +
+        (taken[r.player_name] ? '&check;' : '+') + '</button></td></tr>';
+    }).join('') + '</tbody>';
+  document.querySelectorAll('#planPool [data-add]').forEach(function (b) {
+    b.onclick = function () {
+      const n = b.dataset.add;
+      if (cur().picks.indexOf(n) >= 0) cur().picks = cur().picks.filter(function (x) { return x !== n; });
+      else if (cur().picks.length < SPOTS) cur().picks.push(n);
+      savePlans(); drawPlan();
+    };
+  });
+}
+
+function planCompare() {
+  const st = plans.map(planStats);
+  const POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
+  function row(lab, fn, note) {
+    return '<tr><td class="l">' + lab +
+      (note ? ' <span style="color:var(--muted)">' + note + '</span>' : '') + '</td>' +
+      st.map(function (s) { return '<td>' + fn(s) + '</td>'; }).join('') + '</tr>';
+  }
+  document.getElementById('planCmp').innerHTML =
+    '<thead><tr><th class="l">metric</th>' +
+    plans.map(function (p, i) {
+      return '<th' + (i === active ? ' style="color:var(--ink)"' : '') + '>' + p.name + '</th>';
+    }).join('') + '</tr></thead><tbody>' +
+    row('spent', function (s) { return '$' + s.spend; }) +
+    row('left', function (s) { return '$' + s.left; }) +
+    row('picks', function (s) { return s.rows.length + '/' + SPOTS; }) +
+    row('lineup', function (s) {
+      return s.legal ? '<span class="up">complete</span>'
+        : '<span class="dn">need ' + s.missing.map(function (m) { return m[1] + m[0]; }).join(' ') + '</span>';
+    }) +
+    row('projected starters', function (s) { return s.projStart || '&mdash;'; }, 'pts') +
+    row('top-3 share of budget', function (s) { return Math.round(100 * s.top3 / BUD) + '%'; }) +
+    POS.map(function (p) {
+      return row(p + ' spend', function (s) {
+        const v = s.byPos[p] || 0;
+        return '$' + v + ' <span style="color:var(--muted)">' +
+          (s.spend ? Math.round(100 * v / s.spend) : 0) + '%</span>';
+      }, 'league ' + (D.league_pos_share[p] === undefined ? 0 : D.league_pos_share[p]) + '%');
+    }).join('') + '</tbody>';
+}
+
+function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
+
+(function initPlan() {
+  const ps = document.getElementById('ppos');
+  const seen = {};
+  D.board.forEach(function (r) {
+    if (!seen[r.position]) { seen[r.position] = 1; ps.insertAdjacentHTML('beforeend', '<option>' + r.position + '</option>'); }
+  });
+  document.getElementById('pq').oninput = planPool;
+  ps.onchange = planPool;
+  document.getElementById('phide').onchange = planPool;
+  document.getElementById('planSel').onchange = function (e) { active = +e.target.value; drawPlan(); };
+  document.getElementById('planNew').onclick = function () {
+    const n = prompt('Name this plan', 'Plan ' + String.fromCharCode(65 + plans.length));
+    if (n === null) return;
+    plans.push({ name: n.trim() || 'Plan ' + String.fromCharCode(65 + plans.length), picks: [] });
+    active = plans.length - 1; savePlans(); drawPlan();
+  };
+  // editing the header renames the active plan as you type; only the dropdown
+  // and compare header need repainting, so the field never loses focus
+  const nameBox = document.getElementById('planName');
+  nameBox.oninput = function () {
+    cur().name = nameBox.value;
+    savePlans(); planBar(); planCompare();
+  };
+  nameBox.onblur = function () {
+    if (!cur().name.trim()) { cur().name = 'Plan ' + (active + 1); savePlans(); drawPlan(); }
+  };
+  document.getElementById('planCopy').onclick = function () {
+    const n = prompt('Name the copy', cur().name + ' copy');
+    if (n === null) return;
+    plans.push({ name: n.trim() || cur().name + ' copy', picks: cur().picks.slice() });
+    active = plans.length - 1; savePlans(); drawPlan();
+  };
+  document.getElementById('planDel').onclick = function () {
+    if (plans.length === 1) plans = [{ name: 'Plan A', picks: [] }];
+    else plans.splice(active, 1);
+    active = Math.max(0, Math.min(active, plans.length - 1));
+    savePlans(); drawPlan();
+  };
+})();
+
 function draw() {
-  boardTable(); drawLast();
+  boardTable(); drawLast(); drawPlan();
   tierChart(); startableChart(); posShare(); scatter();
 }
 draw();

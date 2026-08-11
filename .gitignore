@@ -3,6 +3,7 @@ cleandata/fantasy.db
 cleandata/csv/
 cleandata/parquet/
 cleandata/analysis/
+cleandata/dashboard.html
 
 # ...but these two are not generated output:
 #   cleandata/README.md          schema documentation
@@ -10,6 +11,10 @@ cleandata/analysis/
 
 # Excel lock files (created while a workbook is open)
 ~$*.xls*
+
+# Yahoo OAuth — secrets, never commit
+yahoo_credentials.json
+yahoo_token.json
 
 # Python
 __pycache__/

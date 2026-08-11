@@ -51,7 +51,7 @@ b["blendrank"] = b.groupby("position")["blend"].rank(method="first").astype(int)
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "position", "posrank", "projrank", "blendrank",
-     "move", "nfl_team", "adp", "est_price"]].fillna(0).to_dict("records")
+     "move", "nfl_team", "adp", "est_price", "proj_points"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks
@@ -183,6 +183,13 @@ for season in SEASONS:
     team = team.merge(stand[stand.season == season].drop(columns=["season"]),
                       on="franchise", how="left").sort_values("spend", ascending=False)
     D["draft_teams"][str(season)] = team.fillna("").to_dict("records")
+
+D["starters"] = STARTERS_CFG = {"QB": 1, "RB": 2, "WR": 3, "TE": 1, "K": 1, "DEF": 1}
+D["budget"], D["spots"] = 200, 16
+_ps = pd.read_sql("""SELECT position, SUM(price) s FROM draft_picks
+                     WHERE season BETWEEN 2023 AND 2025 GROUP BY position""", con)
+D["league_pos_share"] = {r.position: round(100 * r.s / _ps.s.sum(), 1)
+                         for r in _ps.itertuples()}
 
 D["seasons_list"] = SEASONS
 D["last_season"] = SEASONS[0]
