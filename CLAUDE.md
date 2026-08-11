@@ -966,6 +966,89 @@ not yet model wins.
 Open choice put to Jamie, unanswered: build the H2H/playoff model properly first, or
 ship a usable draft board now and refine after.
 
+## Auction theory, round 2 (researched 2026-08-10) — in-draft tactics
+
+The first research pass covered pre-draft *allocation* (VBD, baselines, stars-and-scrubs).
+Since then we established allocation is close to a wash (Finding 9), so this pass targets
+what's left: mechanics, bidding, and nomination. Sources at the bottom of this file.
+
+### A live auction is a SECOND-PRICE auction — this changes the right play
+
+An open-outcry ascending auction settles at **the second-highest valuation plus $1**, not
+the winner's. Consequences:
+
+- **Do not shade your bids.** Bid shading is correct for *sealed-bid* formats (FAAB), where
+  you pay your own number. In a live auction the price is set by everyone else, so the
+  right play is to bid up to your true value and stop.
+- **Your edge is over the room's SECOND-most-optimistic bidder**, not the whole room. You
+  profit on players where you are right and the *runner-up* is wrong — being uniquely high
+  on someone is worth nothing extra, you just pay one dollar over the next guy.
+- The winner's curse is therefore **weaker here than in FAAB**, but not absent: the
+  second-highest bid is still drawn from the upper tail of the room's estimates.
+
+### The certainty premium — this explains Finding 11's empirical result
+
+Elite players "command premium prices" as *the certainty*: managers pay extra for
+predictable production. That is the mechanism behind the tier-value result we measured
+independently:
+
+| tier | value returned ÷ cost | p10 outcome (bad case) |
+| --- | --- | --- |
+| $1–2 | **3.16×** | 0.20× projection |
+| $21–35 | 0.79× | 0.46× |
+| $36+ | 0.88× | **0.51×** |
+
+Expensive players **are** genuinely safer — we measured the tightest outcome distribution
+at $36+. Buyers are paying for real risk reduction; it is simply priced above its
+expected-points value. Both facts are true at once, and they stop contradicting each other
+once you see the premium as buying *variance reduction* rather than points.
+
+**The actionable consequence, and it is specific to Jamie's stated goal:** certainty is
+worth less to a manager optimising for **1st place** than to one optimising for a winning
+record. A threshold objective (top 6, then win three weeks) rewards ceiling; the premium
+buys floor. **So he should be systematically LESS willing to pay the certainty premium
+than his leaguemates are** — that is an edge available from his objective alone, requiring
+no better player evaluation.
+
+Consistent with the playoff-format literature: in short samples depth matters less than
+ceiling, and boom/bust profiles that are wrong for a regular season are right for weeks
+15–17.
+
+### Nomination tactics (received wisdom — and our data disagrees)
+
+The standard five-phase playbook: nominate hyped second-tier QBs first to drain budgets
+early; nominate mid-tier RB/WR ahead of their rank to inflate them; trigger a TE run;
+late on, nominate players that fit *opponents'* needs to strain their budgets; only
+nominate your own targets at the close. Never nominate K/DEF early.
+
+⚠️ **Finding 4 measured nomination timing at ±1.5% of value in this league — no effect.**
+Either the tactics don't work here, or our measure (surplus by draft phase) is too coarse
+to see them. Do not adopt the playbook as fact; it is a hypothesis we have already failed
+to confirm once.
+
+### Budget pacing and the endgame
+
+- $200 / 16 spots = **~$12.50 per slot** average. Useful as a live sanity check.
+- **Keep ≥$2 per remaining roster spot.** The last-dollar advantage is real leverage: with
+  $2 while the room has $1, you win every contested scrap. Our data supports the setup —
+  **$1 is the single most common price in league history** (97 of 576 picks, 2023–25).
+- **Price enforcement is a trap.** Bidding purely to "set the market" risks owning players
+  you don't want. Rule: every bid must be one you'd be content to win.
+- Set a max per player before the draft and never cross it live.
+
+### How this squares with what we already know
+
+| received wisdom | our data |
+| --- | --- |
+| Stars-and-scrubs wins | Shape is a wash (r = +0.02; shapes within 4.2%) |
+| Nomination tactics move prices | No effect measured (±1.5%) |
+| Elite players are worth the premium | They return 0.88× cost — but are genuinely safest |
+| Cheap $1 fliers backfill the roster | True per dollar (3.16×), but only 26% are startable |
+
+The two that survive contact with the data are **the certainty premium** (explains the
+tier curve) and **the endgame dollar** (cheap to exploit, consistent with $1 being the
+modal price).
+
 ## Analysis backlog
 
 Ordered by expected value, revised after the session's findings:
@@ -1008,3 +1091,12 @@ Done or superseded: positional market drift (`v_position_spend`), stars-and-scru
 - [FantasyPros — Stars and Scrubs or Balanced](https://www.fantasypros.com/2019/06/stars-and-scrubs-or-balanced-auction-roster-how-to-decide-fantasy-football/)
 - [Fantasy Football Calculator — auction strategy](https://fantasyfootballcalculator.com/news/fantasy-football-auction-draft-strategy) (also our ADP source)
 - [nflverse data releases](https://github.com/nflverse/nflverse-data) (stat lines)
+
+Second research pass (in-draft tactics, 2026-08-10):
+
+- [Auction theory for fantasy — winner's curse, English vs sealed-bid, bid shading](https://pitcherlist.com/auction-theory-for-fantasy-baseball/)
+- [Winner's curse (definition and the conditional-on-winning fix)](https://en.wikipedia.org/wiki/Winner%27s_curse)
+- [The power of strategic nominations — the five-phase playbook](https://www.thefantasyfootballers.com/analysis/fantasy-football-auction-drafts-the-power-of-strategic-nominations-fantasy-football/)
+- [Auction budget basics and the $2-per-roster-spot endgame rule](https://www.thefantasyfootballers.com/analysis/fantasy-football-auction-drafts-budget-basics/)
+- [2026 auction strategy — budget tiers, nomination tricks](https://hellorookie.com/fantasy-football-auction-draft-strategy-budget-tiers-nomination-tricks-and-value-targets/amp/)
+- [Elite WRs as "the certainty" — the premium framing](https://www.fantasylife.com/articles/fantasy/auction-fantasy-football-strategy-how-to-approach-wrs-in-2026)

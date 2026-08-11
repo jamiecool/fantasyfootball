@@ -548,6 +548,12 @@ if adp_rows:
         adp_all["adp_delta"] = pd.NA
     adp_all["player_key"] = adp_all["player_name"].map(player_key)
     adp_all["nfl_franchise"] = adp_all["nfl_team"].replace(NFL_MOVES)
+    # Defenses are named three different ways across sources ("Atlanta Defense",
+    # "Los Angeles Rams", "DEN DEF"), so normalise them to the same key the
+    # draft and results tables use, or nothing joins.
+    dm = adp_all["position"] == "DEF"
+    adp_all.loc[dm, "player_name"] = adp_all.loc[dm, "nfl_franchise"] + " DEF"
+    adp_all.loc[dm, "player_key"] = "def_" + adp_all.loc[dm, "nfl_franchise"].str.lower()
     adp_all = adp_all.sort_values(["season", "scoring_format", "adp"])
     adp_all["format_rank"] = (adp_all.groupby(["season", "scoring_format"])["adp"]
                               .rank(method="first").astype(int))
@@ -672,6 +678,12 @@ if os.path.isdir(PROJ_DIR):
 
 if proj_rows:
     pj = pd.DataFrame(proj_rows)
+    # same defense normalisation as preseason_adp -- Sleeper calls them
+    # "Los Angeles Rams", FFC "Atlanta Defense", the results tables "LAR DEF"
+    dm = pj["position"] == "DEF"
+    pj.loc[dm, "nfl_team"] = pj.loc[dm, "nfl_team"].replace(NFL_MOVES)
+    pj.loc[dm, "player_name"] = pj.loc[dm, "nfl_team"] + " DEF"
+    pj.loc[dm, "player_key"] = "def_" + pj.loc[dm, "nfl_team"].str.lower()
     # a player can appear under multiple positions in the feed; keep the best
     pj = pj.sort_values("proj_points", ascending=False)
     pj = pj.drop_duplicates(subset=["season", "player_key"], keep="first")
