@@ -33,6 +33,28 @@ python build_all.py --from build_dashboard.py   # resume after a failure
 **Live feeds do not run by default.** ADP moves daily in preseason, and silently
 re-fetching mid-analysis makes results irreproducible. Ask for it with `--refresh`.
 
+## What you get on a fresh clone, and what you don't
+
+`build_all.py` reproduces everything except two categories.
+
+**Browser-local, and it never leaves your machine.** The dashboard keeps these in
+`localStorage`, so they are per-person and per-browser by design — target stars, per-player
+notes, saved draft plans, and the light/dark choice. There is no sync and no export;
+two people keep their own. Clearing site data loses them.
+
+**One table needs a live fetch.** `vegas_team_week` (weekly betting lines) comes from a
+2.1MB nflverse mirror that is not tracked, because it is rewritten wholesale on every
+fetch and would conflict constantly. Without it the Vegas tab's "games priced so far"
+table is empty; everything else, including the season-long implied totals, works. Fill it
+with:
+
+```bash
+python build_all.py --refresh
+```
+
+Everything else — the database, all 18 other tables, the board, fair prices, dead zones,
+55,861 game lines — rebuilds from what is in the repo.
+
 ## What is where
 
 | | |
