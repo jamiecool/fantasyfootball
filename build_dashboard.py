@@ -120,13 +120,20 @@ for c in ("yr_tier", "post_tier", "vegas_rank"):
 # replacement, as against est_price which is what the room will actually pay.
 _fp = os.path.join(OUT, "analysis", "fair_prices_2026.csv")
 if os.path.exists(_fp):
-    fair = pd.read_csv(_fp)[["player_key", "fair_price", "fair_gap", "exp_par"]]
+    fair = pd.read_csv(_fp)[["player_key", "fair_price", "fair_gap", "exp_par",
+                             "peer_n", "peer_lo", "peer_hi", "peers"]]
     b = b.merge(fair.drop_duplicates("player_key"), on="player_key", how="left")
 else:
     b["fair_price"], b["fair_gap"], b["exp_par"] = b["est_price"], 0, 0.0
+    b["peer_n"], b["peer_lo"], b["peer_hi"], b["peers"] = 1, 0, 0, ""
 b["fair_price"] = b["fair_price"].fillna(b["est_price"]).astype(int)
 b["fair_gap"] = b["fair_gap"].fillna(0).astype(int)
 b["exp_par"] = b["exp_par"].fillna(0).round(0).astype(int)
+# how many players the fit cannot tell apart from this one -- 181 of 192 sit in
+# a group of 2+, so the gap is mostly a WITHIN-TIER statement and has to say so
+for c, d in [("peer_n", 1), ("peer_lo", 0), ("peer_hi", 0)]:
+    b[c] = b[c].fillna(d).astype(int)
+b["peers"] = b["peers"].fillna("")
 
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
@@ -134,7 +141,8 @@ D["board"] = b.nsmallest(400, "adp_rank")[
      "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
      "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts", "playoff_avg",
      "yr_tier", "post_tier", "vegas_rank",
-     "fair_price", "fair_gap", "exp_par"]].fillna(0).to_dict("records")
+     "fair_price", "fair_gap", "exp_par",
+     "peer_n", "peer_lo", "peer_hi", "peers"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks

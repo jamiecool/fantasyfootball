@@ -635,7 +635,7 @@ function boardTable() {
       <td class="l">${starHtml(r.player_key)}${pLink(r.player_name, r.player_key, 0)}${noteHtml(r.player_key)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.position]||'--muted'})">${r.position}${r.blendrank}</span></td>
       <td class="l ${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game \u2014 ${r.vegas_rank} of 32, and ${r.playoff_avg} a game in weeks 15-17` : ''}">${r.nfl_team}</td>
-      <td class="${fairMode ? fcls(r.fair_gap) : gcls(r)}" style="${(fairMode || r.yahoo_rank) ? '' : 'color:var(--muted)'}" title="${fairMode ? `market $${r.est_price}, worth $${r.fair_price} on ${r.exp_par} expected points above replacement` : (r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish')}">${fairMode ? ((r.fair_gap > 0 ? '+$' : r.fair_gap < 0 ? '-$' : '') + (r.fair_gap ? Math.abs(r.fair_gap) : '0')) : (r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—')}</td>
+      <td class="${fairMode ? fcls(r.fair_gap) : gcls(r)}" style="${(fairMode || r.yahoo_rank) ? '' : 'color:var(--muted)'}" title="${fairMode ? `market $${r.est_price}, worth $${r.fair_price}.` + (r.peer_n > 1 ? ` History cannot separate him from ${r.peer_n - 1} other${r.peer_n > 2 ? 's' : ''} priced $${r.peer_lo}-$${r.peer_hi}, all valued the same: ${r.peers}. So this is where he sits INSIDE that group, not a rating of him.` : ` Nothing else at his position shares his valuation.`) : (r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish')}">${fairMode ? ((r.fair_gap > 0 ? '+$' : r.fair_gap < 0 ? '-$' : '') + (r.fair_gap ? Math.abs(r.fair_gap) : '0')) : (r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—')}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
       <td>${r.adp}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
@@ -661,10 +661,12 @@ function boardTable() {
                 ['dm3', 'worth less than market']]) +
         '<span style="flex-basis:100%;height:0"></span>' +
         '<span style="color:var(--muted)"><b>Worth</b> is what a player at this price ' +
-        'and position has historically returned, with the $1-a-spot cost of filling ' +
-        '16 roster slots taken out first. It knows the BAND, not the man — every $1 ' +
-        'quarterback prices at $9 because that is what $1 quarterbacks have averaged. ' +
-        'Read it as where the money is mispriced, not as a player rating.</span>'
+        'and position has historically returned, after the $1-a-spot cost of filling 16 ' +
+        'roster slots. <b>181 of 192 draftable players share a valuation with someone ' +
+        'else</b> — the data cannot separate 17 quarterbacks between $1 and $18, or ' +
+        'the nine receivers from $22 to $37. So the number is a TIER, and the gap says ' +
+        'where a player sits inside his tier, which is the actionable part. Hover any ' +
+        'row for its group.</span>'
       : '<span><b>vs Yahoo</b> — rank against the room:</span>' +
         swatch([['d3', 'they sleep on him'], ['d0', 'agree'], ['dm3', 'they hype him']]) +
         '<span style="flex-basis:100%;height:0"></span>' +

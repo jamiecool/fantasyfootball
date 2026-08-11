@@ -81,14 +81,36 @@ _thin = [pos for pos, g in p.groupby("position") if len(g) < 40]
 if _thin:
     print(f"  thin after the cut, treat their curves with suspicion: {_thin}")
 
+def monotone_curve(sub):
+    """Isotonic for the shape, then interpolated so it is not a staircase.
+
+    Interpolating between the knots smooths the representation, but it does NOT
+    remove the plateaus -- those are in the fit itself. With 575 picks over three
+    seasons isotonic genuinely pools $54-62 into one value, and no amount of
+    interpolation invents a distinction the data does not contain. A power-law
+    fit was tried as an alternative and is far worse (R2 near zero, and it
+    crushes elite PAR from ~100 to 28), so the plateaus stay.
+
+    They are handled honestly instead, by reporting the peer group -- see below.
+    """
+    x = sub.price.to_numpy(float)
+    y = sub.par.to_numpy(float)
+    iso = IsotonicRegression(increasing=True, out_of_bounds="clip")
+    fitted = iso.fit_transform(x, y)
+    order = np.argsort(x)
+    kx, ky = x[order], fitted[order]
+    # one knot per distinct price, so np.interp has a clean grid to work on
+    ux = np.unique(kx)
+    uy = np.array([ky[kx == v].mean() for v in ux])
+    return lambda v: np.interp(np.atleast_1d(v).astype(float), ux, uy)
+
+
 CURVE = {}
 for pos, sub in p.groupby("position"):
     if len(sub) < 25 or sub.price.nunique() < 4:
         CURVE[pos] = (lambda v, m=float(sub.par.mean()): np.full(len(np.atleast_1d(v)), m))
         continue
-    iso = IsotonicRegression(increasing=True, out_of_bounds="clip")
-    iso.fit(sub.price.to_numpy(float), sub.par.to_numpy(float))
-    CURVE[pos] = iso.predict
+    CURVE[pos] = monotone_curve(sub)
 
 print("expected PAR at each price, fitted over the matched window:")
 pts = (1, 3, 8, 15, 25, 40, 60)
@@ -124,6 +146,30 @@ print(f"\n  DEF held at market (${held} across "
       f"{int((NO_DATA & board['draftable']).sum())} defences) -- no outcome data exists")
 board["fair_gap"] = board["fair_price"] - board["est_price"]
 
+# PEER GROUPS. Players sharing a fitted PAR are players this data cannot tell
+# apart, so their fair prices are identical and the whole of fair_gap is just
+# their distance from each other. That is still useful -- "cheapest of three
+# receivers history cannot separate" is an actionable thing to know on draft
+# night -- but only if it is labelled as such rather than read as a per-player
+# valuation. Chase, Nacua and Smith-Njigba are one such group; JSN's +$3 means
+# he is the cheap end of it, not that he is underrated.
+grp = board[board.draftable & ~NO_DATA].groupby(["position", "exp_par"])
+board["peer_n"] = grp["player_name"].transform("size").reindex(board.index).fillna(1).astype(int)
+board["peer_lo"] = grp["est_price"].transform("min").reindex(board.index).fillna(0).astype(int)
+board["peer_hi"] = grp["est_price"].transform("max").reindex(board.index).fillna(0).astype(int)
+board["peers"] = [", ".join(sorted(
+    g[g.player_name != r.player_name].player_name.tolist()))
+    for r, g in ((r, board[(board.position == r.position)
+                           & (board.exp_par == r.exp_par)
+                           & board.draftable & ~NO_DATA])
+                 for r in board.itertuples())]
+
+_multi = board[board.draftable & (board.peer_n > 1)]
+print(f"\n  {len(_multi)} of {int(board.draftable.sum())} draftable players sit in a "
+      f"peer group the data cannot separate")
+print(f"  largest groups: " + ", ".join(
+    f"{p} x{n}" for p, n in board[board.draftable].groupby('position').peer_n.max().items()))
+
 chk = board.loc[board["draftable"], "fair_price"].sum()
 print(f"\nfair prices sum to ${chk:,} against a ${POOL:,} pool "
       f"({100 * chk / POOL:.0f}%); market prices sum to "
@@ -133,9 +179,7 @@ print(f"\nfair prices sum to ${chk:,} against a ${POOL:,} pool "
 _alt = {}
 for pos, sub in full.groupby("position"):
     if len(sub) >= 25 and sub.price.nunique() >= 4:
-        _i = IsotonicRegression(increasing=True, out_of_bounds="clip")
-        _i.fit(sub.price.to_numpy(float), sub.par.to_numpy(float))
-        _alt[pos] = _i.predict
+        _alt[pos] = monotone_curve(sub)
 board["par_9yr"] = [float(_alt[r.position]([r.est_price])[0]) if r.position in _alt
                     else 0.0 for r in board.itertuples()]
 board.loc[~board["draftable"] | NO_DATA, "par_9yr"] = 0.0
@@ -152,7 +196,8 @@ print("=" * 76)
 print(_cmp[["market", "9yr vs mkt", "3yr vs mkt"]].to_string())
 
 cols = ["player_key", "player_name", "position", "nfl_team", "est_price",
-        "fair_price", "fair_gap", "exp_par", "draftable"]
+        "fair_price", "fair_gap", "exp_par", "draftable",
+        "peer_n", "peer_lo", "peer_hi", "peers"]
 board[cols].to_csv(os.path.join(OUT, "fair_prices_2026.csv"), index=False)
 
 print("\n" + "=" * 76)
