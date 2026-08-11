@@ -603,12 +603,21 @@ function boardTable() {
   // players. Fourteen places apart is fourteen actual players either way.
   //
   // The depth problem the proportional rule was solving does not exist here:
-  // this column is already blank past the ~222 players Yahoo publishes, so
-  // everyone shaded is genuinely draftable. Steps come off the distribution --
-  // median |gap| is 10, p75 is 28, p90 is 56.
+  // this column is already blank past the ~222 players Yahoo publishes.
+  //
+  // Steps are LOW and the scale CAPS, because the big gaps are noise. Players
+  // 20+ ranks apart have a median board rank of 153 and a median price of $1 --
+  // they are the deep tail where our board and Yahoo diverge for structural
+  // reasons, not disagreements worth acting on. Scaling to them wasted the whole
+  // gradient: at 10/25/50, FIFTY-TWO of the top 60 players by price came out
+  // colourless and nothing reached mid or dark, because real disagreement where
+  // you actually draft is single digits.
+  //
+  // So +20 and +100 render identically, and 4/9/18 spends the scale on the range
+  // that carries information.
   const gcls = r => {
     if (!r.yahoo_rank) return 'd0';
-    const a = Math.abs(r.gap), step = a >= 50 ? 3 : a >= 25 ? 2 : a >= 10 ? 1 : 0;
+    const a = Math.abs(r.gap), step = a >= 18 ? 3 : a >= 9 ? 2 : a >= 4 ? 1 : 0;
     const d = r.gap >= 0 ? step : -step;
     return d === 3 ? 'd3' : d === 2 ? 'd2' : d === 1 ? 'd1'
          : d === 0 ? 'd0' : d === -1 ? 'dm1' : d === -2 ? 'dm2' : 'dm3';
