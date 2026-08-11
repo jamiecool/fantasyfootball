@@ -64,14 +64,16 @@ RULES = [
             "spots but produced only 19.7% of the points.",
      "n": "mechanism confirmed in league settings; the 21.4% startable figure is 2025 only"},
 
-    {"id": 7, "conf": "medium", "area": "RB",
-     "rule": "Elite RB or lottery-ticket RB. Never mid-tier.",
-     "why": "Mid-tier RB ($11-20) is the worst cell in the entire draft at 1.05 "
-            "PAR per dollar. RB is the worst position per dollar overall (1.38) "
-            "— but within RB, $36+ is the best tier (1.43). The league already "
-            "barbells RB (220 picks at or under $5, 160 at $21+, only 134 between) "
-            "and is right to.",
-     "n": "514 RB picks, 9 seasons"},
+    {"id": 7, "conf": "low", "area": "RB",
+     "rule": "Barbell RB — but this is weaker than it looked. Treat it as a lean.",
+     "why": "DEMOTED on a confidence check: put a bootstrap interval on RB and "
+            "NOT ONE price band separates from break-even. Mid-tier RB is 0.76 "
+            "per dollar but CI 0.44-1.11, so the headline claim that it is the "
+            "worst cell in the draft cannot be made. What survives is a "
+            "simulation lean: at a $80 RB budget, two bats beat four mid-tier "
+            "RBs 419 to 406 — 3%, which is noise. What is NOT noise is that "
+            "one bat plus scraps scores 372, clearly worst. Do not go extreme.",
+     "n": "514 RB picks; every band CI spans 1.0"},
 
     {"id": 8, "conf": "medium", "area": "WR",
      "rule": "Elite WR production costs $36+. There is no cheap route to it.",
@@ -165,4 +167,28 @@ RULES = [
             "of them that is wrong, and it manufactured the result. The empirical "
             "tier test says the opposite: $36+ returns 0.88x its cost.",
      "n": "refuted by 1,514 picks of actual outcomes"},
+
+    {"id": 18, "conf": "high", "area": "WR",
+     "rule": "The WR dead zone is $21-35. It is NOT $11-20 — WR and RB have their "
+             "holes in different places.",
+     "why": "$21-35 WRs return 0.75 per dollar, CI 0.59-0.91 — entirely below "
+            "break-even, the only band at either position whose interval clears "
+            "1.0 on the low side. The mechanism is visible in the marginal buy: "
+            "each extra $10 buys 13.6 points of top-12 rate through $11-20, then "
+            "just 2.0 across $21-35, then 17.0 again at $36+. The curve is flat "
+            "between $20 and $36 and steep either side. The room puts 27% of its "
+            "WR money there for 20% of the WR production.",
+     "n": "88 picks in the band, 594 WR picks total, 9 seasons"},
+
+    {"id": 19, "conf": "medium", "area": "WR",
+     "rule": "Do not concentrate at WR. You start three — own four or five and "
+             "spread the money.",
+     "why": "Dealing real outcomes at a $80 WR budget and scoring best-3-of-5: "
+            "one bat plus scraps is worst at 503 points, against 557 flat and 552 "
+            "barbelled — a 10% penalty for concentrating. Flat and barbell are "
+            "within 1% of each other, so the finding is the FLOOR, not a winning "
+            "shape. Structural reason: 36 WRs start every week, and the curve "
+            "past WR36 is gentle (WR48 is still 0.83 of a last starter, where "
+            "RB48 is 0.55), so WR depth is cheap and covers a bust.",
+     "n": "20,000 draws per shape from 594 real WR outcomes"},
 ]
