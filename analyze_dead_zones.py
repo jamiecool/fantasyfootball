@@ -127,3 +127,43 @@ print(f"wrote {len(out)} rows -> cleandata/analysis/dead_zones.csv")
 print(f"  {(out.verdict == 'dead').sum()} bands confirmed dead, "
       f"{(out.verdict == 'good').sum()} confirmed good, "
       f"{(out.verdict == 'unclear').sum()} cannot be called")
+
+# ==========================================================================
+# CROSS-POSITION, which the per-band chart above cannot see.
+#
+# Every ratio above is computed WITHIN a position, so "RB $36+ = 1.03" means
+# fine RELATIVE TO OTHER RBs. It says nothing about whether RB as a whole
+# deserves the money. That is a different question and it has a different answer.
+# ==========================================================================
+print("\n" + "=" * 88)
+print("IS A WHOLE POSITION OVER- OR UNDER-PRICED?")
+print("=" * 88)
+gp = p.groupby("position").agg(n=("price", "size"), spend=("price", "sum"),
+                               par=("par", "sum"))
+gp["$ share%"] = (100 * gp.spend / gp.spend.sum()).round(1)
+gp["PAR share%"] = (100 * gp.par / gp.par.sum()).round(1)
+gp["ratio"] = (gp["PAR share%"] / gp["$ share%"]).round(2)
+for pos in gp.index:
+    rs = []
+    for _ in range(3000):
+        bs = p.iloc[rng.integers(0, len(p), len(p))]
+        m = bs.position == pos
+        if bs.par.sum() <= 0 or bs[m].price.sum() <= 0:
+            continue
+        rs.append((bs[m].par.sum() / bs.par.sum())
+                  / (bs[m].price.sum() / bs.price.sum()))
+    lo, hi = np.percentile(rs, [2.5, 97.5])
+    gp.loc[pos, "CI"] = f"{lo:.2f}-{hi:.2f}"
+    gp.loc[pos, "verdict"] = ("OVERPRICED" if hi < 1
+                              else "underpriced" if lo > 1 else "cannot call")
+print(gp[["n", "$ share%", "PAR share%", "ratio", "CI", "verdict"]].to_string())
+
+print("\n  ...but check whether it still holds. Season by season:")
+sy = p.groupby(["season", "position"]).agg(sp=("price", "sum"), pr=("par", "sum")).reset_index()
+sy["r"] = ((sy.pr / sy.groupby("season").pr.transform("sum"))
+           / (sy.sp / sy.groupby("season").sp.transform("sum")))
+piv = sy.pivot(index="season", columns="position", values="r").round(2)
+print(piv.to_string())
+print("\n  RB sat below 1.0 in seven straight seasons and then flipped in 2024-25.")
+print("  build_2026_board.py already prices off 2023-25 only for exactly this")
+print("  reason; a nine-season average is pricing a market that has moved.")
