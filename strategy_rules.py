@@ -98,14 +98,41 @@ RULES = [
             "don't want.",
      "n": "auction theory — mechanism, not measured in this league"},
 
-    {"id": 11, "conf": "medium", "area": "Mindset",
-     "rule": "Pay the certainty premium less readily than your leaguemates do.",
-     "why": "Elite players are priced above their expected-points value because "
-            "they reduce variance. But a threshold objective — make top 6, "
-            "then win three weeks — rewards ceiling, not floor. Certainty is "
-            "worth less to you than to someone protecting a winning record, so the "
-            "premium is worse value for you specifically.",
-     "n": "theory plus our tier data; the objective itself is not yet modelled"},
+    {"id": 11, "conf": "rejected", "area": "Mindset",
+     "rule": "REJECTED — pay the certainty premium less readily; the threshold "
+             "objective rewards ceiling.",
+     "why": "Modelled it once weekly data existed, and the load-bearing claim is "
+            "false. Holding expected points equal and varying ONLY weekly "
+            "variance, title odds are flat: 8.32% steady vs 8.47% spiky. Worse, "
+            "it inverts with strength — for a top-2 roster, high variance is "
+            "0.80x, actively destroying a fifth of your title equity. What the "
+            "objective actually rewards is the MEAN, convexly (see rule 16). "
+            "There IS a premium at the top (the 3 priciest picks return $0.62 on "
+            "the dollar), but that is a pricing fact, not a reason to prefer "
+            "boom-bust players.",
+     "n": "refuted: 40k simulated seasons on 106 franchise-seasons of real weekly scores"},
+
+    {"id": 16, "conf": "high", "area": "Mindset",
+     "rule": "Maximise expected points. Full stop — the objective amplifies the "
+             "mean, it does not reward variance.",
+     "why": "P(title) against weekly team mean: 1.0% at 90% of league-average, "
+            "3.2% at 95%, 8.3% at 100%, 16.9% at 105%, 28.6% at 110%. Title odds "
+            "roughly DOUBLE per 5% of expected points. Because making top 6 is a "
+            "steep S-curve in team strength, small edges in expected production "
+            "compound instead of washing out — which is the opposite of the "
+            "intuition that a short playoff makes the regular season a lottery.",
+     "n": "40,000 simulated seasons, weekly scores resampled from 106 real "
+          "franchise-seasons"},
+
+    {"id": 17, "conf": "medium", "area": "Mindset",
+     "rule": "Variance is a lever for the underdog, and a tax on the favourite. "
+             "It is an in-season decision, not a draft strategy.",
+     "why": "At equal talent variance is worth nothing (0.98x). But for a weak "
+            "roster it is worth 1.47x, and for a strong one 0.80x. So it only "
+            "pays once you KNOW you are behind — which is week 10, not draft "
+            "night. Draft for the mean; if you are a bubble team in November, "
+            "that is when you start streaming boom-bust.",
+     "n": "same simulation; direction is robust to real skew and a 4-shark league"},
 
     {"id": 12, "conf": "low", "area": "TE",
      "rule": "TE around $21-35 MAY be the cheapest above-median starter. Unproven.",
