@@ -59,11 +59,31 @@ ydf = pd.read_sql("""SELECT player_key, yahoo_rank, average_cost, percent_drafte
 b = b.merge(ydf, on="player_key", how="left")
 b["yahoo_rank"] = b["yahoo_rank"].fillna(0).astype(int)
 b["yahoo_cost"] = b["average_cost"].fillna(0).round(1)
+# ---- Vegas: how good is the offence he plays in ----------------------------
+# Explicitly NOT part of pricing or ordering -- ADP already contains this, and
+# rule 4 says the market beats our re-derivation of it. It rides along as a
+# visual check while scanning the board: is this a good player on a good team?
+vt = pd.read_sql("SELECT * FROM vegas_team", con)
+vt["yr_tier"] = pd.qcut(vt["pts_per_game"].rank(method="first"), 4,
+                        labels=[1, 2, 3, 4]).astype(int)      # 4 = best offence
+vt["post_tier"] = pd.qcut(vt["playoff_pts"].rank(method="first"), 4,
+                          labels=[1, 2, 3, 4]).astype(int)
+b = b.merge(vt[["team", "pts_per_game", "playoff_pts", "yr_tier", "post_tier",
+                "vegas_rank"]].rename(columns={"team": "nfl_team"}),
+            on="nfl_team", how="left")
+for c, d in [("pts_per_game", 0.0), ("playoff_pts", 0.0),
+             ("yr_tier", 0), ("post_tier", 0), ("vegas_rank", 0)]:
+    b[c] = b[c].fillna(d)
+b["yr_tier"] = b["yr_tier"].astype(int)
+b["post_tier"] = b["post_tier"].astype(int)
+b["vegas_rank"] = b["vegas_rank"].astype(int)
+
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
      "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
-     "yahoo_rank", "yahoo_cost"]].fillna(0).to_dict("records")
+     "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts",
+     "yr_tier", "post_tier", "vegas_rank"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks
@@ -269,6 +289,33 @@ for p, (b, u) in sorted(THRESH.items()):
 
 D["wk"] = {"cols": WK_COLS, "teams": TEAMS, "ps": ps_rows, "thresh": THRESH,
            "seasons": sorted({int(s) for s in pw["season"].unique()}, reverse=True)}
+
+# ---- 11. Vegas page --------------------------------------------------------
+_vt = pd.read_sql("SELECT * FROM vegas_team ORDER BY vegas_rank", con)
+# Same quartile tiers the board uses, computed here too so the page and the
+# board cannot drift apart (the page was silently rendering an absent tier).
+_vt["yr_tier"] = pd.qcut(_vt["pts_per_game"].rank(method="first"), 4,
+                         labels=[1, 2, 3, 4]).astype(int)
+_vt["post_tier"] = pd.qcut(_vt["playoff_pts"].rank(method="first"), 4,
+                           labels=[1, 2, 3, 4]).astype(int)
+_bd = pd.DataFrame(D["board"])
+# how many draftable players each offence actually supplies, so the page answers
+# "who does this get me" rather than just ranking teams
+_cnt = _bd[_bd.est_price >= 3].groupby("nfl_team").size().rename("draftable")
+_top = (_bd.sort_values("est_price", ascending=False)
+        .groupby("nfl_team").head(3)
+        .groupby("nfl_team")
+        .apply(lambda g: ", ".join(f"{r.player_name} ({r.position}, ${r.est_price})"
+                                   for r in g.itertuples()), include_groups=False)
+        .rename("top_players"))
+_vt = _vt.merge(_cnt, left_on="team", right_index=True, how="left")          .merge(_top, left_on="team", right_index=True, how="left")
+_vt["draftable"] = _vt["draftable"].fillna(0).astype(int)
+_vt["top_players"] = _vt["top_players"].fillna("—")
+D["vegas"] = _vt.fillna(0).to_dict("records")
+D["vegas_weeks"] = pd.read_sql(
+    """SELECT week, team, opponent, is_home, spread_line, total_line, implied_total
+       FROM vegas_team_week WHERE season = 2026 ORDER BY week, implied_total DESC""",
+    con).to_dict("records")
 
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p

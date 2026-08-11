@@ -884,6 +884,36 @@ if os.path.exists(ypath):
     except Exception as e:                               # noqa: BLE001
         print("  (board join check skipped:", e, ")")
 
+# --- Vegas implied team totals (see fetch_vegas.py) -------------------------
+# Betting-market expectation for how many points each offence scores. NOT an
+# input to pricing -- ADP already contains it, and rule 4 says so. It is here as
+# a visual check on "good players from good teams" while scanning the board.
+VDIR = os.path.join(ROOT, "rawdata", "vegas")
+vegas_meta = []
+_sharp = os.path.join(VDIR, "sharp_implied_2026.csv")
+if os.path.exists(_sharp):
+    v = pd.read_csv(_sharp)
+    # Sharp abbreviates the Rams "LA"; every other source here says "LAR"
+    v["team"] = v["team"].replace({"LA": "LAR", "LAR": "LAR"})
+    vegas_meta.append({"source": "sharpfootballanalysis", "season": 2026,
+                       "fetched_at": str(v["fetched_at"].iloc[0]) if "fetched_at" in v else "",
+                       "rows": len(v)})
+    tables["vegas_team"] = v.reset_index(drop=True)
+    print(f"\nvegas_team: {len(v)} teams; "
+          f"pts/game {v['pts_per_game'].min():.1f}-{v['pts_per_game'].max():.1f}")
+
+_wk = os.path.join(VDIR, "team_week_implied.csv")
+if os.path.exists(_wk):
+    vw = pd.read_csv(_wk)
+    vw["team"] = vw["team"].replace({"LA": "LAR", "OAK": "LV", "SD": "LAC", "STL": "LAR"})
+    vw["opponent"] = vw["opponent"].replace({"LA": "LAR", "OAK": "LV", "SD": "LAC", "STL": "LAR"})
+    # keep the seasons we can actually join to player_weeks, plus the live one
+    vw = vw[vw["season"] >= 2017]
+    tables["vegas_team_week"] = vw.reset_index(drop=True)
+    _cur = vw[vw["season"] == 2026]
+    print(f"vegas_team_week: {len(vw):,} team-games {vw['season'].min()}-{vw['season'].max()}"
+          f"; 2026 priced through week {int(_cur['week'].max()) if len(_cur) else 0}")
+
 # --- data freshness ---------------------------------------------------------
 # Most of this dataset is historical and never goes stale. Current-season ADP
 # does: it moves daily through the summer. This table makes staleness a query
@@ -952,6 +982,14 @@ for meta in yahoo_meta:
         "note": f"{meta.get('with_adp')} players with an ADP; the room's own anchor, "
                 "moves daily in preseason"
                 + (f"; {age}d old at last build" if age is not None else ""),
+    })
+for meta in vegas_meta:
+    fresh.append({
+        "dataset": f"vegas_team (season {meta.get('season')})",
+        "source": meta.get("source", "sharp"), "as_of": "",
+        "fetched_on": meta.get("fetched_at", ""), "stale_after_days": 7,
+        "refresh_command": "python fetch_vegas.py && python build_clean_data.py",
+        "note": f"{meta.get('rows')} teams; win totals move slowly, weekly lines do not",
     })
 tables["data_freshness"] = pd.DataFrame(fresh)
 

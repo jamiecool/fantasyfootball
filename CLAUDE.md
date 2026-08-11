@@ -1018,6 +1018,29 @@ real to validate against.
 
 Local files `yahoo_credentials.json` / `yahoo_token.json` are gitignored — never commit.
 
+## Data sources, and what each is for
+
+| source | fetch | role |
+|---|---|---|
+| **Underdog** | `fetch_underdog_adp.py` | **ordering within position** — the only thing driving the board's rank |
+| PBAFFL history | `build_clean_data.py` | **cross-position weighting** — our own price curves supply what Underdog can't |
+| FFC | `fetch_adp.py` | K/DEF only. Jamie's read: materially staler than Underdog, injury news lags |
+| **Yahoo** | `fetch_yahoo_adp.py` | the room's anchor (we draft in the app) + the only **auction dollar** figure |
+| Sleeper | `fetch_projections.py` | projections. **Not in the board any more** — dropped 2026-08-11 |
+| nflverse | `fetch_nflverse*.py` | stat lines, season and weekly |
+| **Vegas** | `fetch_vegas.py` | implied team totals. **Display only** — never touches pricing or sort |
+
+The board's price is: Underdog says who is WR9, our own 2023-25 price curve says what
+WR9 costs here. No projection enters it. Yahoo and Vegas ride along as cross-checks.
+
+**Yahoo's auction costs say our board is $6-10 light at the top** (Gibbs $64 vs $73.3).
+Consistent with the "treat these as a floor" note in `build_2026_board.py`.
+
+**Vegas is not validated.** It is on the board as a visual check only. The open question
+is whether implied totals add anything ON TOP of ADP — everyone setting ADP has seen the
+same number. Testable with nine seasons of lines in `vegas_team_week` against
+`player_weeks`; not yet run.
+
 ## Where we left off (2026-08-11, third session)
 
 Added **week-by-week stats** — the piece the whole simulation plan was waiting on.
