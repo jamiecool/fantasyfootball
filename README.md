@@ -37,10 +37,16 @@ re-fetching mid-analysis makes results irreproducible. Ask for it with `--refres
 
 `build_all.py` reproduces everything except two categories.
 
-**Browser-local, and it never leaves your machine.** The dashboard keeps these in
-`localStorage`, so they are per-person and per-browser by design — target stars, per-player
-notes, saved draft plans, and the light/dark choice. There is no sync and no export;
-two people keep their own. Clearing site data loses them.
+**Only the theme is browser-local.** Target stars, per-player notes and draft plans are
+SHARED — they live in `shared/board_state.json`, are tracked, and are baked into the page
+at build time, so a clone opens on the same view. Press **save for both of us** in the
+header to write your edits back, then commit the file.
+
+Unsaved edits sit in `localStorage` and survive a refresh, so nothing is lost if you
+close the tab mid-thought. The header button tells you which state you are in. Saving
+needs the local server (`python serve.py`) — a static page cannot write to disk, so the
+button posts to it. Opened straight off the filesystem, the dashboard still works and
+still shows the shared view; it just cannot save.
 
 **One table needs a live fetch.** `vegas_team_week` (weekly betting lines) comes from a
 2.1MB nflverse mirror that is not tracked, because it is rewritten wholesale on every

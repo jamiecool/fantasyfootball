@@ -22,6 +22,11 @@ rawdata/nflverse/stats_player_week_*.csv
 rawdata/vegas/games.csv
 rawdata/vegas/team_week_implied.csv
 
+# serve.py keeps a one-deep backup each time the Save button writes the shared
+# state. Local safety net, not history -- git already has that.
+shared/*.bak
+shared/*.tmp
+
 # Excel lock files (created while a workbook is open)
 ~$*.xls*
 

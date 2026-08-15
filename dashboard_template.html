@@ -176,6 +176,9 @@
   .vbar{display:inline-block;height:9px;border-radius:3px;background:var(--s1);
         vertical-align:-1px;min-width:2px}
   .toggle{margin-left:auto}
+  /* Save is disabled and quiet until something is actually unsaved. */
+  #saveBtn:disabled{opacity:.55;cursor:default}
+  #saveBtn.on{color:var(--ink);font-weight:650;box-shadow:inset 0 -2px 0 var(--s4)}
   /* --- NFL stats + player profile --- */
   .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;
        text-align:left;border-bottom:1px dotted var(--axis)}
@@ -218,7 +221,8 @@
 <header>
   <h1>PBAFFL — draft data</h1>
   <span class="sub">2026 board &amp; nine seasons of league history</span>
-  <button class="tab toggle" id="themeBtn" aria-selected="false">◐ theme</button>
+  <button class="tab toggle" id="saveBtn" aria-selected="false" disabled>saved</button>
+  <button class="tab" id="themeBtn" aria-selected="false">◐ theme</button>
 </header>
 
 <div class="tabs" role="tablist">
@@ -428,25 +432,50 @@
 const D = __DATA__;
 const POSC = {QB:'--s1', RB:'--s2', WR:'--s3', TE:'--s4', K:'--s5', DEF:'--s6'};
 
+/* ---------- shared board state ----------
+   Targets, notes and draft plans are SHARED, not browser-local: they live in
+   shared/board_state.json, are baked into this page at build time, and are
+   written back through serve.py so a clone opens on the same view.
+
+   The rule, so it is predictable: the built-in state is the baseline, your
+   unsaved edits sit on top of it in localStorage and survive a refresh, and
+   pressing Save writes them to the file for both of you. A rebuild then makes
+   the file the new baseline and the pending copy is dropped.
+
+   Theme stays local. It is a preference, not a shared decision. */
+const SHARED = D.shared || {targets: [], notes: {}, plans: []};
+const PENDING_KEY = 'pbaffl_pending_v1';
+let dirty = false;
+
+function loadPending() {
+  try { return JSON.parse(localStorage.getItem(PENDING_KEY)) || null; } catch (e) { return null; }
+}
+function stashPending() {
+  dirty = true;
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(
+      {targets: [...targets], notes: notes, plans: plans,
+       basedOn: SHARED.saved_at || ''}));
+  } catch (e) { /* storage blocked; edits last for this page view only */ }
+  markSaveState();
+}
+function dropPending() {
+  dirty = false;
+  try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+  markSaveState();
+}
+
 /* ---------- target players ----------
    Keyed on player_key, the same canonical id the profile links use, so a star
    set on the board is the same star in the planner even where the two datasets
    spell a name differently. */
-const TARGET_KEY = 'pbaffl_targets_v1';
-let targets = new Set();
-try { targets = new Set(JSON.parse(localStorage.getItem(TARGET_KEY)) || []); } catch (e) {}
-const saveTargets = () => {
-  try { localStorage.setItem(TARGET_KEY, JSON.stringify([...targets])); } catch (e) {}
-};
+let targets = new Set(SHARED.targets || []);
+const saveTargets = stashPending;
 /* ---------- per-player notes ----------
    Same player_key as targets and profile links, so a note follows the player
    across every table rather than being tied to one spelling of his name. */
-const NOTE_KEY = 'pbaffl_notes_v1';
-let notes = {};
-try { notes = JSON.parse(localStorage.getItem(NOTE_KEY)) || {}; } catch (e) { notes = {}; }
-const saveNotes = () => {
-  try { localStorage.setItem(NOTE_KEY, JSON.stringify(notes)); } catch (e) {}
-};
+let notes = Object.assign({}, SHARED.notes || {});
+const saveNotes = stashPending;
 const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function noteHtml(key) {
@@ -534,6 +563,7 @@ document.querySelectorAll('.tab[data-p]').forEach(b => b.onclick = () => {
   document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'p-' + b.dataset.p);
   draw();
 });
+document.getElementById('saveBtn').onclick = saveShared;
 document.getElementById('themeBtn').onclick = () => {
   const cur = document.documentElement.getAttribute('data-theme');
   const dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme:dark)').matches;
@@ -974,16 +1004,15 @@ function lastTable() {
 
 
 /* ---------- draft planner ---------- */
-const PLAN_KEY = 'pbaffl_plans_v1';
+
 const BUD = D.budget, SPOTS = D.spots, NEED = D.starters;
 const BENCH_SLOTS = SPOTS - Object.values(NEED).reduce((a, b) => a + b, 0);
 const byName = {};
 D.board.forEach(r => { byName[r.player_name] = r; });
 
-let plans = [], active = 0;
-try { plans = JSON.parse(localStorage.getItem(PLAN_KEY)) || []; } catch (e) { plans = []; }
+let plans = JSON.parse(JSON.stringify(SHARED.plans || [])), active = 0;
 if (!plans.length) plans = [{ name: 'Plan A', picks: [] }];
-const savePlans = () => localStorage.setItem(PLAN_KEY, JSON.stringify(plans));
+const savePlans = stashPending;
 const cur = () => plans[active];
 
 /* Every derived number for a roster, in one place, used by the panel and the
@@ -1590,7 +1619,63 @@ function deadZones() {
     }).join('') + '</tbody>';
 }
 
+/* ---------- save / restore ---------- */
+// Applied after all three stores exist. Unsaved edits beat the baked-in
+// baseline, EXCEPT when a newer save has since been built in -- otherwise a
+// rebuild carrying your partner's work would be silently undone by your stale
+// pending copy.
+(function restorePending() {
+  const p = loadPending();
+  if (!p) return;
+  if (p.basedOn && SHARED.saved_at && p.basedOn < SHARED.saved_at) {
+    try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+    return;
+  }
+  if (Array.isArray(p.targets)) targets = new Set(p.targets);
+  if (p.notes) notes = p.notes;
+  if (Array.isArray(p.plans) && p.plans.length) plans = p.plans;
+  dirty = true;
+})();
+
+function markSaveState() {
+  const b = document.getElementById('saveBtn');
+  if (!b) return;
+  b.classList.toggle('on', dirty);
+  b.disabled = !dirty;
+  b.textContent = dirty ? '\u25cf save for both of us' : 'saved';
+  b.title = dirty
+    ? 'Write targets, notes and plans to shared/board_state.json, then commit it'
+    : (SHARED.saved_at
+        ? 'Last saved ' + SHARED.saved_at + (SHARED.saved_by ? ' by ' + SHARED.saved_by : '')
+        : 'Nothing saved yet');
+}
+
+async function saveShared() {
+  const b = document.getElementById('saveBtn');
+  b.disabled = true;
+  b.textContent = 'saving\u2026';
+  try {
+    const r = await fetch('/api/state', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({targets: [...targets], notes: notes, plans: plans}),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    SHARED.saved_at = j.saved_at; SHARED.saved_by = j.saved_by;
+    dropPending();
+    b.textContent = 'saved \u2713';
+    setTimeout(markSaveState, 1800);
+  } catch (e) {
+    // file:// has no server, and neither does a static host
+    b.textContent = 'cannot save here';
+    b.title = 'Saving needs the local server. Run: python serve.py  (' + e + ')';
+    b.disabled = false;
+    setTimeout(markSaveState, 4000);
+  }
+}
+
 function draw() {
+  markSaveState();
   boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL(); drawVegas();
   tierChart(); startableChart(); posShare(); scatter(); deadZones();
 }

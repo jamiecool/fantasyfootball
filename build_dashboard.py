@@ -383,6 +383,24 @@ D["deadzones"] = (pd.read_csv(_dz).astype(object).where(lambda d: d.notna(), Non
                   .to_dict("records") if os.path.exists(_dz) else [])
 D["deadzone_bands"] = ["$1-2", "$3-5", "$6-10", "$11-20", "$21-35", "$36+"]
 
+# ---- 13. shared board state (see shared/board_state.json) ------------------
+# Targets, notes and draft plans used to live only in localStorage, so they never
+# left the browser that made them. They are tracked now, baked in here as the
+# baseline every clone opens with, and written back by serve.py's POST endpoint.
+# The theme is deliberately NOT shared -- that is a personal preference.
+_st = os.path.join(ROOT, "shared", "board_state.json")
+try:
+    D["shared"] = json.load(open(_st, encoding="utf-8"))
+except Exception:                                            # noqa: BLE001
+    D["shared"] = {"saved_at": "", "saved_by": "", "targets": [], "notes": {},
+                   "plans": []}
+_s = D["shared"]
+print(f"\nshared board state: {len(_s.get('targets', []))} targets, "
+      f"{len(_s.get('notes', {}))} notes, {len(_s.get('plans', []))} plans"
+      + (f" (saved {_s['saved_at']}"
+         + (f" by {_s['saved_by']}" if _s.get("saved_by") else "") + ")"
+         if _s.get("saved_at") else " (never saved)"))
+
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p
     JOIN final_ranks f ON f.season=p.season AND f.player_key=p.player_key

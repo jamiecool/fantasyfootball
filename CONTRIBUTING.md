@@ -32,6 +32,13 @@ trivially; on different days they write different files. This also gives us a hi
 of how ADP moved, which we do not otherwise have — the reason Underdog's edge rests on
 Jamie's judgement rather than a measurement is that nobody kept the daily snapshots.
 
+**`shared/board_state.json` is the one file you will both genuinely edit.** Targets,
+notes and draft plans live there. Keys are written sorted and one per line so git can
+merge two people's additions line by line, which handles the common case — you star
+different players, both sets survive. What will not auto-merge is both of you editing
+the SAME note or reordering the same plan; that is a normal conflict and the resolution
+is obvious from the text. Pull before a long session on the board.
+
 **`notes/log/` is one file per person per session.** Name it `YYYY-MM-DD-<you>.md`.
 Never edit someone else's. `CLAUDE.md` stays as the durable index — decisions, traps,
 findings — and changes there should be deliberate rather than a running diary.
