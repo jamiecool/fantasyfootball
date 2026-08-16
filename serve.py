@@ -24,7 +24,6 @@ import http.server
 import json
 import os
 import shutil
-import socketserver
 import subprocess
 import sys
 import time
@@ -117,8 +116,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         sys.stderr.write("  %s\n" % (fmt % args))
 
 
-class Reusable(socketserver.TCPServer):
+class Reusable(http.server.ThreadingHTTPServer):
+    """THREADED, which is not optional here.
+
+    `python -m http.server` uses ThreadingHTTPServer; the first version of this
+    file used a plain socketserver.TCPServer and was therefore single-threaded.
+    That works for one sequential curl and fails the moment a browser is
+    involved: it holds a keep-alive connection open, the single handler thread
+    is stuck on it, and every later request -- including a reload -- hangs until
+    it times out. The symptom is a server that logs one 200 and then appears
+    dead while still listening.
+    """
+
     allow_reuse_address = True                # no 'address already in use' on restart
+    daemon_threads = True                     # ctrl-c should not wait on open sockets
 
 
 if not os.path.exists(os.path.join(WEB, "dashboard.html")):
