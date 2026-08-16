@@ -291,6 +291,7 @@
           <option>QB</option><option>RB</option><option>WR</option>
           <option>TE</option><option>K</option>
         </select>
+        <select id="nTeam"><option value="">all NFL teams</option></select>
         <span class="meter">weeks</span>
         <select id="nW1"></select>
         <span class="meter">&ndash;</span>
@@ -1316,13 +1317,15 @@ const $n = id => document.getElementById(id);
     $n('nW2').insertAdjacentHTML('beforeend', `<option value="${w}">wk ${w}</option>`);
   }
   $n('nW1').value = 1; $n('nW2').value = WK_MAX;
-  ['nSeason', 'nPos', 'nW1', 'nW2', 'nQ', 'nPG'].forEach(id =>
+  fillTeams();
+  ['nSeason', 'nPos', 'nTeam', 'nW1', 'nW2', 'nQ', 'nPG'].forEach(id =>
     $n(id).addEventListener('input', () => {
       // keep the range coherent rather than silently returning nothing
       if (+$n('nW1').value > +$n('nW2').value) {
         if (id === 'nW1') $n('nW2').value = $n('nW1').value;
         else $n('nW1').value = $n('nW2').value;
       }
+      if (id === 'nSeason' || id === 'nPos') fillTeams();
       drawNFL();
     }));
   $n('nFull').onclick = () => { $n('nW1').value = 1; $n('nW2').value = WK_MAX; drawNFL(); };
@@ -1332,13 +1335,30 @@ const $n = id => document.getElementById(id);
   addEventListener('keydown', e => { if (e.key === 'Escape') $n('pModal').hidden = true; });
 })();
 
+/** Team options for the season (and position) in view.
+ *  Rebuilt on change rather than listed once: rosters turn over, and a team can
+ *  vanish from a season entirely once a position filter is on -- offering LAR
+ *  when no Rams quarterback played is an empty table with no explanation. */
+function fillTeams() {
+  const sel = $n('nTeam'), keep = sel.value;
+  const season = +$n('nSeason').value, pos = $n('nPos').value;
+  const teams = [...new Set(WK.ps
+    .filter(p => p[3] === season && (!pos || p[1] === pos))
+    .map(p => p[2]).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">all NFL teams</option>' +
+    teams.map(x => `<option>${x}</option>`).join('');
+  if (teams.includes(keep)) sel.value = keep;   // survive a season change
+}
+
 function drawNFL() {
   const season = +$n('nSeason').value, pos = $n('nPos').value;
+  const team = $n('nTeam').value;
   const w1 = +$n('nW1').value, w2 = +$n('nW2').value;
   const q = $n('nQ').value.toLowerCase(), pg = $n('nPG').checked;
 
   let rows = WK.ps
     .filter(p => p[3] === season && (!pos || p[1] === pos) &&
+                 (!team || p[2] === team) &&
                  (!q || p[0].toLowerCase().includes(q)))
     .map(p => ({p: p, name: p[0], key: p[9], position: p[1], team: p[2],
                 price: p[4], by: p[5], a: nAgg(p, w1, w2)}))
