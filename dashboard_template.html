@@ -176,10 +176,6 @@
   .vbar{display:inline-block;height:9px;border-radius:3px;background:var(--s1);
         vertical-align:-1px;min-width:2px}
   .toggle{margin-left:auto}
-  .recov{margin:14px 26px -4px;padding:12px 16px;border-radius:10px;font-size:13.5px;
-         background:color-mix(in srgb,var(--s4) 16%,var(--surface));
-         border:1px solid color-mix(in srgb,var(--s4) 45%,transparent);color:var(--ink)}
-  .recov[hidden]{display:none}
   /* Save is disabled and quiet until something is actually unsaved. */
   #saveBtn:disabled{opacity:.55;cursor:default}
   #saveBtn.on{color:var(--ink);font-weight:650;box-shadow:inset 0 -2px 0 var(--s4)}
@@ -238,8 +234,6 @@
   <button class="tab" role="tab" aria-selected="false" data-p="str">Strategy</button>
   <button class="tab" role="tab" aria-selected="false" data-p="anl">Analytics</button>
 </div>
-
-<div class="recov" id="recovBar" hidden></div>
 
 <main>
   <section class="panel" id="p-board">
@@ -1654,7 +1648,6 @@ function deadZones() {
    The old keys are never deleted. They stay as a permanent backup, and this is
    a union rather than a replace, so running it after the shared file has real
    content in it cannot lose either side. */
-let recovered = null;
 (function migrateLegacy() {
   const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); }
                       catch (e) { return null; } };
@@ -1673,7 +1666,8 @@ let recovered = null;
     if (add.length) { plans = (blank ? [] : plans).concat(add); got.plans = add.length; }
   }
   if (got.targets + got.notes + got.plans === 0) return;
-  recovered = got;
+  console.info('recovered from pre-shared-state localStorage:', got,
+               '— press save to write them to the repo');
   dirty = true;
 })();
 
@@ -1732,28 +1726,12 @@ async function saveShared() {
   }
 }
 
-function announceRecovery() {
-  if (!recovered) return;
-  const bits = [];
-  if (recovered.targets) bits.push(recovered.targets + ' target' + (recovered.targets > 1 ? 's' : ''));
-  if (recovered.notes) bits.push(recovered.notes + ' note' + (recovered.notes > 1 ? 's' : ''));
-  if (recovered.plans) bits.push(recovered.plans + ' draft plan' + (recovered.plans > 1 ? 's' : ''));
-  const bar = document.getElementById('recovBar');
-  bar.innerHTML = '<b>Recovered ' + bits.join(', ') + '</b> from this browser, saved before ' +
-    'these became shared. They are loaded now — press <b>save for both of us</b> to write ' +
-    'them to the repo so your partner gets them too. Your old copy is untouched either way.' +
-    '<button class="btn mini" id="recovX" style="margin-left:12px">dismiss</button>';
-  bar.hidden = false;
-  document.getElementById('recovX').onclick = () => { bar.hidden = true; };
-}
-
 function draw() {
   markSaveState();
   boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL(); drawVegas();
   tierChart(); startableChart(); posShare(); scatter(); deadZones();
 }
 draw();
-announceRecovery();
 </script>
 </body>
 </html>
