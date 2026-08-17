@@ -94,6 +94,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_GET(self):
+        # The page bakes in a copy of the state at build time, so without this it
+        # cannot see its own save until the next rebuild -- a reload would show an
+        # empty board while the file on disk was correct. This serves the live file.
+        if self.path.rstrip("/") == "/api/state":
+            try:
+                with open(STATE, encoding="utf-8") as f:
+                    return self._json(200, json.load(f))
+            except FileNotFoundError:
+                return self._json(200, {"saved_at": "", "saved_by": "", "targets": [],
+                                        "notes": {}, "plans": []})
+            except Exception as e:                           # noqa: BLE001
+                return self._json(500, {"error": repr(e)})
+        return super().do_GET()
+
     def do_POST(self):
         if self.path.rstrip("/") != "/api/state":
             return self._json(404, {"error": "no such endpoint"})

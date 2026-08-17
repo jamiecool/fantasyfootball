@@ -179,6 +179,7 @@
   /* Save is disabled and quiet until something is actually unsaved. */
   #saveBtn:disabled{opacity:.55;cursor:default}
   #saveBtn.on{color:var(--ink);font-weight:650;box-shadow:inset 0 -2px 0 var(--s4)}
+  #saveBtn.warn{color:var(--bad);font-weight:650;box-shadow:inset 0 -2px 0 var(--bad);opacity:1}
   /* --- NFL stats + player profile --- */
   .lnk{background:none;border:0;padding:0;font:inherit;color:var(--ink);cursor:pointer;
        text-align:left;border-bottom:1px dotted var(--axis)}
@@ -459,6 +460,17 @@ function stashPending() {
        basedOn: SHARED.saved_at || ''}));
   } catch (e) { /* storage blocked; edits last for this page view only */ }
   markSaveState();
+  scheduleSave();
+}
+
+/* AUTOSAVE. Starring a player used to persist by itself, and replacing that with
+   a button meant a week of stars that were never written -- the mechanism worked,
+   nobody had been told to press it. Writes go out on their own now. git stays the
+   deliberate step, which is where review actually belongs. */
+let saveTimer = null, saving = false, saveFailed = false;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => saveShared(true), 700);   // coalesce rapid clicks
 }
 function dropPending() {
   dirty = false;
@@ -564,7 +576,7 @@ document.querySelectorAll('.tab[data-p]').forEach(b => b.onclick = () => {
   document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'p-' + b.dataset.p);
   draw();
 });
-document.getElementById('saveBtn').onclick = saveShared;
+document.getElementById('saveBtn').onclick = () => saveShared(false);
 document.getElementById('themeBtn').onclick = () => {
   const cur = document.documentElement.getAttribute('data-theme');
   const dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme:dark)').matches;
@@ -1692,20 +1704,35 @@ function deadZones() {
 function markSaveState() {
   const b = document.getElementById('saveBtn');
   if (!b) return;
-  b.classList.toggle('on', dirty);
-  b.disabled = !dirty;
-  b.textContent = dirty ? '\u25cf save for both of us' : 'saved';
-  b.title = dirty
-    ? 'Write targets, notes and plans to shared/board_state.json, then commit it'
-    : (SHARED.saved_at
-        ? 'Last saved ' + SHARED.saved_at + (SHARED.saved_by ? ' by ' + SHARED.saved_by : '')
-        : 'Nothing saved yet');
+  b.classList.remove('on', 'warn');
+  b.disabled = false;
+  if (saving) {
+    b.textContent = 'saving\u2026';
+    b.disabled = true;
+    b.title = '';
+  } else if (dirty && saveFailed) {
+    b.classList.add('warn');
+    b.textContent = '\u25cf unsaved \u2014 retry';
+    b.title = 'Could not reach the local server. Your edits are kept in this '
+            + 'browser. Run: python serve.py  then click to save.';
+  } else if (dirty) {
+    b.classList.add('on');
+    b.textContent = '\u25cf saving shortly';
+    b.title = 'Writing to shared/board_state.json automatically';
+  } else {
+    b.textContent = SHARED.saved_at ? 'saved ' + SHARED.saved_at.slice(11) : 'saved';
+    b.disabled = true;
+    b.title = SHARED.saved_at
+      ? 'shared/board_state.json last written ' + SHARED.saved_at
+        + (SHARED.saved_by ? ' by ' + SHARED.saved_by : '') + ' \u2014 commit it to share'
+      : 'Nothing saved yet';
+  }
 }
 
-async function saveShared() {
-  const b = document.getElementById('saveBtn');
-  b.disabled = true;
-  b.textContent = 'saving\u2026';
+async function saveShared(auto) {
+  if (saving) { scheduleSave(); return; }        // never overlap two writes
+  saving = true;
+  markSaveState();
   try {
     const r = await fetch('/api/state', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -1714,24 +1741,49 @@ async function saveShared() {
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || r.status);
     SHARED.saved_at = j.saved_at; SHARED.saved_by = j.saved_by;
-    dropPending();
-    b.textContent = 'saved \u2713';
-    setTimeout(markSaveState, 1800);
+    saveFailed = false; saving = false;
+    dropPending();                                // clears dirty and repaints
   } catch (e) {
-    // file:// has no server, and neither does a static host
-    b.textContent = 'cannot save here';
-    b.title = 'Saving needs the local server. Run: python serve.py  (' + e + ')';
-    b.disabled = false;
-    setTimeout(markSaveState, 4000);
+    // no server: file://, a static host, or serve.py not running. Keep the edits
+    // in localStorage and say so, rather than retrying into a loop.
+    saving = false; saveFailed = true;
+    console.warn('could not save shared state:', e);
+    markSaveState();
   }
+}
+
+/* The baked-in SHARED is a build-time snapshot, so it goes stale the moment
+   anything is saved -- and after a reload the page would show an empty board
+   while the file on disk was correct. Pull the live file on load and adopt it
+   when it is newer than what was built in. Unsaved local edits always win, so
+   this can never overwrite work in progress. */
+async function syncShared() {
+  let live;
+  try {
+    const r = await fetch('/api/state', {cache: 'no-store'});
+    if (!r.ok) return;
+    live = await r.json();
+  } catch (e) { return; }                   // no server: the baked-in copy stands
+  if (!live || !live.saved_at) return;
+  if (dirty) return;                        // never clobber unsaved edits
+  if (SHARED.saved_at && live.saved_at <= SHARED.saved_at) return;
+  SHARED.saved_at = live.saved_at; SHARED.saved_by = live.saved_by;
+  targets = new Set(live.targets || []);
+  notes = Object.assign({}, live.notes || {});
+  plans = (live.plans && live.plans.length)
+    ? JSON.parse(JSON.stringify(live.plans)) : plans;
+  active = Math.min(active, plans.length - 1);
+  draw();
 }
 
 function draw() {
   markSaveState();
+  if (dirty && !saving) scheduleSave();     // covers anything recovered on load
   boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL(); drawVegas();
   tierChart(); startableChart(); posShare(); scatter(); deadZones();
 }
 draw();
+syncShared();
 </script>
 </body>
 </html>
