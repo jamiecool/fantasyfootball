@@ -1,7 +1,53 @@
 {
-  "saved_at": "",
-  "saved_by": "",
-  "targets": [],
+  "saved_at": "2026-08-16 22:34",
+  "saved_by": "jamiecool",
+  "targets": [
+    "chasebrown",
+    "dallasgoedert",
+    "jacorycroskeymerritt",
+    "jahmyrgibbs",
+    "jamarrchase",
+    "jamescook",
+    "jordanmason",
+    "jordyntyson",
+    "kylepitts",
+    "lutherburden",
+    "matthewstafford",
+    "parkerwashington",
+    "pukanacua",
+    "quentinjohnston",
+    "rhamondrestevenson"
+  ],
   "notes": {},
-  "plans": []
+  "plans": [
+    {
+      "name": "Studs and Duds",
+      "picks": [
+        "Jahmyr Gibbs",
+        "Puka Nacua",
+        "Quentin Johnston",
+        "Matthew Stafford",
+        "Dallas Goedert",
+        "Jordan Mason",
+        "Luther Burden",
+        "Rhamondre Stevenson",
+        "Jacory Croskey-Merritt",
+        "Parker Washington"
+      ]
+    },
+    {
+      "name": "LA Stack",
+      "picks": [
+        "Omarion Hampton",
+        "Quentin Johnston",
+        "Matthew Stafford",
+        "Puka Nacua",
+        "Jordan Mason",
+        "Chase Brown",
+        "Dallas Goedert",
+        "Rome Odunze",
+        "Davante Adams"
+      ]
+    }
+  ]
 }
