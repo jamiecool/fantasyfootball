@@ -312,6 +312,34 @@ _rank = pd.read_sql("""SELECT season, player_key, pos_rank, overall_rank
 _rank = {(r.season, r.player_key): (int(r.pos_rank), int(r.overall_rank))
          for r in _rank.itertuples()}
 
+# WHAT THE PRICE BOUGHT, in the same unit as the outcome.
+#
+# "He averaged 14.2 a game" means nothing on its own. The question is what 14.2
+# was against what the room paid, so the yardstick is the player who actually
+# FINISHED at his price rank that season: pay RB5 money and the bar to clear is
+# whatever the real RB5 averaged. Same unit on both sides, no index to explain.
+_dp = pd.read_sql("SELECT season, player_key, position, price FROM draft_picks", con)
+_dp["price_rank"] = _dp.groupby(["season", "position"])["price"].rank(
+    ascending=False, method="first").astype(int)
+PRICE_RANK = {(r.season, r.player_key): r.price_rank for r in _dp.itertuples()}
+
+_fr = pd.read_sql("""SELECT season, position, pos_rank, points, games
+                     FROM final_ranks WHERE games > 0""", con)
+_fr["ppg"] = (_fr["points"] / _fr["games"]).round(2)
+PPG_AT = {(r.season, r.position, int(r.pos_rank)): r.ppg for r in _fr.itertuples()}
+
+
+def expected_ppg(season, position, rank):
+    """PPG of whoever finished at this rank. Walks up if the rank is unfilled."""
+    r = int(rank)
+    while r > 0:
+        v = PPG_AT.get((season, position, r))
+        if v is not None:
+            return round(float(v), 2)
+        r -= 1
+    return None
+
+
 TEAMS = sorted(set(pw["opponent"].dropna().astype(str)) | set(pw["nfl_team"].dropna().astype(str)))
 TIDX = {t: i for i, t in enumerate(TEAMS)}
 ps_rows = []
@@ -322,8 +350,11 @@ for (season, key), g in pw.groupby(["season", "player_key"], sort=False):
     pos_rank, ovr = _rank.get((season, key), (None, None))
     games = [[int(r.week), TIDX.get(r.opponent, -1), round(float(r.points), 1)]
              + [int(getattr(r, c)) for c in WK_COLS] for r in g.itertuples()]
+    prank = PRICE_RANK.get((season, key))
+    exp = expected_ppg(season, first.position, prank) if prank else None
     ps_rows.append([first.player_name, first.position, first.nfl_team, int(season),
-                    price, franchise, pos_rank, ovr, games, key])
+                    price, franchise, pos_rank, ovr, games, key,
+                    exp, int(prank) if prank else None])
 # heaviest scorers first so the default view needs no sort pass
 ps_rows.sort(key=lambda r: -sum(x[2] for x in r[8]))
 

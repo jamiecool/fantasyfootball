@@ -1433,6 +1433,98 @@ function drawNFL() {
   bindLinks($n('nT'));
 }
 
+
+/* ---------- career chart: what he returned against what he cost ----------
+   Bars are actual points per game. The tick across each bar is what the room's
+   price implied -- the PPG of whoever actually FINISHED at his price rank that
+   season. Same unit on both sides, so the gap needs no explaining: pay RB5
+   money and the bar to clear is whatever the real RB5 averaged.
+
+   Colour is the verdict, and the tick's position is the same verdict again, so
+   nothing rests on colour alone. Seasons he went undrafted have no bar to
+   clear and stay grey. */
+function careerChart(rows) {
+  const S = rows.slice().sort((a, b) => a[3] - b[3]);
+  const W = 900, H = 230, m = {t: 26, r: 14, b: 46, l: 46};
+  const svg = el('svg', {viewBox: '0 0 ' + W + ' ' + H, width: '100%'});
+  const vals = [];
+  S.forEach(x => {
+    const a = nAgg(x, 1, WK_MAX);
+    vals.push(a.ppg);
+    if (x[10]) vals.push(x[10]);
+  });
+  const top = Math.max(4, Math.max.apply(null, vals) * 1.18);
+  const Y = v => H - m.b - (v / top) * (H - m.t - m.b);
+  const bw = (W - m.l - m.r) / S.length;
+
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const v = top * f, y = Y(v);
+    svg.append(el('line', {x1: m.l, x2: W - m.r, y1: y, y2: y,
+      stroke: cv('--grid'), 'stroke-width': 1}));
+    const tx = el('text', {x: m.l - 8, y: y + 4, fill: cv('--muted'),
+      'font-size': 12, 'text-anchor': 'end'});
+    tx.textContent = v.toFixed(0);
+    svg.append(tx);
+  });
+
+  S.forEach((x, i) => {
+    const a = nAgg(x, 1, WK_MAX), exp = x[10], price = x[4];
+    const cx = m.l + i * bw + bw / 2, w = Math.min(66, bw - 22);
+    const beat = exp == null ? 0 : a.ppg - exp;
+    // He can be his own yardstick: cost TE1 money AND finished TE1, in which
+    // case exp is his own PPG and the delta is rounding noise. That is "met
+    // exactly", not "beat" -- painting it green would claim an edge that is
+    // structurally impossible, so it gets its own state.
+    const isBench = exp != null && x[6] === x[11];
+    const col = exp == null ? cv('--muted')
+              : isBench ? cv('--s1')
+              : beat >= 0 ? cv('--div-pos') : cv('--div-neg');
+    const bar = el('rect', {x: cx - w / 2, y: Y(a.ppg), width: w,
+      height: Math.max(2, H - m.b - Y(a.ppg)), rx: 4, fill: col,
+      opacity: exp == null ? 0.45 : 0.85});
+    svg.append(bar);
+
+    if (exp != null) {
+      // the bar to clear, drawn wider than the bar so it reads as a threshold
+      svg.append(el('line', {x1: cx - w / 2 - 7, x2: cx + w / 2 + 7,
+        y1: Y(exp), y2: Y(exp), stroke: cv('--ink'), 'stroke-width': 2.5}));
+      const d = el('text', {x: cx, y: Y(Math.max(a.ppg, exp)) - 9, fill: cv('--ink'),
+        'font-size': 13, 'font-weight': 650, 'text-anchor': 'middle'});
+      d.textContent = isBench ? 'met' : (beat >= 0 ? '+' : '') + beat.toFixed(1);
+      svg.append(d);
+    }
+    const ppgT = el('text', {x: cx, y: Y(a.ppg) + 16, fill: '#fff',
+      'font-size': 12, 'font-weight': 650, 'text-anchor': 'middle'});
+    if (H - m.b - Y(a.ppg) > 22) { ppgT.textContent = a.ppg.toFixed(1); svg.append(ppgT); }
+
+    const yr = el('text', {x: cx, y: H - m.b + 18, fill: cv('--ink2'),
+      'font-size': 13, 'text-anchor': 'middle'});
+    yr.textContent = x[3];
+    svg.append(yr);
+    const sub = el('text', {x: cx, y: H - m.b + 34, fill: cv('--muted'),
+      'font-size': 11.5, 'text-anchor': 'middle'});
+    sub.textContent = price == null ? 'undrafted' : '$' + price + ' \u00b7 ' + x[1] + x[11];
+    svg.append(sub);
+
+    bar.addEventListener('mousemove', ev => showTip(ev,
+      '<b>' + x[3] + '</b><br>' + a.ppg.toFixed(1) + ' a game over ' + a.g + ' games' +
+      (exp == null
+        ? '<br>undrafted here, so nothing to clear'
+        : '<br>cost $' + price + ', which bought ' + x[1] + x[11] +
+          (x[6] === x[11]
+            // he finished exactly where his price ranked him, so the yardstick
+            // is himself. A delta of 0.0 there is the honest answer, not a gap
+            // in the data, and saying so stops it reading as broken.
+            ? '<br><b>he WAS ' + x[1] + x[11] + ' that year — exactly what the ' +
+              'price bought</b>'
+            : '<br>' + x[1] + x[11] + ' that year averaged ' + exp.toFixed(1) +
+              '<br><b>' + (beat >= 0 ? 'beat it by ' : 'missed by ') +
+              Math.abs(beat).toFixed(1) + ' a game</b>'))));
+    bar.addEventListener('mouseleave', hideTip);
+  });
+  return svg;
+}
+
 /* ---------- player profile ---------- */
 function showPlayer(key, season) {
   const all = (PIDX[key] || []).slice().sort((a, b) => b[3] - a[3]);
@@ -1504,7 +1596,16 @@ function showPlayer(key, season) {
       `scores among starter-quality ${pos}s — 20 points is a big week for a tight end and a ` +
       `mediocre one for a quarterback, so each position is judged against its own.</p>` +
     `<h3>Game log, ${p[3]}</h3><div class="scroll" style="max-height:320px">${log}</table></div>` +
+    `<h3>Points per game each season, against what he cost</h3>` +
+    `<div id="pChart"></div>` +
+    `<p class="note" style="margin-top:6px">Bar is what he averaged. The line across it is ` +
+    `what his price implied — the PPG of whoever actually finished at his price rank ` +
+    `that season. <b style="color:var(--div-pos)">Green</b> cleared it, ` +
+    `<b style="color:var(--div-neg)">red</b> did not, ` +
+    `<b style="color:var(--s1)">blue</b> means he WAS the player at that rank so there was ` +
+    `nothing to beat, and grey means he went undrafted here.</p>` +
     `<h3>Every season on record</h3><div class="scroll" style="max-height:300px">${career}</table></div>`;
+  $n('pChart').replaceChildren(careerChart(all));
 
   bindLinks($n('pBody'));
   $n('pModal').hidden = false;
