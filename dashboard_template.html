@@ -1596,20 +1596,40 @@ function showPlayer(key, season) {
         `<td class="${cls}" style="font-weight:650">${g[2]}</td></tr>`;
     }).join('') + '</tbody>';
 
-  const career = '<table><thead><tr><th>Year</th><th class="l">Tm</th><th>G</th>' +
-    '<th>Pts</th><th>PPG</th><th>Pos rk</th><th>Boom</th><th>Bust</th>' +
-    '<th>PBAFFL $</th><th class="l">Bought by</th></tr></thead><tbody>' +
+  // Position-aware stat columns, the same set the NFL stats tab uses, so a
+  // season reads as football and not just as a fantasy total. Built from one
+  // list to guarantee the header and the cells cannot drift apart -- they did,
+  // when an Age cell was added and its header silently was not, and every
+  // column after Tm was mislabelled with nothing on screen to show it.
+  const cCols = NCOLS[pos] || NCOLS[''];
+  const cHead = [['Year', ''], ['Tm', 'l'], ['Age', ''], ['G', '']]
+    .concat(cCols.map(c => [NLAB[c] || c, '']))
+    .concat([['Pts', ''], ['PPG', ''], ['Pos rk', ''], ['Boom', ''], ['Bust', ''],
+             ['PBAFFL $', ''], ['Bought by', 'l']]);
+  const career = '<table><thead><tr>' +
+    cHead.map(([l, cls]) => `<th class="${cls}">${l}</th>`).join('') +
+    '</tr></thead><tbody>' +
     all.map(x => {
       const ax = nAgg(x, 1, WK_MAX), tx = WK.thresh[x[1]] || [99, -99];
       const bm = x[8].filter(g => g[2] >= tx[0]).length;
       const bs = x[8].filter(g => g[2] <= tx[1]).length;
+      const cells = [
+        `<button class="lnk" data-pk="${key}" data-ps="${x[3]}">${x[3]}</button>`,
+        x[2],
+        ageOn((D.bio[key] || {}).born, x[3]) ?? '\u2014',
+        ax.g,
+      ].concat(cCols.map(c => ax[c]))
+       .concat([
+        ax.pts, ax.ppg,
+        x[6] == null ? '\u2014' : x[1] + x[6],
+        bm, bs,
+        x[4] == null ? '\u2014' : '$' + x[4],
+        x[5] || '\u2014',
+      ]);
+      if (cells.length !== cHead.length) console.error('career table column mismatch');
       return `<tr${x[3] === p[3] ? ' style="font-weight:650"' : ''}>` +
-        `<td><button class="lnk" data-pk="${key}" data-ps="${x[3]}">${x[3]}</button></td>` +
-        `<td class="l">${x[2]}</td>` +
-        `<td style="color:var(--ink2)">${ageOn((D.bio[key]||{}).born, x[3]) ?? '—'}</td>` +
-        `<td>${ax.g}</td><td>${ax.pts}</td><td>${ax.ppg}</td>` +
-        `<td>${x[6] == null ? '—' : x[1] + x[6]}</td><td>${bm}</td><td>${bs}</td>` +
-        `<td>${x[4] == null ? '—' : '$' + x[4]}</td><td class="l">${x[5] || '—'}</td></tr>`;
+        cells.map((v, i) => `<td class="${cHead[i][1]}">${v}</td>`).join('') +
+        '</tr>';
     }).join('') + '</tbody>';
 
   $n('pBody').innerHTML =
