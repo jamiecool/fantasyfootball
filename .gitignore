@@ -51,3 +51,8 @@ Thumbs.db
 # fetch_nflverse_players.py and only changing when someone enters the league.
 # Same call as the other nflverse mirrors.
 rawdata/nflverse/players.csv
+
+# Personal notes for your own Claude sessions -- preferences, scratch, anything
+# you do not want to negotiate with your partner. Claude Code reads it alongside
+# CLAUDE.md but it never leaves your machine.
+CLAUDE.local.md

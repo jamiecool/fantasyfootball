@@ -39,9 +39,26 @@ different players, both sets survive. What will not auto-merge is both of you ed
 the SAME note or reordering the same plan; that is a normal conflict and the resolution
 is obvious from the text. Pull before a long session on the board.
 
-**`notes/log/` is one file per person per session.** Name it `YYYY-MM-DD-<you>.md`.
-Never edit someone else's. `CLAUDE.md` stays as the durable index — decisions, traps,
-findings — and changes there should be deliberate rather than a running diary.
+**`CLAUDE.md` is split so you do not both write to it.** It was 1,296 lines and the
+single most-edited file in the repo, which is the worst possible shape for two authors.
+It is now a ~500-line durable index — how to run things, how the league works, what has
+already gone wrong — and it should change rarely and deliberately.
+
+Everything that grows moved out:
+
+| | |
+|---|---|
+| `notes/findings/*.md` | one file per analysis. Adding one? New file, plus a line in its README |
+| `notes/findings/README.md` | the findings audit. Read it before citing any result |
+| `notes/backlog.md` | what is worth doing next |
+| `notes/log/YYYY-MM-DD-<you>.md` | one file per person per session. Never edit someone else's |
+
+Two people writing up different analyses now touch different files and cannot conflict.
+`notes/log/` additionally has `merge=union` set, so even a same-day filename collision
+keeps both sides rather than stopping the world.
+
+**`CLAUDE.local.md` is gitignored.** Personal preferences and scratch for your own
+sessions, read alongside `CLAUDE.md`, never shared and never in a diff.
 
 **`dashboard_template.html` is the one real hazard.** 1,600 lines, and it is the
 highest-churn file in the repo. Not yet split into partials. If you are both touching
