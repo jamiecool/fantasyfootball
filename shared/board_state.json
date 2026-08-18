@@ -1,24 +1,31 @@
 {
-  "saved_at": "2026-08-17 09:21",
+  "saved_at": "2026-08-17 21:22",
   "saved_by": "jamiecool",
   "targets": [
     "chasebrown",
     "christianwatson",
     "dallasgoedert",
     "djmoore",
+    "georgekittle",
     "jacorycroskeymerritt",
+    "jadarianprice",
     "jahmyrgibbs",
+    "jalenmcmillan",
     "jamarrchase",
     "jamescook",
     "jordanmason",
     "jordyntyson",
+    "kennethwalker",
     "kylepitts",
+    "kylermurray",
     "lutherburden",
     "matthewstafford",
     "parkerwashington",
     "pukanacua",
     "quentinjohnston",
-    "rhamondrestevenson"
+    "rhamondrestevenson",
+    "traviskelce",
+    "zachcharbonnet"
   ],
   "notes": {},
   "plans": [
@@ -32,9 +39,9 @@
         "Dallas Goedert",
         "Jordan Mason",
         "Luther Burden",
-        "Rhamondre Stevenson",
         "Jacory Croskey-Merritt",
-        "Parker Washington"
+        "Parker Washington",
+        "Zach Charbonnet"
       ]
     },
     {
@@ -49,6 +56,26 @@
         "Dallas Goedert",
         "Rome Odunze",
         "Davante Adams"
+      ]
+    },
+    {
+      "name": "RBs",
+      "picks": [
+        "James Cook",
+        "Matthew Stafford",
+        "Luther Burden",
+        "Parker Washington",
+        "Puka Nacua",
+        "Dallas Goedert",
+        "Will Reichard",
+        "LAC DEF",
+        "Jordan Mason",
+        "Jacory Croskey-Merritt",
+        "Matthew Golden",
+        "Adonai Mitchell",
+        "Jalen McMillan",
+        "Kyler Murray",
+        "Chase Brown"
       ]
     }
   ]

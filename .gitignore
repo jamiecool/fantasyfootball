@@ -46,3 +46,8 @@ venv/
 Thumbs.db
 .vscode/
 .idea/
+
+# nflverse players.csv: 7MB reference file, 25k players, refetched by
+# fetch_nflverse_players.py and only changing when someone enters the league.
+# Same call as the other nflverse mirrors.
+rawdata/nflverse/players.csv

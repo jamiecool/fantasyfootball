@@ -31,6 +31,8 @@ STAGES = [
      "rawdata/nflverse/stats_player_reg_2025.csv"),
     ("fetch_nflverse_weekly.py", "week-by-week stat lines", False,
      "rawdata/nflverse/stats_player_week_2025.csv"),
+    ("fetch_nflverse_players.py", "height, weight, birth date, draft slot", False,
+     "rawdata/nflverse/players.csv"),
     ("fetch_adp.py", "FFC redraft ADP (K/DEF only these days)", True, None),
     ("fetch_underdog_adp.py", "Underdog ADP -- drives the board's ordering", True, None),
     ("fetch_projections.py", "Sleeper projections (analytics only)", True, None),

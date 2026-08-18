@@ -432,6 +432,36 @@ print(f"\nshared board state: {len(_s.get('targets', []))} targets, "
          + (f" by {_s['saved_by']}" if _s.get("saved_by") else "") + ")"
          if _s.get("saved_at") else " (never saved)"))
 
+# ---- 14. player biography, keyed for the profile card ----------------------
+# Age is computed per SEASON, not once: a card spanning 2017-2025 wants "he was
+# 24 that year", and for the 2026 board it wants his age this September. Storing
+# a birth date and deriving both is the only version that stays correct.
+_bio = optional("player_bio",
+                "SELECT player_id, player_key, height_in, weight_lb, birth_date,"
+                " college, rookie_season, draft_year, draft_round, draft_pick,"
+                " draft_team FROM player_bio",
+                ["player_id", "player_key", "height_in", "weight_lb", "birth_date",
+                 "college", "rookie_season", "draft_year", "draft_round",
+                 "draft_pick", "draft_team"])
+D["bio"] = {}
+for r in _bio.itertuples():
+    if not r.player_key:
+        continue
+    h = None
+    if pd.notna(r.height_in):
+        h = f"{int(r.height_in) // 12}-{int(r.height_in) % 12}"
+    D["bio"][r.player_key] = {
+        "ht": h,
+        "wt": int(r.weight_lb) if pd.notna(r.weight_lb) else None,
+        "born": str(r.birth_date)[:10] if pd.notna(r.birth_date) else None,
+        "college": r.college if pd.notna(r.college) else None,
+        "rookie": int(r.rookie_season) if pd.notna(r.rookie_season) else None,
+        "draft": (f"rd {int(r.draft_round)}, pick {int(r.draft_pick)}"
+                  + (f", {r.draft_team}" if pd.notna(r.draft_team) else "")
+                  if pd.notna(r.draft_round) else "undrafted"),
+    }
+print(f"\nbio for {len(D['bio'])} players on the profile card")
+
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p
     JOIN final_ranks f ON f.season=p.season AND f.player_key=p.player_key

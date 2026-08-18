@@ -1434,6 +1434,38 @@ function drawNFL() {
 }
 
 
+
+/* Age is derived, never stored, because a card spanning nine seasons needs
+   "he was 24 that year" and the 2026 board needs "he is 23 this September".
+   One birth date answers both; a stored age answers neither for long.
+   NFL seasons are pinned to 1 September so the number does not tick over
+   mid-season. */
+function ageOn(born, season) {
+  if (!born) return null;
+  const b = new Date(born + 'T00:00:00Z');
+  if (isNaN(b)) return null;
+  const ref = Date.UTC(season, 8, 1);          // 1 Sep of that season
+  return Math.floor((ref - b.getTime()) / 31557600000);
+}
+function bioLine(key, season) {
+  const b = (D.bio || {})[key];
+  if (!b) return '';
+  const bits = [];
+  const age = ageOn(b.born, season);
+  if (age != null) bits.push('<b>' + age + '</b> in ' + season);
+  if (b.ht) bits.push(b.ht.replace('-', "'") + '"');
+  if (b.wt) bits.push(b.wt + ' lb');
+  if (b.rookie) bits.push((season - b.rookie) === 0 ? 'rookie season'
+                          : 'yr ' + (season - b.rookie + 1));
+  if (!bits.length) return '';
+  const extra = [];
+  if (b.college) extra.push(b.college);
+  if (b.draft) extra.push(b.draft);
+  return '<p class="pHead" style="margin-top:2px">' + bits.join(' \u00b7 ') +
+    (extra.length ? '<span style="color:var(--muted)"> \u2014 ' + extra.join(' \u00b7 ') +
+                    '</span>' : '') + '</p>';
+}
+
 /* ---------- career chart: what he returned against what he cost ----------
    Bars are actual points per game. The tick across each bar is what the room's
    price implied -- the PPG of whoever actually FINISHED at his price rank that
@@ -1573,7 +1605,9 @@ function showPlayer(key, season) {
       const bs = x[8].filter(g => g[2] <= tx[1]).length;
       return `<tr${x[3] === p[3] ? ' style="font-weight:650"' : ''}>` +
         `<td><button class="lnk" data-pk="${key}" data-ps="${x[3]}">${x[3]}</button></td>` +
-        `<td class="l">${x[2]}</td><td>${ax.g}</td><td>${ax.pts}</td><td>${ax.ppg}</td>` +
+        `<td class="l">${x[2]}</td>` +
+        `<td style="color:var(--ink2)">${ageOn((D.bio[key]||{}).born, x[3]) ?? '—'}</td>` +
+        `<td>${ax.g}</td><td>${ax.pts}</td><td>${ax.ppg}</td>` +
         `<td>${x[6] == null ? '—' : x[1] + x[6]}</td><td>${bm}</td><td>${bs}</td>` +
         `<td>${x[4] == null ? '—' : '$' + x[4]}</td><td class="l">${x[5] || '—'}</td></tr>`;
     }).join('') + '</tbody>';
@@ -1582,6 +1616,7 @@ function showPlayer(key, season) {
     `<h2>${name}</h2>` +
     `<p class="pHead"><span class="pos" style="background:var(${POSC[pos] || '--muted'})">${pos}</span> ` +
       `&nbsp;${p[2]} · ${p[3]} season · ${all.length} season${all.length > 1 ? 's' : ''} on record</p>` +
+    bioLine(key, p[3]) +
     '<div class="row" style="margin:12px 0 4px">' +
       `<div class="tile"><div class="v">${a.pts}</div><div class="k">points, ${p[3]}</div></div>` +
       `<div class="tile"><div class="v">${a.ppg}</div><div class="k">per game (${a.g} played)</div></div>` +
