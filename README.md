@@ -102,25 +102,35 @@ seasons. **Draft plan** is a snake planner that snakes from your slot and flags 
 where the board says a player will not last. **Strategy** and **Analytics** are derived
 from that league's own drafts only. **NFL stats** and **Vegas** are shared with PBAFFL.
 
-The second league's board rests on two corrections to ESPN's numbers, both measured
-from five seasons of outcomes: its projections run ~15% high because it assumes every
-starter plays 17 games, and its replacement level is projected rather than realised.
-The second matters most — ESPN's 24th-best QB projects 239.1 points where the real
-five-season figure is 153.7, and in a superflex league that gap is the whole game.
+Both boards are built the same way, and it is worth saying how — see below.
 
 ## Where the numbers come from
 
-The board's price is built in two halves, and the split matters:
+Every board here is built in two halves, and the split matters. One source is not
+allowed to do both jobs.
 
 - **Ordering within a position** is Underdog's. Sharp, best-ball, repriced continuously.
-- **Cross-position weighting** is PBAFFL's own price history, 2023–25. Underdog cannot
-  supply it — best ball has 18 rounds, a FLEX we do not have, and no K or DEF. RB1 goes
-  for $66 here while QB1 goes for $36, and that gap *is* our format.
+- **Cross-position weighting** is the league's own draft history, 2023–25. Underdog
+  cannot supply it — best ball has 18 rounds, a FLEX PBAFFL does not have, and no K or
+  DEF at all.
 
-**No projection enters the price.** Preseason ADP predicts final finish at rho 0.42,
+What that second half looks like depends on the format, but the idea is identical:
+
+| | PBAFFL (auction) | Perennial Push (snake) |
+|---|---|---|
+| the curve | what the Nth-best at a position **cost** | what pick the Nth-best **went at** |
+| what it says | RB1 = $66, QB1 = $36 | RB1 at pick 2, QB1 at pick 2, TE1 at 31 |
+| the format it encodes | no FLEX, mandatory K + DEF | superflex |
+
+So Underdog says who the fifth-best RB is; the league's own history says what the fifth
+RB costs *there*. In the snake league that curve is the only thing that knows the league
+is superflex — and it knows it by measurement rather than by anyone modelling a starter
+requirement.
+
+**No projection enters either board.** Preseason ADP predicts final finish at rho 0.42,
 which is roughly the ceiling for anyone; two independent markets agree with each other
 at 0.95 while either agrees with a projection model at 0.65–0.72. The model is the
-outlier, so it stays out of pricing and lives in analytics only.
+outlier, so it stays out of ranking and rides along as a column.
 
 ## Reading the analysis honestly
 

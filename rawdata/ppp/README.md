@@ -52,9 +52,19 @@ and nothing re-pulls it. Every projection, ADP and ownership figure on the Peren
 Push board is frozen at that date. The dashboard cannot tell you this — check
 `snapshots/` for what is actually current before drafting off it.
 
-**There is no name normaliser.** About 18 players are spelled differently here than
-in Underdog's data — `James Cook III` vs `James Cook`, `DJ Moore` vs `D.J. Moore`,
-`Kenny Gainwell` vs `Kenneth Gainwell`. Nothing joins the two leagues' player
-tables today, so this costs nothing yet. It would be the first thing to fix if
-anyone ever wants to compare a player across both boards. See trap 1 in `CLAUDE.md`
-— name joins in this repo have burned us before.
+**The name join is fine — the "~18 mismatches" claim was wrong.** The Cowork README
+that came with this data said about 18 players were spelled differently from Underdog's
+(`James Cook III`, `DJ Moore`, `Kenny Gainwell`). Measured against the repo's own
+`player_key`, which already folds `Jr/Sr/III`, strips punctuation and carries an alias
+table, the real numbers are:
+
+- **0 collisions** in the ESPN pool — no two different players fold to one key, which is
+  the check trap 1 exists to force. `build_board()` raises rather than joining if this
+  ever stops being true.
+- **206 of 249** join to Underdog ADP.
+- **3 skill players** miss: Najee Harris, Darius Slayton, Jahan Dotson — all deep-round
+  names Underdog does not rank. They fall back to ESPN's ADP for ordering and the board
+  marks them `espn` in its UD column.
+- **40** are K/DEF, which Underdog carries none of by design (trap 8), ordered on ESPN's
+  own ADP instead.
+- **0 position disagreements** among the players that joined.

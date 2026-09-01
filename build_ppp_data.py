@@ -14,26 +14,40 @@ rawdata/ppp/README.md).
 Run:
     python build_ppp_data.py
 
-TWO IDEAS DO ALL THE WORK HERE, and both exist because ESPN's own numbers are
-the wrong shape for this league:
+THE BOARD IS BUILT BY ppp_board.py, on the same settled method as every other
+board in this repo: Underdog ADP orders within a position, this league's own
+2023-25 draft history weights across positions, and no projection touches the
+sort. Read that module's docstring before changing anything about the ranking.
+
+WHAT THIS FILE STILL DOES is the outcome analysis -- what a round actually
+returned, which positions stop paying when, the quarterback gap -- plus two
+measurements that are genuinely useful next to a board without being allowed to
+rank it:
 
 1. ESPN PROJECTS EVERY STARTER TO PLAY 17 GAMES, so its projections run high --
-   actual points land at 0.83-0.89 of projection depending on position. Each
-   projection is therefore deflated by its own position's measured ratio before
-   anything is ranked. Ranking on raw projections silently ranks on ESPN's
-   optimism about durability.
+   actual points land at 0.83-0.89 of projection depending on position. `exp`
+   deflates each projection by its own position's measured ratio. An
+   informational column, not a ranking.
 
 2. REPLACEMENT LEVEL IS MEASURED, NOT PROJECTED. ESPN's 24th-best QB for 2026
    projects 239.1 points; across five actual seasons the 24th-best QB scored
-   153.7. Measuring value against the projected floor instead of the real one
-   erases ~85 points of value from every quarterback -- which in a superflex
-   league, where 24 QBs start every week and there is no 25th worth having, is
-   the whole ballgame.
+   153.7. That gap is the single best illustration of why this league's own
+   history beats a projection feed for anything positional -- but it is now a
+   finding on the Strategy tab rather than machinery inside the board.
+
+A PREVIOUS VERSION RANKED THIS BOARD ON (1) AND (2) DIRECTLY, deriving value over
+replacement from a starter requirement of QB = 2.0 per team. It reached broadly
+the right conclusion about quarterbacks for defensible reasons, but it did it by
+modelling the format from an assumption, and off a projection feed the repo had
+already rejected for exactly that purpose. The draft history states the same fact
+without the assumption. See CLAUDE.md trap 13.
 """
 import json
 import os
 import statistics as st
 from collections import defaultdict
+
+from ppp_board import build_board
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "rawdata", "ppp")
@@ -42,6 +56,13 @@ OUT = os.path.join(ROOT, "cleandata", "analysis")
 SEASONS = [2021, 2022, 2023, 2024, 2025]
 TEAMS = {2021: 14, 2022: 12, 2023: 12, 2024: 12, 2025: 12}
 ROUNDS = 18
+
+# The board's cross-position curve uses the last THREE seasons, matching the
+# window the PBAFFL price curve uses. The outcome analysis below uses all five:
+# more history is better for measuring what a round returns, but a stale draft
+# is actively misleading about where the room takes a position today. 2021 also
+# had 14 teams, which would distort a pick-based curve for a 12-team league.
+CURVE_SEASONS = [2023, 2024, 2025]
 
 # Starters per team. Superflex is filled by a QB here in practice -- 33 QBs went
 # in 2025 for 12 teams -- so QB carries two starting slots. The single FLEX is
@@ -166,50 +187,27 @@ for rd in range(1, ROUNDS + 1):
     qbcum.append(round(tot / len(SEASONS), 1))
 
 # ---- 4. the 2026 board -----------------------------------------------------
-# schema: pid|name|pos|proTeam|espnRank|adp|own|proj
-board = []
-for f in rows(src("board2026.psv")):
-    board.append(dict(pid=f[0], n=f[1], pos=f[2], tm=f[3], espn=int(f[4]),
-                      adp=float(f[5]) if f[5] else None,
-                      own=float(f[6]) if f[6] else None,
-                      prj=float(f[7]) if f[7] else 0.0))
-byp = defaultdict(list)
-for p in board:
-    byp[p["pos"]].append(p)
-for pos, lst in byp.items():
-    lst.sort(key=lambda x: -x["prj"])
-    for i, p in enumerate(lst, 1):
-        p["prank"] = i
+# THE SETTLED METHOD, and see ppp_board.py for why each half is what it is:
+# Underdog orders within a position, this league's own 2023-25 draft history
+# weights across positions, ESPN's ADP covers the K and DEF that Underdog has
+# none of. No projection touches the sort.
+board, DIAG = build_board(
+    board_rows=list(rows(src("board2026.psv"))),
+    picks=picks, seasons=CURVE_SEASONS, rounds=ROUNDS,
+    teams_per=TEAMS[max(SEASONS)],
+    db_path=os.path.join(ROOT, "cleandata", "fantasy.db"))
 
-# Deflate onto the scale this league's outcomes actually land on, then measure
-# against the replacement level those outcomes actually produced.
+# Projections are carried as an informational column only -- never the ranking.
+# `exp` deflates ESPN's number onto the scale this league's outcomes actually
+# land on, which is a genuine measurement and useful to eyeball next to a pick;
+# it is emphatically not what sorted the rows above.
 for p in board:
     p["exp"] = round(p["prj"] * RATIO.get(p["pos"], 0.86), 1)
+    p["vor"] = (round(p["exp"] - REPL_ACT[p["pos"]], 1)
+                if p["pos"] in SKILL else None)
 
-# K and D-ST are streamed, not valued -- they get no VOR and sort to the bottom,
-# which is also what rule 4 says to do with them.
 skill = [p for p in board if p["pos"] in SKILL]
 stream = [p for p in board if p["pos"] not in SKILL]
-for p in skill:
-    p["vor"] = round(p["exp"] - REPL_ACT[p["pos"]], 1)
-for p in stream:
-    p["vor"] = None
-skill.sort(key=lambda x: -x["vor"])
-stream.sort(key=lambda x: (x["pos"], -x["prj"]))
-
-# ESPN's rank re-expressed inside the same pool, so the two orderings are
-# comparable: "we say 14th, ESPN says 41st" rather than comparing against a
-# board that also contains kickers.
-for i, p in enumerate(sorted(skill, key=lambda x: x["espn"]), 1):
-    p["espnRank"] = i
-for i, p in enumerate(skill, 1):
-    p["rank"] = i
-    p["gap"] = p["espnRank"] - i
-    p["rd"] = (i - 1) // 12 + 1
-    p["pk"] = (i - 1) % 12 + 1
-for p in stream:
-    p["rank"] = p["gap"] = p["rd"] = p["pk"] = p["espnRank"] = None
-board = skill + stream
 
 # ---- 5. teams and their drafts ---------------------------------------------
 teams = {}
@@ -233,7 +231,9 @@ qb_top3 = len([p for p in skill if p["pos"] == "QB" and p["rank"] <= 36])
 
 D = dict(
     league=json.load(open(src("league.json"), encoding="utf-8")),
-    seasons=SEASONS, rounds=ROUNDS, replacement=REPL_ACT, ratio=RATIO, need=NEED,
+    seasons=SEASONS, curveSeasons=CURVE_SEASONS, rounds=ROUNDS,
+    replacement=REPL_ACT, ratio=RATIO, need=NEED, curves=DIAG["curves"],
+    nUnderdog=DIAG["n_underdog"], nEspn=DIAG["n_espn"],
     qbTop3=qb_top3, qbcum=qbcum, board=board, rdstat=rdstat, posband=posband,
     qbedge=qbedge, poscount=poscount, bands=[f"{a}-{b}" for a, b in BANDS],
     draft={str(y): [dict(o=p["o"], rd=p["rd"], pk=p["sl"], tm=p["tm"], n=p["n"],
@@ -248,6 +248,7 @@ D = dict(
 # is the same contract strategy_rules.py holds for PBAFFL.
 rb = next(c for c in posband if c["pos"] == "RB")["cells"]
 qb_cells = next(x for x in posband if x["pos"] == "QB")["cells"]
+CURVE = DIAG["curves"]
 D["rules"] = [
     dict(id="1", conf="high", area="Superflex",
          rule="The second quarterback is the best value on the board, and this room "
@@ -266,18 +267,24 @@ D["rules"] = [
              "24th-best QB for 2026 projects 239.1 points. Across five actual seasons "
              f"the 24th-best QB scored {REPL_ACT['QB']}. Twenty-four QBs start every week "
              "in a superflex league and there is no 25th worth having, so the real floor "
-             f"is {REPL_ACT['QB']} - and measuring against the projected floor instead "
-             f"quietly erases about {round(239.1 - REPL_ACT['QB'])} points of value from "
-             "every quarterback.",
+             f"is {REPL_ACT['QB']} - and anyone valuing quarterbacks off the projected "
+             f"floor instead is quietly erasing about {round(239.1 - REPL_ACT['QB'])} "
+             "points from every one of them. This board does not price off either floor; "
+             "it takes the league's own draft history instead, which reaches the same "
+             "conclusion without needing a projection to be right.",
          n="5 seasons of realized outcomes vs ESPN preseason projections"),
     dict(id="3", conf="high", area="Superflex",
          rule="ESPN's own board is built for a one-QB league. Do not draft from it here.",
-         why=f"Ranked inside the same {len(skill)}-player pool, quarterbacks sit far later "
-             "on ESPN than value over replacement says they belong. This board puts "
-             f"{qb_top3} quarterbacks inside the first three rounds; across five seasons "
+         why="This league's own drafts say where a position goes: over 2023-25 the first "
+             f"quarterback off the board went at overall pick {CURVE['QB'][1]:.0f} and the "
+             f"fifth at {CURVE['QB'][5]:.0f}, where the fifth running back went at "
+             f"{CURVE['RB'][5]:.0f} and the first tight end at {CURVE['TE'][1]:.0f}. "
+             f"Ranked inside the same {len(board)}-player pool, ESPN has quarterbacks far "
+             f"later than that. This board puts {qb_top3} inside the first three rounds; "
              f"the room itself has taken {qbcum[2]} by that point, so the market already "
              "knows. ESPN does not.",
-         n=f"{len(skill)} skill players, ESPN PPR order vs superflex VOR, same pool"),
+         n=f"{sum(len(v) for v in CURVE.values())} position-rank observations, "
+           f"{len(CURVE_SEASONS)} seasons"),
     dict(id="4", conf="high", area="Roster shape",
          rule="Never spend a pick on a kicker or defense before round 13.",
          why="K and D/ST were startable 85-100% of the time in every round band from 10 "
@@ -294,13 +301,15 @@ D["rules"] = [
              "best late.",
          n=f"{sum(c['n'] for c in rb)} RB picks, 5 seasons"),
     dict(id="6", conf="high", area="Mindset",
-         rule="Treat every projection as roughly 15% too high, and rank on the gaps "
-              "rather than the totals.",
+         rule="Treat every projection as roughly 15% too high, and never rank off one.",
          why="Across 933 picks with usable ESPN preseason projections, actual points came "
              "in at 0.82-0.90 of projection in every round band through 15. By position "
              f"the ratio is {RATIO['QB']} for QBs, {RATIO['RB']} for RBs, {RATIO['WR']} "
-             f"for WRs and {RATIO['TE']} for TEs - this board deflates every projection by "
-             "its own position's factor before ranking.",
+             f"for WRs and {RATIO['TE']} for TEs, and the Exp column on the board applies "
+             "each. But the deeper point is that a projection is one algorithm, not a "
+             "market: two independent markets agree with each other at rho 0.95 while "
+             "either agrees with a projection model at 0.65-0.72. Projections are a column "
+             "here, never the sort.",
          n="933 picks with projections, 4 seasons"),
     dict(id="7", conf="medium", area="Draft slot",
          rule="Your draft slot is not worth worrying about.",
@@ -323,8 +332,26 @@ with open(path, "w", encoding="utf-8", newline="\n") as f:
     json.dump(D, f, separators=(",", ":"))
 
 print(f"\nrealized replacement: {REPL_ACT}")
-print(f"proj deflator by pos: {RATIO}")
-print(f"\n{len(skill)} skill players ranked, {len(stream)} K/DEF streamed")
+print(f"proj deflator by pos: {RATIO}       (informational columns only)")
+
+print(f"\nboard ordering within position: {DIAG['n_underdog']} from Underdog, "
+      f"{DIAG['n_espn']} from ESPN ADP (K/DEF plus anyone Underdog does not rank)")
+if DIAG["espn_ordered_skill"]:
+    print("  skill players Underdog does not rank, ordered on ESPN ADP instead: "
+          + ", ".join(DIAG["espn_ordered_skill"]))
+print(f"\ncross-position curve, {CURVE_SEASONS[0]}-{CURVE_SEASONS[-1]} "
+      f"(overall pick the Nth at each position actually went):")
+print("       " + "".join(f"{p:>8}" for p in ["QB", "RB", "WR", "TE", "K", "DEF"]))
+for r in (1, 2, 3, 5, 8, 12):
+    print(f"  {('#' + str(r)):>4} " + "".join(
+        f"{(round(CURVE[p][r]) if r in CURVE.get(p, {}) else '-'):>8}"
+        for p in ["QB", "RB", "WR", "TE", "K", "DEF"]))
+
+print(f"\n{len(skill)} skill players, {len(stream)} K/DEF, {len(board)} on the board")
 print(f"QBs inside rounds 1-3 on this board: {qb_top3}   "
       f"(the room historically takes {qbcum[2]} by then)")
+print("\nround 1 as this board has it:")
+for p in board[:12]:
+    print(f"  {p['rd']}.{p['pk']:02}  {p['n']:<24}{p['pos']}{p['prank']:<3} "
+          f"pick {p['pick']:>6}   ESPN {p['espnRank']:>3} ({p['gap']:+})")
 print(f"\nwrote {path}  ({os.path.getsize(path) / 1e3:.0f}KB)")

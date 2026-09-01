@@ -36,14 +36,27 @@ Done or superseded: positional market drift (`v_position_spend`), stars-and-scru
 2. **`board2026.psv` is frozen at 2026-09-01.** Every projection, ADP and ownership
    figure on the PPP board is that day's snapshot and nothing re-pulls it. The page
    cannot tell you this. Resolved by item 1.
-3. **No name normaliser between the two leagues.** ~18 players are spelled differently
-   (`James Cook III` vs `James Cook`, `DJ Moore` vs `D.J. Moore`). Nothing joins them
-   today so it costs nothing, but it is a prerequisite for any cross-league comparison —
-   and trap 1 says name joins in this repo need a collision check.
+3. ~~No name normaliser between the two leagues.~~ **Measured and closed 2026-09-01.**
+   The claimed ~18 mismatches were not real: the repo's `player_key` already folds
+   `Jr/III` and punctuation, giving 0 collisions, 206/249 joined to Underdog, and only 3
+   unmatched skill players (Najee Harris, Darius Slayton, Jahan Dotson — all deep-round,
+   and they fall back to ESPN ADP). `build_board()` raises if a collision ever appears.
 4. **PPP's strategy rules live in `build_ppp_data.py`, not `strategy_rules.py`.** They
    are auto-interpolated from measured numbers so they cannot go stale, which is good,
    but it means two files now hold "the rules we act on". Worth unifying if PPP work
    continues.
+5. **The QB=2.0 starter assumption is gone from the board, but rule 2 still leans on
+   it.** The board no longer needs it — the pick curve measures the superflex effect
+   directly. Rule 2's "24 QBs start every week" is still an inference from 33 QBs being
+   drafted in 2025, not from lineup data. Checkable: ESPN lineup slot 7 is superflex, so
+   five seasons of started-lineup data would settle what actually fills it. Worth doing
+   before leaning hard on the QB conclusion, though the pick curve now supports it
+   independently.
+6. **Underdog is a 1QB best-ball format.** The method only takes within-position
+   ordering from it, which is format-agnostic, so this is defensible — but it is an
+   assumption, not a measurement. If Underdog's QB-vs-QB ordering is itself distorted by
+   1QB scarcity (e.g. rushing QBs valued differently), the superflex board inherits it.
+   No way to test this without a superflex ADP source.
 
 ## Known gaps
 

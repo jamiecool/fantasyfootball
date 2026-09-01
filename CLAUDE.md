@@ -101,11 +101,18 @@ derived only from its own drafts, and they live in `build_ppp_data.py` rather th
 
 The one genuinely shared thing is the NFL stats and Vegas tabs, which are league-agnostic.
 
-Two known gaps, both written up in `rawdata/ppp/README.md`: **`board2026.psv` is a frozen
-snapshot** (pulled 2026-09-01, nothing re-pulls it), and **there is no name normaliser
-between the two leagues' player tables** — about 18 players are spelled differently.
-Nothing joins them today, so it costs nothing yet; it is the first thing to fix if anyone
-ever wants to compare a player across both boards. See trap 1.
+Its board is priced by the settled method (see below), so it depends on Underdog ADP
+being fresh in exactly the way the PBAFFL board does.
+
+One known gap, written up in `rawdata/ppp/README.md`: **`board2026.psv` is a frozen
+snapshot** — pulled 2026-09-01, and nothing re-pulls it, so ESPN's projections and
+ownership on that board do not age forward. The player pool it defines is what makes a
+player draftable, so a stale pool is a real limitation, not a cosmetic one.
+
+The name join between the two leagues is **not** a gap — the Cowork notes claimed ~18
+mismatches, but measured against the repo's own `player_key` there are 0 collisions and
+only 3 skill players unmatched. `build_board()` refuses to join if a collision ever
+appears, per trap 1.
 
 **Scope steer (2026-08, from Jamie):** interested in **league-wide changes over time**,
 not individual manager patterns. Don't build per-manager analysis.
@@ -221,6 +228,14 @@ Each of these silently produced plausible-but-wrong output before being caught:
     every later session rebuilt only the dashboard. **`build_all.py` end-to-end is the
     only thing that proves the pipeline works**; `build_dashboard.py` passing proves
     almost nothing. Run it before you commit, as CONTRIBUTING.md already asks.
+13. **A board built off projections, in a repo that had already rejected them.** The
+    first Perennial Push board ranked on ESPN projections deflated to a measured
+    replacement level, deriving value from an asserted starter requirement of QB = 2.0
+    per team. It reached roughly the right conclusion for defensible reasons, but it
+    modelled the format from an assumption and ran on a projection feed dropped
+    repo-wide on 2026-08-11 for exactly that reason. **The settled pricing method below
+    applies to every league, not just PBAFFL.** A new league or dataset does not reset
+    the methodology — check what is already settled before designing anything.
 
 
 ## What Jamie actually wants out of this
@@ -378,10 +393,34 @@ stars-and-scrubs vs balanced per team-season, and we can correlate it with outco
 *within* a season without needing manager identity.
 
 
-## How the 2026 board is priced (settled 2026-08-10)
+## How a board is priced (settled 2026-08-10) — EVERY LEAGUE, not just PBAFFL
 
 Two separate jobs, two separate sources. Getting this wrong caused several rounds of
 bad output, so it is worth stating plainly.
+
+**This is the method for any board in this repo.** It was written for PBAFFL and read
+as PBAFFL-only, which is how the second league ended up with a projection-ranked board
+(trap 13). The two halves generalise directly — only the units change:
+
+| | PBAFFL (auction) | Perennial Push (snake) |
+|---|---|---|
+| ordering within position | Underdog ADP | Underdog ADP |
+| weighting across positions | own **price** curve, 2023–25 | own **pick** curve, 2023–25 |
+| K / DEF | FFC | ESPN's own ADP |
+| projections | `proj` column only | `Proj` column only |
+
+The snake version lives in `ppp_board.py`; read its docstring before touching the
+ranking. Its cross-position curve is "the overall pick the Nth-best player at each
+position actually went", which is the direct analogue of "what WR9 costs here" — and it
+is the only thing in that board that knows the league is superflex. It knows it by
+measurement: QB1 goes at overall pick 2 there, QB5 at 10, where RB5 goes at 20.
+
+One difference worth noting: the PBAFFL price curve is smoothed before the isotonic fit
+because its per-rank samples are thin. The snake pick curve is **not** smoothed, and
+should not be — position rank is defined by draft order within a season, so the curve is
+monotone by construction (measured: 4 inversions in 224 ranks, all in tail cells with
+n<3, which isotonic alone repairs). Smoothing a curve that steep at the top moved RB1
+from pick 2 to 6.5 and TE1 from 31 to 40.
 
 1. **Ordering WITHIN a position → Underdog.** Jamie's call, from years of watching it:
    sharp money, continuously repriced, moves first. **We cannot verify this** — no
