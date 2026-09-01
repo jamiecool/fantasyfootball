@@ -84,6 +84,29 @@ Jamie plays in **PBAFFL** (Yahoo league 792831), a 12-team **auction** league he
 in since 2017. Goal: use nine years of league history plus market data to prepare for
 the 2026 draft, via analysis and simulation.
 
+### There is a second league on the dashboard (added 2026-09-01)
+
+**Perennial Push for Penultimacy** — ESPN league 623238770. 12 teams, **snake** draft,
+18 rounds, **full PPR**, and a **superflex** slot. Five seasons, 2021–2025.
+
+A switcher in the page header decides which league every surface is describing, and
+`build_ppp_data.py` builds its half of the data from `rawdata/ppp/`.
+
+⚠ **Keep the two leagues' conclusions apart.** Everything in this file below this
+section is PBAFFL and does not transfer: different draft format, different scoring,
+different roster. The auction findings — the certainty premium, the endgame dollar, the
+$1–2 tier table — are all statements about an auction. PPP has its own eight rules,
+derived only from its own drafts, and they live in `build_ppp_data.py` rather than
+`strategy_rules.py` for exactly that reason.
+
+The one genuinely shared thing is the NFL stats and Vegas tabs, which are league-agnostic.
+
+Two known gaps, both written up in `rawdata/ppp/README.md`: **`board2026.psv` is a frozen
+snapshot** (pulled 2026-09-01, nothing re-pulls it), and **there is no name normaliser
+between the two leagues' player tables** — about 18 players are spelled differently.
+Nothing joins them today, so it costs nothing yet; it is the first thing to fix if anyone
+ever wants to compare a player across both boards. See trap 1.
+
 **Scope steer (2026-08, from Jamie):** interested in **league-wide changes over time**,
 not individual manager patterns. Don't build per-manager analysis.
 
@@ -112,6 +135,7 @@ python fetch_nflverse.py      # season stat lines 2017-2025 -> rawdata/nflverse/
 python fetch_adp.py           # historical ADP 2017-2025    -> rawdata/adp/       (network)
 python fetch_underdog_adp.py  # CURRENT-season Underdog ADP -> rawdata/underdog/  (network)
 python build_clean_data.py    # everything -> cleandata/fantasy.db + csv/ + parquet/
+python build_ppp_data.py      # 2nd league -> cleandata/analysis/ppp_data.json (no network)
 ```
 
 The two historical fetchers skip files already present, so the normal loop is just
@@ -185,6 +209,18 @@ Each of these silently produced plausible-but-wrong output before being caught:
 10. **Fitting price ~ ADP with a polynomial in log space bends the wrong way at the
     top** — a quadratic priced ADP 1 *below* ADP 5. Rank-matching against history is
     better behaved and inherits the budget identity.
+11. **Patching the built artifact instead of the template.** The second league arrived
+    as three scripts that string-replaced `cleandata/dashboard.html` — the 4MB *output*.
+    It worked once and could not survive a rebuild, and every anchor it matched actually
+    lived in `dashboard_template.html` anyway. If a change belongs on the page, it goes
+    in the template and the build; nothing downstream of `build_all.py` is a source file.
+12. **`main` shipped a `build_clean_data.py` that would not parse, and nobody noticed
+    for two weeks** (commit `390eb34`, 2026-08-17 → fixed 2026-09-01). The player_bio
+    block was pasted twice and one copy had a real newline inside an f-string. It went
+    unseen because the database already existed, so nothing re-ran the first stage —
+    every later session rebuilt only the dashboard. **`build_all.py` end-to-end is the
+    only thing that proves the pipeline works**; `build_dashboard.py` passing proves
+    almost nothing. Run it before you commit, as CONTRIBUTING.md already asks.
 
 
 ## What Jamie actually wants out of this

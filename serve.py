@@ -13,6 +13,9 @@ shared/board_state.json, which IS tracked, so a clone gets them. A static page
 cannot write to disk, and this server is already ours, so the "Save" button posts
 the state here and this writes the file. Then it is a normal commit.
 
+Four keys are persisted: targets, notes, plans (PBAFFL's auction plans) and
+xplans (Perennial Push's snake plans).
+
 Bound to localhost only, one fixed path, shape-validated, and written atomically
 with a .bak kept -- it accepts a file from a web page, so it is careful about it.
 
@@ -52,12 +55,18 @@ def write_state(payload):
     targets = payload.get("targets", [])
     notes = payload.get("notes", {})
     plans = payload.get("plans", [])
+    # The second league's snake plans (Perennial Push). These were dropped on the
+    # floor here for a while: the page posted them but this function only knew
+    # about three keys, so PPP plans never left the browser that made them.
+    xplans = payload.get("xplans", [])
     if not isinstance(targets, list) or not all(isinstance(t, str) for t in targets):
         raise ValueError("targets must be a list of player keys")
     if not isinstance(notes, dict) or not all(isinstance(v, str) for v in notes.values()):
         raise ValueError("notes must be a map of player key -> text")
     if not isinstance(plans, list):
         raise ValueError("plans must be a list")
+    if not isinstance(xplans, list):
+        raise ValueError("xplans must be a list")
 
     rec = {
         "saved_at": time.strftime("%Y-%m-%d %H:%M"),
@@ -67,6 +76,7 @@ def write_state(payload):
         "targets": sorted(set(targets)),
         "notes": {k: notes[k] for k in sorted(notes) if notes[k].strip()},
         "plans": plans,
+        "xplans": xplans,
     }
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     if os.path.exists(STATE):
@@ -104,7 +114,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     return self._json(200, json.load(f))
             except FileNotFoundError:
                 return self._json(200, {"saved_at": "", "saved_by": "", "targets": [],
-                                        "notes": {}, "plans": []})
+                                        "notes": {}, "plans": [], "xplans": []})
             except Exception as e:                           # noqa: BLE001
                 return self._json(500, {"error": repr(e)})
         return super().do_GET()
@@ -122,7 +132,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:                               # noqa: BLE001
             return self._json(500, {"error": repr(e)})
         sys.stderr.write(f"  saved board state: {len(rec['targets'])} targets, "
-                         f"{len(rec['notes'])} notes, {len(rec['plans'])} plans"
+                         f"{len(rec['notes'])} notes, {len(rec['plans'])} plans, "
+                         f"{len(rec['xplans'])} snake plans"
                          f"{' by ' + rec['saved_by'] if rec['saved_by'] else ''}\n")
         return self._json(200, {"ok": True, "saved_at": rec["saved_at"],
                                 "saved_by": rec["saved_by"]})

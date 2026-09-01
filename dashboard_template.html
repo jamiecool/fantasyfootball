@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store">
-<title>PBAFFL — draft data</title>
+<title>Draft data — PBAFFL &amp; Perennial Push</title>
 <style>
   :root{
     color-scheme: light;
@@ -90,6 +90,50 @@
        box-shadow:0 4px 14px rgba(0,0,0,.16);opacity:0;transition:opacity .1s;z-index:9;
        font-variant-numeric:tabular-nums}
   .filters{display:flex;gap:8px;align-items:center;margin-bottom:11px;flex-wrap:wrap}
+  /* league switcher: the one control that changes what every other surface means,
+     so it sits in the header and is styled as a commitment, not a filter */
+  .lgwrap{display:flex;align-items:center;gap:7px;margin-left:auto}
+  .lgwrap label{color:var(--muted);font-size:14.4px}
+  #lgSel{font-weight:650;font-size:15.6px;border-color:var(--s1)}
+  .lgnote{font-size:14.4px;color:var(--ink2);margin:2px 0 0;flex-basis:100%}
+  .ruleset{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .rule{border:1px solid var(--border);border-radius:10px;padding:14px 16px;background:var(--plane)}
+  .rule h3{margin:0 0 6px;font-size:16.2px;font-weight:650;line-height:1.35}
+  .rule .meta{display:flex;gap:8px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .rule .why{color:var(--ink2);font-size:15px;margin:0 0 7px}
+  .rule .n{color:var(--muted);font-size:13.8px}
+  .area{border-radius:999px;padding:1px 9px;font-size:13.1px;font-weight:600;
+        border:1px solid var(--border);color:var(--ink2)}
+  .kpi{font-variant-numeric:tabular-nums}
+  tr.arb td{background:color-mix(in srgb,var(--s1) 13%,transparent)}
+  .stream td{color:var(--ink2)}
+  /* snake pick labels read "13.148" -- wider than the auction planner's slot tags */
+  #xplanPicks .slot .lab,#xplanRoster .slot .lab{width:76px;white-space:nowrap}
+  #xplanPicks .slot .lab{font-variant-numeric:tabular-nums}
+  /* post-draft rosters: one card per team, so a whole roster reads at a glance
+     instead of being reassembled from a pick list */
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(408px,1fr));gap:14px}
+  .rcard{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--plane)}
+  .rcard h3{margin:0;font-size:16.2px;font-weight:650;display:flex;align-items:baseline;gap:7px}
+  .rcard h3 .pl{color:var(--muted);font-size:14.4px;font-weight:600;min-width:22px}
+  .rcard .sub2{color:var(--ink2);font-size:14.4px;margin:2px 0 9px}
+  .rcard table{font-size:14.4px}
+  .rcard th,.rcard td{padding:2px 5px;white-space:nowrap}
+  .rcard tbody tr:hover{background:var(--surface)}
+  .rcard .sl{width:52px;color:var(--muted);font-size:12.4px;font-weight:650;letter-spacing:.02em;
+       overflow:hidden;white-space:nowrap}
+  /* fixed layout so the name column absorbs the slack and ellipses instead of
+     pushing the finish column outside the card */
+  .rcard table{width:100%;table-layout:fixed}
+  .rcard td.nmcell{overflow:hidden;text-overflow:ellipsis}
+  .rcard .bench td{opacity:.62}
+  .rcard tr.empty td{opacity:.5}
+  .rcard .divider td{padding:0;border-bottom:1px dashed var(--axis)}
+  .segwrap{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .segwrap .btn{border:0;border-radius:0;border-right:1px solid var(--border)}
+  .segwrap .btn:last-child{border-right:0}
+  .segwrap .btn[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:650;
+       box-shadow:inset 0 -2px 0 var(--s1)}
   input[type=search],select{background:var(--plane);color:var(--ink);border:1px solid var(--border);
        border-radius:7px;padding:5px 9px;font:inherit;font-size:15.6px}
   .planbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
@@ -206,6 +250,11 @@
   .glogx{display:flex;gap:2px;font-size:11.2px;color:var(--muted);
          font-variant-numeric:tabular-nums}
   .glogx span{flex:1;min-width:5px;text-align:center}
+
+  /* Honour the viewer's reduced-motion preference. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;animation-iteration-count:1 !important;scroll-behavior:auto !important}
+  }
 </style>
 <script>
   // Runs before first paint, so a stored dark theme never flashes light. This
@@ -220,20 +269,32 @@
 </head>
 <body>
 <header>
-  <h1>PBAFFL — draft data</h1>
-  <span class="sub">2026 board &amp; nine seasons of league history</span>
+  <h1 id="hTitle">PBAFFL — draft data</h1>
+  <span class="sub" id="hSub">2026 board &amp; nine seasons of league history</span>
   <button class="tab toggle" id="saveBtn" aria-selected="false" disabled>saved</button>
   <button class="tab" id="themeBtn" aria-selected="false">◐ theme</button>
+  <span class="lgwrap">
+    <label for="lgSel">League</label>
+    <select id="lgSel" aria-label="Choose which league's rules and data to view">
+      <option value="pbaffl">PBAFFL — auction, half-PPR</option>
+      <option value="ppp">Perennial Push — snake, superflex</option>
+    </select>
+  </span>
 </header>
 
 <div class="tabs" role="tablist">
-  <button class="tab" role="tab" aria-selected="true"  data-p="board">2026 board</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="last" id="lastTab">Past drafts</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="nfl">NFL stats</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="vegas">Vegas</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="plan">Draft plan</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="str">Strategy</button>
-  <button class="tab" role="tab" aria-selected="false" data-p="anl">Analytics</button>
+  <button class="tab" role="tab" aria-selected="true"  data-lg="pbaffl" data-p="board">2026 board</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="last" id="lastTab">Past drafts</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xboard">2026 board</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xlast">Past drafts</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="both" data-p="nfl">NFL stats</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="both" data-p="vegas">Vegas</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="plan">Draft plan</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="str">Strategy</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="anl">Analytics</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xplan">Draft plan</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xstr">Strategy</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xanl">Analytics</button>
 </div>
 
 <main>
@@ -242,13 +303,13 @@
       <h2>The board</h2>
       <div class="legend" id="bdLeg"></div>
       <div class="filters">
-        <input type="search" id="q" placeholder="filter players…">
-        <select id="posf"><option value="">all positions</option></select>
-        <select id="teamf"><option value="">all NFL teams</option></select>
+        <input type="search" id="q" aria-label="Filter the board by player" placeholder="filter players…">
+        <select id="posf" aria-label="Filter the board by position"><option value="">all positions</option></select>
+        <select id="teamf" aria-label="Filter the board by NFL team"><option value="">all NFL teams</option></select>
         <button class="btn" id="tgtOnly" aria-pressed="false">☆ targets only</button>
         <button class="btn" id="fairBtn" aria-pressed="false">$ market price</button>
       </div>
-      <div class="scroll" style="max-height:78vh"><table id="boardT"></table></div>
+      <div class="scroll" style="max-height:78vh"><table id="boardT" aria-label="The board — every player with price, value and tier"></table></div>
     </div>
   </section>
 
@@ -257,18 +318,29 @@
       <h2 id="lastH">Every pick</h2>
       <div class="legend" id="dvLeg"></div>
       <div class="filters">
-        <select id="lseason" style="font-weight:650"></select>
-        <input type="search" id="lq" placeholder="filter players…">
-        <select id="lteam"><option value="">all teams</option></select>
-        <select id="lpos"><option value="">all positions</option></select>
-        <select id="lnfl"><option value="">all NFL teams</option></select>
+        <select id="lseason" aria-label="Choose a season" style="font-weight:650"></select>
+        <span class="segwrap" role="group" aria-label="Choose a view">
+          <button class="btn" id="lvPicks" aria-pressed="true">pick by pick</button>
+          <button class="btn" id="lvRost" aria-pressed="false">rosters</button>
+        </span>
+        <input type="search" id="lq" aria-label="Filter last season's picks by player" placeholder="filter players…">
+        <select id="lteam" aria-label="Filter by league team"><option value="">all teams</option></select>
+        <select id="lpos" aria-label="Filter by position"><option value="">all positions</option></select>
+        <select id="lnfl" aria-label="Filter by NFL team"><option value="">all NFL teams</option></select>
       </div>
-      <div class="scroll"><table id="lastT"></table></div>
+      <div class="scroll" id="lPickWrap"><table id="lastT" aria-label="Last season — every pick"></table></div>
+      <div id="lRostWrap" hidden>
+        <p class="note">What every roster looked like coming out of the auction, slotted into this league's
+          starting lineup — QB, two RB, three WR, TE, K and D/ST — with everyone else on the bench. Slots are
+          filled by full-season points, so this is the best lineup the draft could have fielded, not what was
+          started week to week. Cards are ordered by where the team finished.</p>
+        <div class="rgrid" id="lRosters"></div>
+      </div>
     </div>
     <div class="row" id="lastTiles"></div>
     <div class="card">
       <h2>By team</h2>
-      <div class="scroll" style="max-height:none"><table id="lastTeamT"></table></div>
+      <div class="scroll" style="max-height:none"><table id="lastTeamT" aria-label="Last season — results by team"></table></div>
     </div>
   </section>
   <section class="panel" id="p-nfl" hidden>
@@ -280,25 +352,25 @@
         Click a player for his game log. Built from nflverse play-by-play, which covers
         QB/RB/WR/TE/K only — <b>team defences are not in this dataset</b>.</p>
       <div class="filters">
-        <select id="nSeason" style="font-weight:650"></select>
-        <select id="nPos">
+        <select id="nSeason" aria-label="Choose a season" style="font-weight:650"></select>
+        <select id="nPos" aria-label="Filter NFL stats by position">
           <option value="">all positions</option>
           <option>QB</option><option>RB</option><option>WR</option>
           <option>TE</option><option>K</option>
         </select>
-        <select id="nTeam"><option value="">all NFL teams</option></select>
+        <select id="nTeam" aria-label="Filter NFL stats by NFL team"><option value="">all NFL teams</option></select>
         <span class="meter">weeks</span>
-        <select id="nW1"></select>
+        <select id="nW1" aria-label="First week of the range"></select>
         <span class="meter">&ndash;</span>
-        <select id="nW2"></select>
+        <select id="nW2" aria-label="Last week of the range"></select>
         <button class="btn mini" id="nFull">full season</button>
         <button class="btn mini" id="nPlayoff">wks 15&ndash;17</button>
-        <input type="search" id="nQ" placeholder="filter players…">
+        <input type="search" id="nQ" aria-label="Filter NFL stats by player" placeholder="filter players…">
         <label class="chk"><input type="checkbox" id="nPG"> per game</label>
         <span class="spacer" style="flex:1"></span>
         <span class="meter" id="nCount"></span>
       </div>
-      <div class="scroll" style="max-height:74vh"><table id="nT"></table></div>
+      <div class="scroll" style="max-height:74vh"><table id="nT" aria-label="NFL stats scored under PBAFFL rules"></table></div>
     </div>
   </section>
 
@@ -310,14 +382,14 @@
         everyone setting a draft price has seen these numbers too &mdash; so this is a
         cross-check, not an edge. <b>wk&nbsp;15&ndash;17</b> is our playoff window. Season
         figures from Sharp Football Analysis, weekly lines from nflverse.</p>
-      <div class="scroll" style="max-height:70vh"><table id="vegT"></table></div>
+      <div class="scroll" style="max-height:70vh"><table id="vegT" aria-label="Implied team totals from the betting market"></table></div>
     </div>
     <div class="card">
       <h2>2026 games priced so far</h2>
       <p class="note">Books have posted only the opening weeks, so the season-long numbers
         above are the usable ones until the rest fills in.</p>
-      <div class="filters"><select id="vegWk"></select></div>
-      <div class="scroll" style="max-height:44vh"><table id="vegWT"></table></div>
+      <div class="filters"><select id="vegWk" aria-label="Choose a week"></select></div>
+      <div class="scroll" style="max-height:44vh"><table id="vegWT" aria-label="2026 games priced so far"></table></div>
     </div>
   </section>
 
@@ -325,7 +397,7 @@
     <div class="modalCard noteCard">
       <h2 id="nTitle">Note</h2>
       <p class="pHead" id="nSub"></p>
-      <textarea id="nText" placeholder="What do you want to remember about him on draft night?"></textarea>
+      <textarea id="nText" aria-label="Note about this player" placeholder="What do you want to remember about him on draft night?"></textarea>
       <div class="noteBar">
         <button class="btn" id="nSave">Save</button>
         <button class="btn" id="nCancel">Cancel</button>
@@ -344,7 +416,7 @@
 
     <section class="panel" id="p-plan" hidden>
     <div class="planbar">
-      <select id="planSel"></select>
+      <select id="planSel" aria-label="Choose a draft plan"></select>
       <button class="btn" id="planNew">+ new</button>
       <button class="btn" id="planCopy">duplicate</button>
       <button class="btn" id="planDel">delete</button>
@@ -359,17 +431,17 @@
       <div class="card">
         <h2>Add players</h2>
         <div class="filters">
-          <input type="search" id="pq" placeholder="search…">
-          <select id="ppos"><option value="">all pos</option></select>
+          <input type="search" id="pq" aria-label="Search players to add to the plan" placeholder="search…">
+          <select id="ppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
           <label class="chk"><input type="checkbox" id="phide" checked> hide drafted</label>
           <label class="chk"><input type="checkbox" id="ptgt"> ★ targets only</label>
         </div>
-        <div class="scroll" style="max-height:62vh"><table id="planPool"></table></div>
+        <div class="scroll" style="max-height:62vh"><table id="planPool" aria-label="Draft plan — players available to add"></table></div>
       </div>
     </div>
     <div class="card">
       <h2>Compare</h2>
-      <div class="scroll" style="max-height:none"><table id="planCmp"></table></div>
+      <div class="scroll" style="max-height:none"><table id="planCmp" aria-label="Draft plan comparison"></table></div>
     </div>
   </section>
 
@@ -388,7 +460,7 @@
         effect, and a linear axis would let the cheap bands crush everything else.</p>
       <div id="dzChart"></div>
       <div class="legend" id="dzLeg"></div>
-      <div class="scroll" style="max-height:52vh;margin-top:14px"><table id="dzT"></table></div>
+      <div class="scroll" style="max-height:52vh;margin-top:14px"><table id="dzT" aria-label="Return per dollar by price band and position"></table></div>
     </div>
 
     <div class="card">
@@ -397,7 +469,7 @@
          picks across nine seasons. Above 1.0 means the tier returned more than it cost.
          This uses actual outcomes — no projections.</p>
       <div id="tier"></div>
-      <div class="scroll" style="max-height:none;margin-top:12px"><table id="tierT"></table></div>
+      <div class="scroll" style="max-height:none;margin-top:12px"><table id="tierT" aria-label="Value delivered versus money spent, by price tier"></table></div>
     </div>
     <div class="card">
       <h2>Chance a pick returned a startable season</h2>
@@ -423,7 +495,140 @@
     <div class="card">
       <h2>Biggest disagreements</h2>
       <p class="note">Sorted by absolute gap. These are the players whose price is least trustworthy.</p>
-      <div class="scroll"><table id="mktT"></table></div>
+      <div class="scroll"><table id="mktT" aria-label="Biggest disagreements between price sources"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= Perennial Push (snake, superflex) ================= -->
+  <section class="panel" id="p-xboard" hidden>
+    <div class="card">
+      <h2>The 2026 board — ranked for superflex</h2>
+      <p class="note">Value over replacement under this league's own rules: full PPR, 12 teams,
+        and a superflex slot that puts 24 quarterbacks in starting lineups every week.
+        <b>Proj</b> is ESPN's raw projection; <b>Exp</b> deflates it by how far that position's
+        projections have actually overshot here across five seasons; <b>VOR</b> measures Exp against
+        the points the last startable player at the position really scored — not what ESPN projected
+        he would. <b>#</b> is the overall pick, <b>Rd.Pk</b> the same pick in an 18-round snake, and
+        <b>ESPN rd</b> where ESPN's one-QB board puts him. No dollar figures — this is a snake draft.</p>
+      <div class="row" id="xbTiles"></div>
+      <div class="legend" id="xbLeg"></div>
+      <div class="filters">
+        <input type="search" id="xq" aria-label="Filter the board by player" placeholder="filter players…">
+        <select id="xposf" aria-label="Filter the board by position"><option value="">all positions</option></select>
+        <button class="btn" id="xtgtOnly" aria-pressed="false">☆ targets only</button>
+        <button class="btn" id="xarbOnly" aria-pressed="false">↑ cheaper than ESPN</button>
+        <button class="btn" id="xstream" aria-pressed="true">hide K / D-ST</button>
+      </div>
+      <div class="scroll" style="max-height:74vh"><table id="xboardT"
+        aria-label="2026 board ranked by value over replacement for a superflex league"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-xlast" hidden>
+    <div class="card">
+      <h2 id="xlastH">Every pick</h2>
+      <p class="note">Five seasons of this league's drafts, with what each pick actually scored
+        under these rules and how that compares with the average return of its round.</p>
+      <div class="filters">
+        <select id="xseason" aria-label="Choose a season" style="font-weight:650"></select>
+        <span class="segwrap" role="group" aria-label="Choose a view">
+          <button class="btn" id="xvPicks" aria-pressed="true">pick by pick</button>
+          <button class="btn" id="xvRost" aria-pressed="false">rosters</button>
+        </span>
+        <select id="xposf2" aria-label="Filter by position"><option value="">all positions</option></select>
+      </div>
+      <div class="row" id="xlTiles"></div>
+      <div class="scroll" style="max-height:38vh"><table id="xteamT" aria-label="Team draft summary"></table></div>
+      <div id="xPickWrap">
+        <h2 style="margin-top:20px">Pick by pick</h2>
+        <div class="legend" id="xdvLeg"></div>
+        <div class="scroll" style="max-height:60vh"><table id="xlastT" aria-label="Every pick in the selected season"></table></div>
+      </div>
+      <div id="xRostWrap" hidden>
+        <h2 style="margin-top:20px">Post-draft rosters</h2>
+        <p class="note">What every team walked out of the draft holding, slotted into this league's starting
+          lineup — QB, two RB, three WR, TE, superflex, flex, K and D/ST — with everyone else on the bench.
+          Slots are filled by full-season points, so this is the best lineup the draft could have fielded,
+          not what was started week to week. Cards are ordered by where the team finished.</p>
+        <div class="rgrid" id="xRosters"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-xplan" hidden>
+    <div class="planbar">
+      <select id="xplanSel" aria-label="Choose a draft plan"></select>
+      <button class="btn" id="xplanNew">+ new</button>
+      <button class="btn" id="xplanCopy">duplicate</button>
+      <button class="btn" id="xplanDel">delete</button>
+      <label class="chk" style="margin-left:6px">draft slot
+        <select id="xslot" aria-label="Your position in the draft order"></select></label>
+      <span class="spacer"></span>
+      <span id="xplanMeter" class="meter"></span>
+    </div>
+    <div class="plangrid">
+      <div class="card">
+        <input id="xplanName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        <p class="note">Your eighteen picks, snaking from the slot above. <b>Exp</b> is the player's
+          expected points under this league's scoring. A pick is flagged when the board ranks a player
+          well ahead of where you would be taking him — he is unlikely to still be there.</p>
+        <div id="xplanPicks"></div>
+        <div id="xplanRoster" style="margin-top:14px"></div>
+      </div>
+      <div class="card">
+        <h2>Add players</h2>
+        <p class="note">Adding a player drops him into your earliest pick where the board says he could
+          realistically still be available.</p>
+        <div class="filters">
+          <input type="search" id="xpq" aria-label="Search players to add to the plan" placeholder="search…">
+          <select id="xppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
+          <label class="chk"><input type="checkbox" id="xphide" checked> hide picked</label>
+          <label class="chk"><input type="checkbox" id="xptgt"> ★ targets only</label>
+        </div>
+        <div class="scroll" style="max-height:62vh"><table id="xplanPool" aria-label="Players available to add to the plan"></table></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Compare</h2>
+      <div class="scroll" style="max-height:none"><table id="xplanCmp" aria-label="Draft plan comparison"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-xstr" hidden>
+    <div class="card">
+      <h2>What five seasons of this league say</h2>
+      <p class="note">Every rule below is derived from Perennial Push's own drafts, 2021–2025,
+        scored under its own rules. None of PBAFFL's auction findings carry over — different
+        draft format, different scoring, different roster.</p>
+      <div class="ruleset" id="xRules"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-xanl" hidden>
+    <div class="card">
+      <h2>The quarterback gap</h2>
+      <p class="note">Mean points returned by quarterbacks against the running backs, receivers and
+        tight ends taken in the same rounds. In a superflex league the middle rounds are where the
+        room stops paying for quarterbacks and the value does not.</p>
+      <div class="legend" id="xQbLeg"></div>
+      <div id="xQbChart"></div>
+    </div>
+    <div class="card">
+      <h2>What a round is worth</h2>
+      <p class="note">Average points returned per pick by round, with the share of picks that finished
+        as a startable player at their position.</p>
+      <div id="xRdChart"></div>
+    </div>
+    <div class="card">
+      <h2>When each position stops paying</h2>
+      <p class="note">Share of picks that finished startable, by position and round band.
+        Faint lines are bands with fewer than 25 picks.</p>
+      <div class="legend" id="xPosLeg"></div>
+      <div id="xPosChart"></div>
+    </div>
+    <div class="card">
+      <h2>What the room actually drafts, by round</h2>
+      <div class="scroll" style="max-height:52vh"><table id="xCountT" aria-label="Positions drafted by round"></table></div>
     </div>
   </section>
 </main>
@@ -432,6 +637,12 @@
 
 <script>
 const D = __DATA__;
+// ---- Perennial Push: the second league -------------------------------------
+// ESPN league 623238770 -- snake, superflex, full PPR. Built by
+// build_ppp_data.py and carried in the same data blob as every other
+// dataset, so there is one page and one build. The league switcher in the
+// header decides which of the two leagues every surface below is describing.
+const PPP = D.ppp;
 const POSC = {QB:'--s1', RB:'--s2', WR:'--s3', TE:'--s4', K:'--s5', DEF:'--s6'};
 
 /* ---------- shared board state ----------
@@ -457,6 +668,7 @@ function stashPending() {
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(
       {targets: [...targets], notes: notes, plans: plans,
+       xplans: (typeof xplans !== 'undefined' ? xplans : []),
        basedOn: SHARED.saved_at || ''}));
   } catch (e) { /* storage blocked; edits last for this page view only */ }
   markSaveState();
@@ -467,7 +679,7 @@ function stashPending() {
    a button meant a week of stars that were never written -- the mechanism worked,
    nobody had been told to press it. Writes go out on their own now. git stays the
    deliberate step, which is where review actually belongs. */
-let saveTimer = null, saving = false, saveFailed = false;
+let saveTimer = null, saving = false, saveFailed = false, noServer = false;
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => saveShared(true), 700);   // coalesce rapid clicks
@@ -558,7 +770,7 @@ function bindStars(root) {
     if (targets.has(k)) targets.delete(k); else targets.add(k);
     saveTargets();
     // redraw only the surfaces that show stars, so a click stays instant
-    boardTable(); drawPlan();
+    if (LG === 'pbaffl') { boardTable(); drawPlan(); } else { xBoard(); xDrawPlan(); }
   });
 }
 const cv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -944,6 +1156,7 @@ function fillSeasonFilters() {
 function drawLast() {
   document.getElementById('lastH').textContent = lSeason + ' draft — every pick';
   lastTiles(); lastTeamTable(); lastTable();
+  if (lView === 'rosters') lRosters();
 }
 
 function lastTiles() {
@@ -1866,6 +2079,13 @@ function markSaveState() {
     b.textContent = 'saving\u2026';
     b.disabled = true;
     b.title = '';
+  } else if (dirty && noServer) {
+    b.classList.add('on');
+    b.textContent = '\u25cf kept in this browser';
+    b.disabled = true;
+    b.title = 'This is a static copy with no server to write to. Your stars, '
+            + 'notes and plans are saved in this browser and survive a refresh. '
+            + 'Run the dashboard from serve.py to write shared edits everyone sees.';
   } else if (dirty && saveFailed) {
     b.classList.add('warn');
     b.textContent = '\u25cf unsaved \u2014 retry';
@@ -1886,26 +2106,50 @@ function markSaveState() {
 }
 
 async function saveShared(auto) {
+  if (noServer) { markSaveState(); return; }     // static copy: nothing to POST to
   if (saving) { scheduleSave(); return; }        // never overlap two writes
   saving = true;
   markSaveState();
+  let r;
   try {
-    const r = await fetch('/api/state', {
+    r = await fetch('/api/state', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({targets: [...targets], notes: notes, plans: plans}),
+      // xplans is the second league's snake plans. It used to be left out of this
+      // body, so PPP plans lived in localStorage and never reached the shared file
+      // -- they did not survive a different browser, let alone a clone.
+      body: JSON.stringify({targets: [...targets], notes: notes, plans: plans,
+                            xplans: xplans}),
     });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || r.status);
+  } catch (e) {
+    // fetch reached nothing -- file:// or a host that blocks the request. Expected
+    // on a published copy, not a failure. Edits stay in localStorage; latch off so
+    // there is no retry loop and no red banner.
+    saving = false; noServer = true; saveFailed = false;
+    console.info('no save server here; stars, notes and plans are kept in this browser only');
+    markSaveState();
+    return;
+  }
+  let j = null;
+  try { j = await r.json(); } catch (e) { j = null; }   // a static 404 returns HTML, not JSON
+  if (r.ok && j && j.saved_at) {
+    // reached serve.py and it wrote the shared file -- the real save path.
     SHARED.saved_at = j.saved_at; SHARED.saved_by = j.saved_by;
     saveFailed = false; saving = false;
     dropPending();                                // clears dirty and repaints
-  } catch (e) {
-    // no server: file://, a static host, or serve.py not running. Keep the edits
-    // in localStorage and say so, rather than retrying into a loop.
-    saving = false; saveFailed = true;
-    console.warn('could not save shared state:', e);
-    markSaveState();
+    return;
   }
+  if (!r.ok && j && j.error) {
+    // reached serve.py but it refused the write -- a real failure worth flagging.
+    saving = false; saveFailed = true;
+    console.warn('could not save shared state:', j.error);
+    markSaveState();
+    return;
+  }
+  // reached something that is not our save server (static host, 404, wrong app).
+  // Treat it like no server: keep the edits locally and stop trying.
+  saving = false; noServer = true; saveFailed = false;
+  console.info('no save server here; stars, notes and plans are kept in this browser only');
+  markSaveState();
 }
 
 /* The baked-in SHARED is a build-time snapshot, so it goes stale the moment
@@ -1932,12 +2176,664 @@ async function syncShared() {
   draw();
 }
 
+/* ================= league switching =================
+   PBAFFL is an auction league; Perennial Push is an 18-round snake with a
+   superflex slot. They do not share a vocabulary -- dollars mean nothing in a
+   snake, and "never pay up for a QB" is exactly backwards under superflex -- so
+   the switch swaps the whole tab set and every panel rather than re-labelling
+   one. NFL stats and Vegas are league-agnostic and stay put in both modes. */
+const LG_META = {
+  pbaffl: {title: 'PBAFFL — draft data',
+           sub: '2026 board &amp; nine seasons of league history'},
+  ppp:    {title: 'Perennial Push for Penultimacy',
+           sub: '2026 superflex board &amp; five seasons of league history'}
+};
+let LG = 'pbaffl';
+try { const s = localStorage.getItem('pbaffl_league_v1');
+      if (s === 'pbaffl' || s === 'ppp') LG = s; } catch (e) {}
+
+// A clone that has not run build_ppp_data.py has no second league at all, and a
+// half-rendered one is worse than none. Drop back to a single-league page: pull
+// the switcher and PPP's tabs out entirely, and ignore a stored preference for
+// a league whose data is not on this page. Note that .lgwrap is display:flex,
+// so the hidden attribute would not have hidden it.
+const HAVE_PPP = !!PPP;
+if (!HAVE_PPP) {
+  LG = 'pbaffl';
+  document.querySelector('.lgwrap').remove();
+  document.querySelectorAll('.tab[data-lg="ppp"]').forEach(t => t.remove());
+}
+
+function applyLeague(redraw) {
+  document.getElementById('hTitle').textContent = LG_META[LG].title;
+  document.getElementById('hSub').innerHTML = LG_META[LG].sub;
+  const sel = document.getElementById('lgSel');
+  if (sel) sel.value = LG;                      // absent on a single-league build
+  const tabs = [...document.querySelectorAll('.tab[data-p]')];
+  tabs.forEach(t => { t.hidden = !(t.dataset.lg === LG || t.dataset.lg === 'both'); });
+  // keep the current tab if this league has it, otherwise fall back to its board
+  const cur = tabs.find(t => t.getAttribute('aria-selected') === 'true' && !t.hidden);
+  const pick = cur || tabs.find(t => !t.hidden);
+  tabs.forEach(t => t.setAttribute('aria-selected', String(t === pick)));
+  document.querySelectorAll('.panel').forEach(p => p.hidden = p.id !== 'p-' + pick.dataset.p);
+  if (redraw) draw();
+}
+if (HAVE_PPP) document.getElementById('lgSel').onchange = e => {
+  LG = e.target.value;
+  try { localStorage.setItem('pbaffl_league_v1', LG); } catch (err) {}
+  applyLeague(true);
+};
+
+/* ================= Perennial Push renderers ================= */
+const xPOS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
+const xSTREAM = p => p.pos === 'K' || p.pos === 'DEF';
+let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: null, pos2: '', view: 'picks'};
+let lView = 'picks';
+const xKey = p => 'x' + p.pid;                        // namespaced so PBAFFL stars never collide
+const xFmt = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1);
+const xRdPk = p => p.rd == null ? '—' : p.rd + '.' + String(p.pk).padStart(2, '0');
+
+function xTiles() {
+  const r = PPP.replacement, b = PPP.board;
+  const arb = b.filter(p => p.gap != null && p.gap >= 24).length;
+  const t = [
+    ['18', 'rounds, snake', 'full PPR, superflex'],
+    ['24', 'QBs start every week', '2 per team, 12 teams'],
+    [PPP.qbTop3, 'QBs inside rounds 1–3', 'the room takes ' + PPP.qbcum[2] + ' by then'],
+    [xFmt(r.QB), 'replacement QB, realized', 'vs ' + xFmt(r.RB) + ' RB / ' + xFmt(r.WR) + ' WR'],
+    [arb, 'players 2+ rounds cheaper', "than ESPN's one-QB board"]
+  ];
+  document.getElementById('xbTiles').innerHTML = t.map(([v, k, s]) =>
+    `<div class="tile"><div class="v kpi">${v}</div><div class="k">${k}` +
+    (s ? `<br><span style="color:var(--muted)">${s}</span>` : '') + `</div></div>`).join('');
+}
+
+function xBoard() {
+  xTiles();
+  const sel = document.getElementById('xposf');
+  if (sel.options.length === 1)
+    xPOS.forEach(p => sel.add(new Option(p, p)));
+  let rows = PPP.board.slice();
+  if (xState.hideStream) rows = rows.filter(p => !xSTREAM(p));
+  if (xState.pos) rows = rows.filter(p => p.pos === xState.pos);
+  if (xState.q) { const q = xState.q.toLowerCase(); rows = rows.filter(p => p.n.toLowerCase().includes(q)); }
+  if (xState.tgt) rows = rows.filter(p => targets.has(xKey(p)));
+  if (xState.arb) rows = rows.filter(p => p.gap != null && p.gap >= 24);
+  const head = `<thead><tr>
+    <th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>
+    <th>Proj</th><th>Exp</th><th>VOR</th><th>ESPN rd</th><th>Move</th><th></th></tr></thead>`;
+  const body = rows.map(p => {
+    const gapRd = p.gap == null ? null : Math.round(p.gap / 12 * 10) / 10;
+    const cls = (p.gap != null && p.gap >= 24) ? ' class="arb"' : (xSTREAM(p) ? ' class="stream"' : '');
+    const mv = gapRd == null ? '—'
+      : gapRd >= 0.8 ? `<span class="up">${gapRd.toFixed(1)} rd earlier</span>`
+      : gapRd <= -0.8 ? `<span class="dn">${Math.abs(gapRd).toFixed(1)} rd later</span>`
+      : '<span style="color:var(--muted)">—</span>';
+    return `<tr${cls}>
+      <td class="l kpi" style="color:var(--muted)">${p.rank == null ? '—' : p.rank}</td>
+      <td class="l" style="font-weight:650">${xRdPk(p)}</td>
+      <td class="l">${p.n}</td>
+      <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${p.prank}</span></td>
+      <td class="l" style="color:var(--ink2)">${p.tm}</td>
+      <td style="color:var(--ink2)">${xFmt(p.prj)}</td>
+      <td>${xFmt(p.exp)}</td>
+      <td>${p.vor == null ? '<span style="color:var(--muted)">stream</span>' : (p.vor > 0 ? '+' : '') + xFmt(p.vor)}</td>
+      <td>${p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1}</td>
+      <td>${mv}</td>
+      <td class="l">${starHtml(xKey(p))}</td></tr>`;
+  }).join('');
+  const t = document.getElementById('xboardT');
+  t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="11" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
+  bindStars(t);
+  document.getElementById('xbLeg').innerHTML =
+    '<span><i style="background:color-mix(in srgb,var(--s1) 40%,transparent)"></i>2+ rounds cheaper than ESPN has him</span>' +
+    xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('') +
+    `<span style="color:var(--muted)">Exp = projection × ${PPP.ratio[ 'QB' ]}–${PPP.ratio['DEF']} deflator by position; ` +
+    `VOR = Exp above the points the last startable player at that position really scored</span>`;
+}
+
+function xLast() {
+  const sel = document.getElementById('xseason');
+  if (!sel.options.length) {
+    PPP.seasons.slice().reverse().forEach(s => sel.add(new Option(s, s)));
+    xState.season = String(PPP.seasons[PPP.seasons.length - 1]);
+    sel.value = xState.season;
+  }
+  const yr = xState.season || sel.value;
+  const p2 = document.getElementById('xposf2');
+  if (p2.options.length === 1) xPOS.forEach(p => p2.add(new Option(p, p)));
+  const teams = (PPP.teams[yr] || []).slice().sort((a, b) => a.fin - b.fin);
+  const picks = (PPP.draft[yr] || []);
+  const tname = {}; teams.forEach(t => tname[t.id] = t);
+
+  document.getElementById('xlastH').textContent = yr + ' draft';
+  const nT = teams.length;
+  const scored = picks.filter(p => p.act != null);
+  const meanH = teams.length ? teams.reduce((a, t) => a + (t.haul || 0), 0) / teams.length : 0;
+  document.getElementById('xlTiles').innerHTML = [
+    [nT, 'teams'], [picks.length, 'picks'],
+    [Math.round(meanH), 'mean points drafted'],
+    [scored.length ? Math.round(scored.reduce((a, p) => a + p.st, 0) / scored.length * 100) + '%' : '—', 'picks that finished startable']
+  ].map(([v, k]) => `<div class="tile"><div class="v kpi">${v}</div><div class="k">${k}</div></div>`).join('');
+
+  document.getElementById('xteamT').innerHTML =
+    `<thead><tr><th class="l">Finish</th><th class="l">Team</th><th class="l">Manager</th>
+      <th>W-L</th><th>Points for</th><th>Drafted pts</th><th>Startables</th></tr></thead><tbody>` +
+    teams.map(t => `<tr>
+      <td class="l" style="font-weight:650">${t.fin || '—'}</td>
+      <td class="l">${t.name}</td><td class="l" style="color:var(--ink2)">${t.own}</td>
+      <td>${t.w}-${t.l}</td><td>${xFmt(t.pf)}</td><td>${xFmt(t.haul)}</td><td>${t.startables}</td></tr>`).join('') +
+    '</tbody>';
+
+  let rows = picks;
+  if (xState.pos2) rows = rows.filter(p => p.pos === xState.pos2);
+  const shade = v => v == null ? 'd0'
+    : v >= 90 ? 'd3' : v >= 45 ? 'd2' : v >= 15 ? 'd1'
+    : v <= -90 ? 'dm3' : v <= -45 ? 'dm2' : v <= -15 ? 'dm1' : 'd0';
+  document.getElementById('xlastT').innerHTML =
+    `<thead><tr><th class="l">Pick</th><th class="l">Player</th><th class="l">Pos</th>
+      <th class="l">Drafted by</th><th>Points</th><th>Proj</th><th class="l">Finished</th>
+      <th>vs round</th></tr></thead><tbody>` +
+    rows.map(p => `<tr>
+      <td class="l" style="font-weight:650">${p.rd}.${String(p.pk).padStart(2, '0')}</td>
+      <td class="l">${p.n}</td>
+      <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span></td>
+      <td class="l" style="color:var(--ink2)">${tname[p.tm] ? tname[p.tm].ab : p.tm}</td>
+      <td>${p.act == null ? '—' : xFmt(p.act)}</td>
+      <td>${p.prj ? xFmt(p.prj) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="l fin">${p.fin || ''}${p.st ? '' : p.fin ? ' <span style="color:var(--muted)">(bench)</span>' : ''}</td>
+      <td class="${shade(p.vor)}">${p.vor == null ? '—' : (p.vor > 0 ? '+' : '') + xFmt(p.vor)}</td></tr>`).join('') +
+    '</tbody>';
+  if (xState.view === 'rosters') xRosters();
+  document.getElementById('xdvLeg').innerHTML =
+    '<span><i style="background:var(--div-pos)"></i>beat the average return of its round</span>' +
+    '<span><i style="background:var(--div-neg)"></i>fell short of it</span>' +
+    '<span style="color:var(--muted)">shading repeats the number beside it; 2023 projections were not retained by ESPN</span>';
+}
+
+function xStr() {
+  document.getElementById('xRules').innerHTML = PPP.rules.map(r => `
+    <div class="rule">
+      <div class="meta"><span class="pill ${r.conf}">${r.conf}</span><span class="area">${r.area}</span></div>
+      <h3>${r.rule}</h3>
+      <p class="why">${r.why}</p>
+      <div class="n">${r.n}</div>
+    </div>`).join('');
+}
+
+function xQbChart() {
+  const rows = PPP.qbedge, W = 860, H = 280, m = {t: 14, r: 16, b: 46, l: 52};
+  const max = Math.max(...rows.flatMap(r => [r.qb, r.flex])) * 1.08;
+  const gw = (W - m.l - m.r) / rows.length, bw = (gw - 26) / 2;
+  const Y = v => H - m.b - v / max * (H - m.t - m.b);
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%'});
+  for (let v = 0; v <= max; v += 50) {
+    svg.append(el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: cv('--grid'), 'stroke-width': 1}));
+    const t = el('text', {x: m.l - 8, y: Y(v) + 4, fill: cv('--muted'), 'font-size': 14, 'text-anchor': 'end'});
+    t.textContent = v; svg.append(t);
+  }
+  rows.forEach((r, i) => {
+    [['qb', r.qb, r.qbn, cv('--s1'), 'QB'], ['flex', r.flex, r.flexn, cv('--muted'), 'RB / WR / TE']]
+      .forEach(([k, v, n, fill], j) => {
+        const x = m.l + i * gw + 13 + j * bw;
+        const g = el('g');
+        g.append(el('rect', {x, y: Y(v), width: bw - 4, height: Math.max(2, H - m.b - Y(v)), rx: 3, fill}));
+        g.addEventListener('mousemove', e => showTip(e,
+          `<b>Rounds ${r.band}</b><br>${j ? 'RB / WR / TE' : 'QB'}: ${v} pts<br>n=${n}`));
+        g.addEventListener('mouseleave', hideTip);
+        svg.append(g);
+      });
+    const lb = el('text', {x: m.l + i * gw + gw / 2, y: H - 26, fill: cv('--ink2'), 'font-size': 14.5, 'text-anchor': 'middle'});
+    lb.textContent = 'Rd ' + r.band; svg.append(lb);
+    const ed = el('text', {x: m.l + i * gw + gw / 2, y: H - 8, 'font-size': 14, 'text-anchor': 'middle',
+      fill: r.edge > 0 ? cv('--div-pos') : cv('--div-neg'), 'font-weight': 650});
+    ed.textContent = (r.edge > 0 ? '+' : '') + r.edge; svg.append(ed);
+  });
+  document.getElementById('xQbChart').replaceChildren(svg);
+  document.getElementById('xQbLeg').innerHTML =
+    `<span><i style="background:var(--s1)"></i>quarterbacks</span>` +
+    `<span><i style="background:var(--muted)"></i>running backs, receivers, tight ends</span>` +
+    `<span style="color:var(--muted)">figure under each band is the QB advantage in points</span>`;
+}
+
+function xRdChart() {
+  const rows = PPP.rdstat, W = 860, H = 270, m = {t: 14, r: 44, b: 34, l: 46};
+  const max = Math.max(...rows.map(r => r.mean)) * 1.08;
+  const bw = (W - m.l - m.r) / rows.length;
+  const Y = v => H - m.b - v / max * (H - m.t - m.b);
+  const Ys = v => H - m.b - v / 100 * (H - m.t - m.b);
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%'});
+  for (let v = 0; v <= max; v += 50) {
+    svg.append(el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: cv('--grid'), 'stroke-width': 1}));
+    const t = el('text', {x: m.l - 8, y: Y(v) + 4, fill: cv('--muted'), 'font-size': 14, 'text-anchor': 'end'});
+    t.textContent = v; svg.append(t);
+  }
+  rows.forEach((r, i) => {
+    const x = m.l + i * bw + 3, g = el('g');
+    g.append(el('rect', {x, y: Y(r.mean), width: bw - 6, height: Math.max(2, H - m.b - Y(r.mean)), rx: 3, fill: cv('--s1')}));
+    g.addEventListener('mousemove', e => showTip(e,
+      `<b>Round ${r.rd}</b><br>${r.mean} pts mean<br>${r.med} median<br>${r.st}% startable<br>n=${r.n}`));
+    g.addEventListener('mouseleave', hideTip);
+    svg.append(g);
+    const lb = el('text', {x: x + (bw - 6) / 2, y: H - 12, fill: cv('--ink2'), 'font-size': 13.5, 'text-anchor': 'middle'});
+    lb.textContent = r.rd; svg.append(lb);
+  });
+  const pts = rows.map((r, i) => `${m.l + i * bw + bw / 2},${Ys(r.st)}`).join(' ');
+  svg.append(el('polyline', {points: pts, fill: 'none', stroke: cv('--s2'), 'stroke-width': 2, 'stroke-linejoin': 'round'}));
+  const rl = el('text', {x: W - m.r + 6, y: Ys(rows[0].st) + 4, fill: cv('--s2'), 'font-size': 13.5});
+  rl.textContent = 'startable %'; svg.append(rl);
+  document.getElementById('xRdChart').replaceChildren(svg);
+}
+
+function xPosChart() {
+  const bands = PPP.bands, W = 860, H = 280, m = {t: 14, r: 16, b: 34, l: 46};
+  const gw = (W - m.l - m.r) / (bands.length - 1);
+  const Y = v => H - m.b - v / 100 * (H - m.t - m.b);
+  const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%'});
+  for (let v = 0; v <= 100; v += 25) {
+    svg.append(el('line', {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: cv('--grid'), 'stroke-width': 1}));
+    const t = el('text', {x: m.l - 8, y: Y(v) + 4, fill: cv('--muted'), 'font-size': 14, 'text-anchor': 'end'});
+    t.textContent = v + '%'; svg.append(t);
+  }
+  bands.forEach((b, i) => {
+    const t = el('text', {x: m.l + i * gw, y: H - 12, fill: cv('--ink2'), 'font-size': 14.5, 'text-anchor': 'middle'});
+    t.textContent = 'Rd ' + b; svg.append(t);
+  });
+  PPP.posband.forEach(row => {
+    const pts = [];
+    row.cells.forEach((c, i) => { if (c.st != null) pts.push([m.l + i * gw, Y(c.st), c, i]); });
+    if (pts.length > 1)
+      svg.append(el('polyline', {points: pts.map(p => p[0] + ',' + p[1]).join(' '), fill: 'none',
+        stroke: cv(POSC[row.pos]), 'stroke-width': 2, 'stroke-linejoin': 'round'}));
+    pts.forEach(([x, y, c]) => {
+      const g = el('g');
+      g.append(el('circle', {cx: x, cy: y, r: c.n < 25 ? 3 : 4.5, fill: cv(POSC[row.pos]), opacity: c.n < 25 ? .45 : 1}));
+      g.addEventListener('mousemove', e => showTip(e,
+        `<b>${row.pos}, rounds ${c.band}</b><br>${c.st}% startable<br>mean ${c.mean} pts<br>n=${c.n}${c.n < 25 ? ' — thin' : ''}`));
+      g.addEventListener('mouseleave', hideTip);
+      svg.append(g);
+    });
+  });
+  document.getElementById('xPosChart').replaceChildren(svg);
+  document.getElementById('xPosLeg').innerHTML = xPOS.map(p =>
+    `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('') +
+    '<span style="color:var(--muted)">faded points = fewer than 25 picks</span>';
+}
+
+function xCountTable() {
+  document.getElementById('xCountT').innerHTML =
+    `<thead><tr><th class="l">Round</th>${xPOS.map(p => `<th>${p}</th>`).join('')}<th>Total</th></tr></thead><tbody>` +
+    PPP.poscount.map(r => {
+      const tot = xPOS.reduce((a, p) => a + r[p], 0);
+      return `<tr><td class="l" style="font-weight:650">${r.rd}</td>` +
+        xPOS.map(p => {
+          const share = tot ? r[p] / tot : 0;
+          const bg = share > 0 ? `background:color-mix(in srgb,var(${POSC[p]}) ${Math.round(share * 62)}%,transparent)` : '';
+          return `<td style="${bg}">${r[p] || ''}</td>`;
+        }).join('') + `<td style="color:var(--ink2)">${tot}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
+function xAnl() { xQbChart(); xRdChart(); xPosChart(); xCountTable(); }
+
+/* ---------- Perennial Push: snake draft plan ----------
+   The auction planner budgets dollars; a snake planner budgets picks. The
+   constraint here is not what you can afford but who is still on the board when
+   your turn comes round, so the unit of the plan is your own eighteen picks. */
+const XTEAMS = 12, XRDS = 18;
+const XNEED = {QB: 1, RB: 2, WR: 3, TE: 1, SUPERFLEX: 1, FLEX: 1, K: 1, DEF: 1};
+const XSTART = Object.values(XNEED).reduce((a, b) => a + b, 0);   // 11
+const XBENCH = XRDS - XSTART;                                     // 7
+const xById = {};
+// The one PPP lookup built at parse time rather than inside a renderer, so it
+// needs the same guard the switcher does -- without it a build with no second
+// league throws here and takes the PBAFFL board down with it.
+if (HAVE_PPP) PPP.board.forEach(p => xById[p.pid] = p);
+
+// snake: odd rounds run 1..12, even rounds run back 12..1
+const xPickNo = (slot, rd) => (rd - 1) * XTEAMS + (rd % 2 ? slot : XTEAMS + 1 - slot);
+const xMyPicks = slot => Array.from({length: XRDS}, (_, i) => xPickNo(slot, i + 1));
+
+let xplans = [], xactive = 0;
+function xLoadPlans() {
+  const p = loadPending();
+  if (p && Array.isArray(p.xplans) && p.xplans.length) { xplans = p.xplans; return; }
+  // Same precedence as PBAFFL's plans: unsaved local edits win, then the shared
+  // file baked in at build time, then a starter plan for a fresh clone.
+  if (Array.isArray(SHARED.xplans) && SHARED.xplans.length) {
+    xplans = JSON.parse(JSON.stringify(SHARED.xplans));
+    return;
+  }
+  xplans = [{name: 'Plan A', slot: 6, ids: Array(XRDS).fill(null)}];
+}
+xLoadPlans();
+const xCur = () => xplans[Math.min(xactive, xplans.length - 1)];
+function xSavePlans() { stashPending(); }
+
+function xPlanStats(pl) {
+  const rows = pl.ids.map(id => id ? xById[id] : null);
+  const filled = rows.filter(Boolean);
+  // fill starting slots best-first, then bench
+  const need = Object.assign({}, XNEED);
+  const starters = [], bench = [];
+  filled.slice().sort((a, b) => (b.vor == null ? -1e9 : b.vor) - (a.vor == null ? -1e9 : a.vor))
+    .forEach(r => {
+      if (need[r.pos] > 0) { need[r.pos]--; starters.push([r.pos, r]); }
+      else if (r.pos === 'QB' && need.SUPERFLEX > 0) { need.SUPERFLEX--; starters.push(['SUPERFLEX', r]); }
+      else if (['RB', 'WR', 'TE'].includes(r.pos) && need.FLEX > 0) { need.FLEX--; starters.push(['FLEX', r]); }
+      else if (['RB', 'WR', 'TE'].includes(r.pos) && need.SUPERFLEX > 0) { need.SUPERFLEX--; starters.push(['SUPERFLEX', r]); }
+      else bench.push(r);
+    });
+  const missing = Object.keys(need).filter(k => need[k] > 0).map(k => [k, need[k]]);
+  return {rows, filled, starters, bench, missing,
+    exp: Math.round(starters.reduce((a, s) => a + (s[1].exp || 0), 0)),
+    legal: missing.length === 0};
+}
+
+function xPlanBar() {
+  const sel = document.getElementById('xplanSel');
+  sel.innerHTML = xplans.map((p, i) =>
+    `<option value="${i}"${i === xactive ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+  const sl = document.getElementById('xslot');
+  if (!sl.options.length)
+    for (let i = 1; i <= XTEAMS; i++) sl.add(new Option(i, i));
+  sl.value = xCur().slot;
+  const s = xPlanStats(xCur());
+  document.getElementById('xplanMeter').innerHTML =
+    `<b>${s.filled.length}</b> / ${XRDS} picks &middot; <b>${s.exp}</b> projected starting points &middot; ` +
+    (s.legal ? '<span class="up">lineup complete</span>'
+             : `<span class="dn">need ${s.missing.map(m => m[1] + ' ' + m[0]).join(', ')}</span>`);
+  const nm = document.getElementById('xplanName');
+  if (document.activeElement !== nm) nm.value = xCur().name;
+}
+
+function xPlanPicks() {
+  const pl = xCur(), mine = xMyPicks(pl.slot);
+  let html = '';
+  mine.forEach((no, i) => {
+    const rd = i + 1, r = pl.ids[i] ? xById[pl.ids[i]] : null;
+    // A player ranked well ahead of the pick you are holding will not still be
+    // sitting there; one ranked well behind it means you are taking him early.
+    const gone  = r && r.rank != null && (no - r.rank) >= 12;
+    const reach = r && r.rank != null && (no - r.rank) <= -12;
+    const badge = !r ? '' : gone
+      ? ` <span class="dn" title="board rank ${r.rank}, pick ${no}">unlikely to last</span>`
+      : reach ? ` <span class="up" title="board rank ${r.rank}, pick ${no}">reach — could wait</span>` : '';
+    html += `<div class="slot${r ? '' : ' empty'}">
+      <span class="lab">${rd}.${String(no).padStart(3, ' ')}</span>
+      <span class="nm">${r ? starHtml(xKey(r)) + esc(r.n) +
+        ` <span style="color:var(--muted)">${r.pos}${r.prank} &middot; ${r.tm}</span>` + badge
+        : '&mdash;'}</span>
+      <span class="pr">${r ? xFmt(r.exp) : ''}</span>
+      ${r ? `<button class="btn mini" data-xdrop="${i}" aria-label="remove">&times;</button>` : ''}
+    </div>`;
+  });
+  const host = document.getElementById('xplanPicks');
+  host.innerHTML = html;
+  bindStars(host);
+  host.querySelectorAll('[data-xdrop]').forEach(b => b.onclick = () => {
+    xCur().ids[+b.dataset.xdrop] = null; xSavePlans(); xDrawPlan();
+  });
+}
+
+function xPlanRoster() {
+  const s = xPlanStats(xCur());
+  const order = ['QB', 'RB', 'WR', 'TE', 'SUPERFLEX', 'FLEX', 'K', 'DEF'];
+  const pool = s.starters.slice();
+  let html = '<div class="slot" style="border:0"><span class="lab">LINEUP</span><span class="nm" style="color:var(--muted)">' +
+    s.exp + ' projected points from your eleven starters</span></div>';
+  order.forEach(pos => {
+    for (let i = 0; i < XNEED[pos]; i++) {
+      const idx = pool.findIndex(x => x[0] === pos);
+      const r = idx >= 0 ? pool.splice(idx, 1)[0][1] : null;
+      html += `<div class="slot start${r ? '' : ' empty'}">
+        <span class="lab" style="width:74px">${pos}</span>
+        <span class="nm">${r ? esc(r.n) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+        <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
+    }
+  });
+  html += `<div class="slot" style="border:0;padding-top:8px"><span class="lab">BENCH</span><span class="nm"></span></div>`;
+  for (let i = 0; i < XBENCH; i++) {
+    const r = s.bench[i];
+    html += `<div class="slot bench${r ? '' : ' empty'}"><span class="lab" style="width:74px"></span>
+      <span class="nm">${r ? esc(r.n) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+      <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
+  }
+  document.getElementById('xplanRoster').innerHTML = html;
+}
+
+function xPlanPool() {
+  const q = document.getElementById('xpq').value.toLowerCase();
+  const pf = document.getElementById('xppos').value;
+  const hide = document.getElementById('xphide').checked;
+  const tgt = document.getElementById('xptgt').checked;
+  const sel = document.getElementById('xppos');
+  if (sel.options.length === 1) xPOS.forEach(p => sel.add(new Option(p, p)));
+  const taken = new Set(xCur().ids.filter(Boolean));
+  const rows = PPP.board.filter(r =>
+    (!q || r.n.toLowerCase().includes(q)) && (!pf || r.pos === pf) &&
+    (!hide || !taken.has(r.pid)) && (!tgt || targets.has(xKey(r)))).slice(0, 300);
+  const t = document.getElementById('xplanPool');
+  t.innerHTML = '<thead><tr><th class="l" style="cursor:default">#</th><th class="l">player</th>' +
+    '<th class="l">pos</th><th>Exp</th><th>VOR</th><th></th></tr></thead><tbody>' +
+    rows.map(r => `<tr>
+      <td class="l" style="color:var(--muted)">${r.rank == null ? '—' : r.rank}</td>
+      <td class="l">${starHtml(xKey(r))}${esc(r.n)}
+        <span style="color:var(--muted)">${r.tm}</span></td>
+      <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
+      <td>${xFmt(r.exp)}</td>
+      <td>${r.vor == null ? '<span style="color:var(--muted)">stream</span>' : (r.vor > 0 ? '+' : '') + xFmt(r.vor)}</td>
+      <td><button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
+    '</tbody>';
+  bindStars(t);
+  t.querySelectorAll('[data-xadd]').forEach(b => b.onclick = () => {
+    const pid = b.dataset.xadd, p = xById[pid], pl = xCur();
+    if (pl.ids.includes(pid)) return;
+    const mine = xMyPicks(pl.slot);
+    let slot;
+    if (p.rank == null) {
+      // kickers and defences carry no board rank and cost nothing to wait on:
+      // five seasons say never before round 13, so that is where they land
+      slot = pl.ids.findIndex((v, i) => !v && i >= 12);
+    } else {
+      // earliest of my picks where he could still plausibly be on the board
+      slot = pl.ids.findIndex((v, i) => !v && mine[i] >= p.rank);
+    }
+    if (slot < 0) slot = pl.ids.findIndex(v => !v);
+    if (slot < 0) return;                        // all eighteen picks used
+    pl.ids[slot] = pid;
+    xSavePlans(); xDrawPlan();
+  });
+}
+
+function xPlanCompare() {
+  const cols = xplans.map(xPlanStats);
+  const posRow = pos => xplans.map((p, i) =>
+    `<td>${cols[i].filled.filter(r => r.pos === pos).length || ''}</td>`).join('');
+  document.getElementById('xplanCmp').innerHTML =
+    '<thead><tr><th class="l">&nbsp;</th>' + xplans.map(p => `<th class="l">${esc(p.name)}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    '<tr><td class="l">draft slot</td>' + xplans.map(p => `<td>${p.slot}</td>`).join('') + '</tr>' +
+    '<tr><td class="l">picks used</td>' + cols.map(c => `<td>${c.filled.length}/${XRDS}</td>`).join('') + '</tr>' +
+    '<tr><td class="l">projected starting points</td>' + cols.map(c => `<td><b>${c.exp}</b></td>`).join('') + '</tr>' +
+    '<tr><td class="l">lineup</td>' + cols.map(c => `<td>${c.legal
+      ? '<span class="up">complete</span>'
+      : '<span class="dn">' + c.missing.map(m => m[1] + ' ' + m[0]).join(', ') + '</span>'}</td>`).join('') + '</tr>' +
+    xPOS.map(pos => `<tr><td class="l">${pos}</td>${posRow(pos)}</tr>`).join('') +
+    '</tbody>';
+}
+
+function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPlanCompare(); }
+
+(function xPlanWire() {
+  const on = (id, ev, fn) => { const n = document.getElementById(id); if (n) n.addEventListener(ev, fn); };
+  on('xplanSel', 'change', e => { xactive = +e.target.value; xDrawPlan(); });
+  on('xslot', 'change', e => { xCur().slot = +e.target.value; xSavePlans(); xDrawPlan(); });
+  on('xplanName', 'input', e => { xCur().name = e.target.value || 'untitled'; xSavePlans(); xPlanCompare(); });
+  on('xplanNew', 'click', () => {
+    xplans.push({name: 'Plan ' + String.fromCharCode(65 + xplans.length), slot: xCur().slot,
+      ids: Array(XRDS).fill(null)});
+    xactive = xplans.length - 1; xSavePlans(); xDrawPlan();
+  });
+  on('xplanCopy', 'click', () => {
+    const c = JSON.parse(JSON.stringify(xCur()));
+    c.name = c.name + ' copy'; xplans.push(c); xactive = xplans.length - 1; xSavePlans(); xDrawPlan();
+  });
+  on('xplanDel', 'click', () => {
+    if (xplans.length < 2) return;               // never leave the planner empty
+    xplans.splice(xactive, 1); xactive = 0; xSavePlans(); xDrawPlan();
+  });
+  ['xpq', 'xppos', 'xphide', 'xptgt'].forEach(id => on(id, id === 'xpq' ? 'input' : 'change', xPlanPool));
+})();
+
+/* ---- Perennial Push filter wiring ---- */
+(function xWire() {
+  const on = (id, ev, fn) => { const n = document.getElementById(id); if (n) n.addEventListener(ev, fn); };
+  on('xq', 'input', e => { xState.q = e.target.value; xBoard(); });
+  on('xposf', 'change', e => { xState.pos = e.target.value; xBoard(); });
+  on('xposf2', 'change', e => { xState.pos2 = e.target.value; xLast(); });
+  on('xseason', 'change', e => { xState.season = e.target.value; xLast(); });
+  const tog = (id, key, fn) => on(id, 'click', e => {
+    xState[key] = !xState[key];
+    e.target.setAttribute('aria-pressed', String(xState[key]));
+    fn();
+  });
+  tog('xtgtOnly', 'tgt', () => xBoard());
+  tog('xarbOnly', 'arb', () => xBoard());
+  on('xstream', 'click', e => {
+    xState.hideStream = !xState.hideStream;
+    e.target.setAttribute('aria-pressed', String(xState.hideStream));
+    e.target.textContent = xState.hideStream ? 'hide K / D-ST' : 'show K / D-ST';
+    xBoard();
+  });
+})();
+
+/* ---------- post-draft roster views ----------
+   A pick list answers "what happened at 4.07"; it does not answer "what did that
+   team end up with", which is the question you actually ask when reading an old
+   draft. Same rows, regrouped by team and ordered the way the team built it. */
+function rosterCard(head, sub, rows) {
+  return `<div class="rcard">
+    <h3>${head}</h3>
+    <div class="sub2">${sub}</div>
+    <table><tbody>${rows}</tbody></table></div>`;
+}
+/* Fill a starting lineup from a drafted roster, best season first. Required slots
+   take priority, then superflex, then flex -- so a spare QB lands in superflex
+   rather than crowding out the flex a running back needs. */
+function fillLineup(list, need, posKey, ptsKey) {
+  const order = Object.keys(need);
+  const left = Object.assign({}, need);
+  const starters = [], bench = [];
+  list.slice().sort((a, b) => (b[ptsKey] || 0) - (a[ptsKey] || 0)).forEach(r => {
+    const pos = r[posKey];
+    if (left[pos] > 0) { left[pos]--; starters.push([pos, r]); }
+    else if (left.SUPERFLEX > 0 && ['QB', 'RB', 'WR', 'TE'].includes(pos)) { left.SUPERFLEX--; starters.push(['SUPERFLEX', r]); }
+    else if (left.FLEX > 0 && ['RB', 'WR', 'TE'].includes(pos)) { left.FLEX--; starters.push(['FLEX', r]); }
+    else bench.push(r);
+  });
+  // present starters in lineup order, not in the order they were filled
+  starters.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+  const empty = order.filter(k => left[k] > 0).flatMap(k => Array(left[k]).fill(k));
+  return {starters, bench, empty};
+}
+const SLOTLBL = {SUPERFLEX: 'SFLEX'};                 // full word overruns the column
+const slotLabel = s => s ? `<span title="${s === 'SUPERFLEX' ? 'superflex — QB, RB, WR or TE' : s}">${SLOTLBL[s] || s}</span>` : '';
+function posCounts(list, key) {
+  const c = {};
+  list.forEach(r => { const p = r[key]; c[p] = (c[p] || 0) + 1; });
+  return ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].filter(p => c[p]).map(p => c[p] + ' ' + p).join(' · ');
+}
+
+function xRosters() {
+  const yr = xState.season || document.getElementById('xseason').value;
+  const teams = (PPP.teams[yr] || []).slice().sort((a, b) => (a.fin || 99) - (b.fin || 99));
+  const picks = PPP.draft[yr] || [];
+  const host = document.getElementById('xRosters');
+  host.innerHTML = teams.map(t => {
+    const mine = picks.filter(p => p.tm === t.id).sort((a, b) => a.o - b.o);
+    const L = fillLineup(mine, {QB: 1, RB: 2, WR: 3, TE: 1, SUPERFLEX: 1, FLEX: 1, K: 1, DEF: 1}, 'pos', 'act');
+    const line = (slot, p, cls) => `<tr class="${cls}">
+      <td class="l sl">${slotLabel(slot)}</td>
+      <td class="l" style="color:var(--muted);width:44px">${p ? p.rd + '.' + String(p.pk).padStart(2, '0') : ''}</td>
+      <td class="l" style="width:44px">${p ? `<span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span>` : ''}</td>
+      <td class="l nmcell">${p ? esc(p.n) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="width:52px">${p && p.act != null ? xFmt(p.act) : ''}</td>
+      <td class="l" style="width:44px;color:var(--ink2)">${p ? (p.fin || '') : ''}</td></tr>`;
+    const rows = L.starters.map(([s, p]) => line(s, p, '')).join('') +
+      L.empty.map(s => line(s, null, 'empty')).join('') +
+      (L.bench.length ? '<tr class="divider"><td colspan="6"></td></tr>' : '') +
+      L.bench.map(p => line('', p, 'bench')).join('');
+    const head = `<span class="pl">${t.fin || '—'}</span>${esc(t.name)}`;
+    const sub = `${esc(t.own)} &middot; ${t.w}-${t.l} &middot; ${Math.round(t.pf)} pts for<br>` +
+      `<span style="color:var(--muted)">${Math.round(L.starters.reduce((a, s) => a + (s[1].act || 0), 0))} pts from the lineup &middot; ` +
+      `${Math.round(t.haul)} drafted &middot; ${posCounts(mine, 'pos')}</span>`;
+    return rosterCard(head, sub, rows);
+  }).join('');
+}
+
+function lRosters() {
+  const rows = D.draft[lSeason] || [];
+  const meta = {};
+  (D.draft_teams[lSeason] || []).forEach(t => meta[t.franchise] = t);
+  const names = [...new Set(rows.map(r => r.franchise))]
+    .sort((a, b) => ((meta[a] && meta[a].rank) || 99) - ((meta[b] && meta[b].rank) || 99));
+  document.getElementById('lRosters').innerHTML = names.map(fr => {
+    const mine = rows.filter(r => r.franchise === fr).sort((a, b) => b.price - a.price);
+    const t = meta[fr] || {};
+    const L = fillLineup(mine, Object.assign({}, D.starters), 'position', 'points');
+    const line = (slot, r, cls) => `<tr class="${cls}">
+      <td class="l sl">${slotLabel(slot)}</td>
+      <td class="l" style="width:40px;font-weight:650">${r ? '$' + r.price : ''}</td>
+      <td class="l" style="width:44px">${r ? `<span class="pos" style="background:var(${POSC[r.position] || '--muted'})">${r.position}</span>` : ''}</td>
+      <td class="l nmcell">${r ? esc(r.player_name) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="width:52px">${r && r.points != null ? Math.round(r.points) : ''}</td>
+      <td class="l" style="width:44px;color:var(--ink2)">${r ? (r.finish || '') : ''}</td></tr>`;
+    const body = L.starters.map(([s, r]) => line(s, r, '')).join('') +
+      L.empty.map(s => line(s, null, 'empty')).join('') +
+      (L.bench.length ? '<tr class="divider"><td colspan="6"></td></tr>' : '') +
+      L.bench.map(r => line('', r, 'bench')).join('');
+    const head = `<span class="pl">${t.rank || '—'}</span>${esc(fr)}`;
+    const sub = (t.wins !== undefined && t.wins !== '' ? `${t.wins}-${t.losses} &middot; ` : '') +
+      `${t.points_for ? Math.round(t.points_for) + ' pts for' : ''}<br>` +
+      `<span style="color:var(--muted)">${Math.round(L.starters.reduce((a, s) => a + (s[1].points || 0), 0))} pts from the lineup &middot; ` +
+      `$${t.spend || 0} spent &middot; ${posCounts(mine, 'position')}</span>`;
+    return rosterCard(head, sub, body);
+  }).join('');
+}
+
+function setView(which, pickWrap, rostWrap, bPicks, bRost, render) {
+  const rost = which === 'rosters';
+  document.getElementById(pickWrap).hidden = rost;
+  document.getElementById(rostWrap).hidden = !rost;
+  document.getElementById(bPicks).setAttribute('aria-pressed', String(!rost));
+  document.getElementById(bRost).setAttribute('aria-pressed', String(rost));
+  if (rost) render();
+}
+(function viewWire() {
+  const g = id => document.getElementById(id);
+  if (g('xvPicks')) {
+    g('xvPicks').onclick = () => { xState.view = 'picks'; setView('picks', 'xPickWrap', 'xRostWrap', 'xvPicks', 'xvRost', xRosters); };
+    g('xvRost').onclick = () => { xState.view = 'rosters'; setView('rosters', 'xPickWrap', 'xRostWrap', 'xvPicks', 'xvRost', xRosters); };
+  }
+  if (g('lvPicks')) {
+    g('lvPicks').onclick = () => { lView = 'picks'; setView('picks', 'lPickWrap', 'lRostWrap', 'lvPicks', 'lvRost', lRosters); };
+    g('lvRost').onclick = () => { lView = 'rosters'; setView('rosters', 'lPickWrap', 'lRostWrap', 'lvPicks', 'lvRost', lRosters); };
+  }
+})();
+
 function draw() {
   markSaveState();
   if (dirty && !saving) scheduleSave();     // covers anything recovered on load
-  boardTable(); drawLast(); drawPlan(); drawStrategy(); drawNFL(); drawVegas();
-  tierChart(); startableChart(); posShare(); scatter(); deadZones();
+  if (LG === 'pbaffl') {
+    boardTable(); drawLast(); drawPlan(); drawStrategy();
+    tierChart(); startableChart(); posShare(); scatter(); deadZones();
+  } else {
+    xBoard(); xLast(); xDrawPlan(); xStr(); xAnl();
+  }
+  drawNFL(); drawVegas();                   // league-agnostic in both modes
 }
+applyLeague(false);
 draw();
 syncShared();
 </script>

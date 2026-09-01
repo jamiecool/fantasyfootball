@@ -60,10 +60,21 @@ keeps both sides rather than stopping the world.
 **`CLAUDE.local.md` is gitignored.** Personal preferences and scratch for your own
 sessions, read alongside `CLAUDE.md`, never shared and never in a diff.
 
-**`dashboard_template.html` is the one real hazard.** 1,600 lines, and it is the
-highest-churn file in the repo. Not yet split into partials. If you are both touching
-the dashboard, say which tab you are in first — the `drawX()` functions are reasonably
-separable, so conflicts are usually resolvable if you stay inside your own.
+**`dashboard_template.html` is the one real hazard.** ~2,800 lines now that it carries
+both leagues, and it is the highest-churn file in the repo. Not yet split into partials.
+If you are both touching the dashboard, say which tab you are in first — the `drawX()`
+functions are reasonably separable, so conflicts are usually resolvable if you stay
+inside your own.
+
+The two leagues are separated by a naming convention rather than by a file: **everything
+belonging to Perennial Push is `x`-prefixed** — `xBoard()`, `xDrawPlan()`, `xplans`,
+`#p-xboard`, `xState`. PBAFFL's equivalents are unprefixed. So one person can work on
+`last`/`drawLast` while the other is in `xlast`/`xDrawLast` without touching a shared
+line. `PPP` is the second league's data, `D` is everything.
+
+**Do not patch `cleandata/dashboard.html`.** It is generated, gitignored, and rewritten
+by every build. Changes go in `dashboard_template.html` and `build_dashboard.py`. This
+is trap 11 in `CLAUDE.md` and it has already cost one rebuild-proof feature.
 
 **`strategy_rules.py` is an append-to-a-list file.** Two people adding rules will
 collide on the tail and can duplicate an `id`. Take the next free id, add at the end,

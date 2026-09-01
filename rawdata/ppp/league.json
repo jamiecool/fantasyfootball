@@ -1,0 +1,33 @@
+{
+  "id": "ppp",
+  "espnLeagueId": "623238770",
+  "name": "Perennial Push for Penultimacy",
+  "shortName": "Perennial Push",
+  "draftType": "SNAKE",
+  "rounds": 18,
+  "teams": 12,
+  "teamsBySeason": {"2021": 14, "2022": 12, "2023": 12, "2024": 12, "2025": 12, "2026": 12},
+  "superflex": true,
+  "starters": {"QB": 1, "RB": 2, "WR": 3, "TE": 1, "SUPERFLEX": 1, "FLEX": 1, "K": 1, "DEF": 1},
+  "startersTotal": 11,
+  "bench": 7,
+  "ir": 1,
+  "rosterSpots": 18,
+  "scoring": {
+    "reception": 1.0,
+    "passYd": 0.04, "passTD": 4, "passInt": -2, "pass2pt": 2,
+    "rushYd": 0.1, "rushTD": 6, "rush2pt": 2,
+    "recYd": 0.1, "recTD": 6, "rec2pt": 2,
+    "fumbleLost": -2,
+    "fg0_39": 3, "fg40_49": 4, "fg50_59": 5, "fg60plus": 6, "pat": 1, "fgMiss": -1,
+    "dstSack": 1, "dstInt": 2, "dstFumRec": 2, "dstSafety": 2, "dstBlock": 2, "dstTD": 6,
+    "dstPA": {"0": 5, "1-6": 4, "7-13": 3, "14-17": 1, "18-27": 0, "28-34": -1, "35-45": -3, "46+": -5},
+    "dstYA": {"<100": 5, "100-199": 3, "200-299": 2, "300-349": 0, "350-399": -1, "400-449": -3, "450-499": -5, "500-549": -6, "550+": -7}
+  },
+  "seasons": [2021, 2022, 2023, 2024, 2025],
+  "notes": [
+    "2021 was a 14-team league with only 2 WR starter slots; 2022 onward is 12 teams with 3 WR slots.",
+    "ESPN did not retain preseason projections for 2023; proj column is 0 for most 2023 picks.",
+    "Superflex (ESPN lineup slot 7) has been active every season 2021-2025."
+  ]
+}

@@ -42,6 +42,7 @@ STAGES = [
     ("build_2026_board.py", "prices -> analysis/board_2026.csv", False, None),
     ("analyze_dead_zones.py", "per-band returns -> analysis/dead_zones.csv", False, None),
     ("build_fair_prices.py", "valuations -> analysis/fair_prices_2026.csv", False, None),
+    ("build_ppp_data.py", "2nd league (ESPN) -> analysis/ppp_data.json", False, None),
     ("build_dashboard.py", "everything -> cleandata/dashboard.html", False, None),
 ]
 

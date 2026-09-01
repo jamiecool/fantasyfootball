@@ -427,7 +427,8 @@ except Exception:                                            # noqa: BLE001
                    "plans": []}
 _s = D["shared"]
 print(f"\nshared board state: {len(_s.get('targets', []))} targets, "
-      f"{len(_s.get('notes', {}))} notes, {len(_s.get('plans', []))} plans"
+      f"{len(_s.get('notes', {}))} notes, {len(_s.get('plans', []))} plans, "
+      f"{len(_s.get('xplans', []))} snake plans"
       + (f" (saved {_s['saved_at']}"
          + (f" by {_s['saved_by']}" if _s.get("saved_by") else "") + ")"
          if _s.get("saved_at") else " (never saved)"))
@@ -461,6 +462,25 @@ for r in _bio.itertuples():
                   if pd.notna(r.draft_round) else "undrafted"),
     }
 print(f"\nbio for {len(D['bio'])} players on the profile card")
+
+# ---- 15. the second league: Perennial Push (see build_ppp_data.py) ---------
+# ESPN league 623238770 -- snake, superflex, full PPR. It shares this page and
+# the league switcher in the header decides which one every surface is
+# describing. Nothing about it touches PBAFFL's numbers: different format,
+# different scoring, its own board, history and strategy rules.
+#
+# Guarded the same way the live-feed tables are. A clone that has not run
+# build_ppp_data.py should get a working PBAFFL dashboard with the second league
+# absent, not a stack trace -- the template hides the switcher when this is None.
+_ppp = os.path.join(OUT, "analysis", "ppp_data.json")
+if os.path.exists(_ppp):
+    D["ppp"] = json.load(open(_ppp, encoding="utf-8"))
+    print(f"\nPerennial Push: {len(D['ppp']['board'])} on the 2026 board, "
+          f"{sum(len(v) for v in D['ppp']['draft'].values())} picks across "
+          f"{len(D['ppp']['seasons'])} seasons")
+else:
+    D["ppp"] = None
+    print("\n  (no ppp_data.json -- run: python build_ppp_data.py)")
 
 # ---- 8. headline numbers ---------------------------------------------------
 adp_real = pd.read_sql("""SELECT p.season,p.adp,f.overall_rank fr FROM v_preseason p

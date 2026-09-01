@@ -1,11 +1,21 @@
-# PBAFFL — auction draft analysis
+# PBAFFL & Perennial Push — draft analysis
 
-Nine seasons of a 12-team half-PPR **auction** league, normalised into a queryable
-database, plus a localhost dashboard used live during the draft.
+Two fantasy leagues, normalised into a queryable database, plus a localhost dashboard
+used live during both drafts. A switcher in the page header decides which league every
+surface is describing.
 
-The league: $200 budget, 16 roster spots, starters are 1 QB / 2 RB / 3 WR / 1 TE /
-1 K / 1 DEF with **no FLEX**, half-PPR with a non-default **−2 interceptions**.
-Strict redraft, and an IR slot that everyone uses.
+**PBAFFL** — nine seasons of a 12-team half-PPR **auction** league. $200 budget, 16
+roster spots, starters are 1 QB / 2 RB / 3 WR / 1 TE / 1 K / 1 DEF with **no FLEX**,
+half-PPR with a non-default **−2 interceptions**. Strict redraft, and an IR slot that
+everyone uses. This is the bulk of the repo.
+
+**Perennial Push for Penultimacy** — five seasons of a 12-team full-PPR **snake**
+league on ESPN, 18 rounds, with a **superflex** slot. See `rawdata/ppp/README.md`.
+
+**Almost nothing carries between them.** Different draft format, different scoring,
+different roster — so the second league has its own board, its own history and its own
+strategy rules rather than reusing any of the auction work. The one thing they share is
+the NFL stats and Vegas tabs, which are league-agnostic.
 
 ## Get it running
 
@@ -66,8 +76,9 @@ Everything else — the database, all 18 other tables, the board, fair prices, d
 | | |
 |---|---|
 | `rawdata/` | inputs. Nine years of Yahoo exports, plus fetched market data |
+| `rawdata/ppp/` | the second league's ESPN pulls, checked in — see its README |
 | `cleandata/fantasy.db` | SQLite, the thing to query. **Generated** |
-| `cleandata/dashboard.html` | the draft-day tool. **Generated** |
+| `cleandata/dashboard.html` | the draft-day tool, both leagues. **Generated** |
 | `fetch_*.py` | one per external source |
 | `build_*.py` | transforms, in the order `build_all.py` runs them |
 | `analyze_*.py` | investigations; each prints its findings and some persist a CSV |
@@ -76,12 +87,26 @@ Everything else — the database, all 18 other tables, the board, fair prices, d
 
 ## The dashboard
 
-Six tabs. **2026 board** is the draft-day surface: expected price, a market/fair-value
-toggle, target stars, per-player notes, and colour flags for Vegas team strength and
-disagreement with Yahoo. **Past drafts** is nine seasons of every pick and how it
-turned out. **NFL stats** is 55,861 game lines scored under our rules, with any week
-range and a player profile. **Vegas**, **Draft plan** and **Strategy** are what they
-sound like.
+Pick a league in the header; the tabs change with it.
+
+**PBAFFL (seven tabs).** **2026 board** is the draft-day surface: expected price, a
+market/fair-value toggle, target stars, per-player notes, and colour flags for Vegas
+team strength and disagreement with Yahoo. **Past drafts** is nine seasons of every
+pick and how it turned out, with a pick-by-pick and a post-draft roster view. **NFL
+stats** is 55,861 game lines scored under our rules, with any week range and a player
+profile. **Vegas**, **Draft plan** and **Strategy** are what they sound like.
+
+**Perennial Push (five tabs).** **2026 board** ranks by value over replacement for
+superflex — no dollar figures, because it is a snake draft. **Past drafts** is five
+seasons. **Draft plan** is a snake planner that snakes from your slot and flags picks
+where the board says a player will not last. **Strategy** and **Analytics** are derived
+from that league's own drafts only. **NFL stats** and **Vegas** are shared with PBAFFL.
+
+The second league's board rests on two corrections to ESPN's numbers, both measured
+from five seasons of outcomes: its projections run ~15% high because it assumes every
+starter plays 17 games, and its replacement level is projected rather than realised.
+The second matters most — ESPN's 24th-best QB projects 239.1 points where the real
+five-season figure is 153.7, and in a superflex league that gap is the whole game.
 
 ## Where the numbers come from
 
