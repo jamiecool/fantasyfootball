@@ -2327,7 +2327,7 @@ function xBoard() {
   if (xState.arb) rows = rows.filter(p => p.gap != null && p.gap >= 24);
   const head = `<thead><tr>
     <th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>
-    <th>Est. pick</th><th>UD</th><th>Proj</th><th>ESPN rd</th><th>Move</th><th></th></tr></thead>`;
+    <th>Est. pick</th><th>UD</th><th>Proj</th><th>ESPN rd</th><th>Move</th></tr></thead>`;
   const body = rows.map(p => {
     const gapRd = p.gap == null ? null : Math.round(p.gap / 12 * 10) / 10;
     const cls = (p.gap != null && p.gap >= 24) ? ' class="arb"' : (xSTREAM(p) ? ' class="stream"' : '');
@@ -2338,7 +2338,7 @@ function xBoard() {
     return `<tr${cls}>
       <td class="l kpi" style="color:var(--muted)">${p.rank == null ? '—' : p.rank}</td>
       <td class="l" style="font-weight:650">${xRdPk(p)}</td>
-      <td class="l">${p.n}</td>
+      <td class="l">${starHtml(xKey(p))}${p.n}${noteHtml(xKey(p))}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${p.prank}</span></td>
       <td class="l" style="color:var(--ink2)">${p.tm}</td>
       <td style="font-weight:650">${p.pick == null ? '—' : xFmt(p.pick)}</td>
@@ -2347,12 +2347,12 @@ function xBoard() {
             : '<span style="color:var(--muted)" title="Underdog does not rank him; ordered on ESPN ADP instead">espn</span>'}</td>
       <td style="color:var(--muted)">${xFmt(p.prj)}</td>
       <td>${p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1}</td>
-      <td>${mv}</td>
-      <td class="l">${starHtml(xKey(p))}</td></tr>`;
+      <td>${mv}</td></tr>`;
   }).join('');
   const t = document.getElementById('xboardT');
-  t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="11" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
+  t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="10" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
   bindStars(t);
+  bindNotes(t);                  // notes share a key with PBAFFL now, same as targets
   document.getElementById('xbLeg').innerHTML =
     '<span><i style="background:color-mix(in srgb,var(--s1) 40%,transparent)"></i>2+ rounds cheaper than ESPN has him</span>' +
     xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('') +
@@ -2688,7 +2688,7 @@ function xPlanPool() {
     '<th class="l">pos</th><th>Est. pick</th><th>Proj</th><th></th></tr></thead><tbody>' +
     rows.map(r => `<tr>
       <td class="l" style="color:var(--muted)">${r.rank == null ? '—' : r.rank}</td>
-      <td class="l">${starHtml(xKey(r))}${esc(r.n)}
+      <td class="l">${starHtml(xKey(r))}${esc(r.n)}${noteHtml(xKey(r))}
         <span style="color:var(--muted)">${r.tm}</span></td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
       <td style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
@@ -2696,6 +2696,7 @@ function xPlanPool() {
       <td><button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
     '</tbody>';
   bindStars(t);
+  bindNotes(t);
   t.querySelectorAll('[data-xadd]').forEach(b => b.onclick = () => {
     const pid = b.dataset.xadd, p = xById[pid], pl = xCur();
     if (pl.ids.includes(pid)) return;
