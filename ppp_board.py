@@ -154,11 +154,17 @@ def build_board(board_rows, picks, seasons, rounds, teams_per, db_path):
 
     board = []
     for f in board_rows:
+        # THE KEY IS SHARED WITH PBAFFL ON PURPOSE. Both leagues draft the same
+        # NFL players, so a target starred in one should be starred in the other,
+        # and that only works if both sides fold a player to the same string.
+        # Defences need explicit help: ESPN calls them "Texans D/ST" while the
+        # PBAFFL board keys them def_hou off the team abbreviation.
+        key = ("def_" + f[3].lower()) if f[2] == "DEF" else player_key(f[1])
         board.append(dict(pid=f[0], n=f[1], pos=f[2], tm=f[3], espn=int(f[4]),
                           adp=float(f[5]) if f[5] else None,
                           own=float(f[6]) if f[6] else None,
                           prj=float(f[7]) if f[7] else 0.0,
-                          key=player_key(f[1])))
+                          key=key))
 
     # trap 1: never join on a folded name without checking it collides with nobody
     seen = defaultdict(list)

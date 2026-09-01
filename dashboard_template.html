@@ -701,6 +701,29 @@ function dropPending() {
    set on the board is the same star in the planner even where the two datasets
    spell a name differently. */
 let targets = new Set(SHARED.targets || []);
+
+/* ONE-TIME MIGRATION of the second league's old target keys.
+ *
+ * Perennial Push stars were originally saved as 'x' + ESPN playerId, which kept
+ * them in a separate namespace from PBAFFL's folded player_key. Targets are
+ * shared across both leagues now, so translate any surviving 'x<pid>' key to the
+ * player it refers to rather than dropping a star Jamie had already set.
+ * Anything that no longer resolves -- a player off this year's ESPN board -- is
+ * left alone rather than guessed at. Harmless once the state file is rewritten;
+ * it simply finds nothing to do.
+ */
+if (PPP) {
+  const byPid = {};
+  PPP.board.forEach(p => byPid['x' + p.pid] = p.key);
+  let moved = 0;
+  [...targets].forEach(k => {
+    if (byPid[k]) { targets.delete(k); targets.add(byPid[k]); moved++; }
+  });
+  // NOT stashPending() here: it reads notes/plans/xplans, which are declared
+  // further down and would still be in the temporal dead zone. Marking dirty is
+  // enough -- draw() schedules the save once everything exists.
+  if (moved) { console.info(`migrated ${moved} Perennial Push target(s) to shared keys`); dirty = true; }
+}
 const saveTargets = stashPending;
 /* ---------- per-player notes ----------
    Same player_key as targets and profile links, so a note follows the player
@@ -1478,6 +1501,25 @@ const WK = D.wk, SI = {};
 WK.cols.forEach(function (c, i) { SI[c] = i + 3; });   // game row: [wk, opp, pts, ...stats]
 const WK_MAX = 18;
 
+/* SCORE EVERY WEEK UNDER THE LEAGUE THAT IS SELECTED.
+ *
+ * The NFL stats tab is shared between the two leagues, but the points baked into
+ * each game row are PBAFFL's -- half-PPR. Perennial Push is full PPR, and read
+ * unchanged this tab was quietly understating every pass-catcher by half a point
+ * per reception: about 60 points a season on an elite WR, which is a round and a
+ * half of draft capital.
+ *
+ * The rescore is exact rather than approximate. Every other scoring rule in the
+ * two leagues is identical -- 0.04 pass yd, 4 pass TD, -2 INT, 0.1 rush yd, 6
+ * rush TD -- so a reception is the only term that can differ. Confirmed against
+ * PPP's own scored season totals: solving for the reception value gives 1.001
+ * points with r = 1.0000 across 566 player-seasons.
+ */
+const REC_I = SI.rec;
+const wkPts = g => LG === 'ppp' ? Math.round((g[2] + 0.5 * g[REC_I]) * 10) / 10 : g[2];
+const wkThresh = pos =>
+  (LG === 'ppp' ? (WK.threshPpr || WK.thresh) : WK.thresh)[pos] || [99, -99];
+
 // Index player-seasons by player_key -- the DB's canonical key, not the display
 // name. Joining on names is what produced the Michael Thomas and Chris Thompson
 // bugs, and "Chris Godwin Jr." vs "Chris Godwin" would silently break links.
@@ -1523,7 +1565,7 @@ function nAgg(p, w1, w2) {
   for (const k in SI) o[k] = 0;
   for (const gm of p[8]) {
     if (gm[0] < w1 || gm[0] > w2) continue;
-    o.g++; o.pts += gm[2];
+    o.g++; o.pts += wkPts(gm);
     for (const k in SI) o[k] = NMAX[k] ? Math.max(o[k], gm[SI[k]]) : o[k] + gm[SI[k]];
   }
   o.pts = Math.round(o.pts * 10) / 10;
@@ -1777,19 +1819,25 @@ function careerChart(rows) {
 }
 
 /* ---------- player profile ---------- */
+// Which player the profile modal is showing, so a league switch can re-score it.
+// Without this the card keeps whichever league's points it was opened under,
+// which is the one place on the tab a stale number would not be obvious.
+let curCard = null;
+
 function showPlayer(key, season) {
+  curCard = {key: key, season: season};
   const all = (PIDX[key] || []).slice().sort((a, b) => b[3] - a[3]);
   if (!all.length) return;
   // asked-for season if we have it, else his most recent -- clicking a 2026
   // board row or a rookie should still open what history exists
   const p = all.find(x => x[3] === season) || all[0];
   const name = p[0];
-  const pos = p[1], th = WK.thresh[pos] || [99, -99];
+  const pos = p[1], th = wkThresh(pos);
   const a = nAgg(p, 1, WK_MAX);
-  const boom = p[8].filter(g => g[2] >= th[0]).length;
-  const bust = p[8].filter(g => g[2] <= th[1]).length;
+  const boom = p[8].filter(g => wkPts(g) >= th[0]).length;
+  const bust = p[8].filter(g => wkPts(g) <= th[1]).length;
   const cols = NCOLS[pos] || NCOLS[''];
-  const best = Math.max.apply(null, p[8].map(g => g[2]).concat([1]));
+  const best = Math.max.apply(null, p[8].map(g => wkPts(g)).concat([1]));
 
   // one bar per week 1-18 so byes and missed games read as gaps, not as a
   // compressed run of games -- availability is part of what you bought
@@ -1799,9 +1847,10 @@ function showPlayer(key, season) {
     const g = byWk[w];
     if (!g) { bars += `<i class="bye" style="height:2px" title="wk ${w} — no game"></i>`; }
     else {
-      const cls = g[2] >= th[0] ? 'boom' : g[2] <= th[1] ? 'bust' : '';
-      const h = Math.max(2, Math.round(g[2] / best * 72));
-      bars += `<i class="${cls}" style="height:${h}px" title="wk ${w} vs ${WK.teams[g[1]] || '?'} — ${g[2]} pts"></i>`;
+      const pts = wkPts(g);
+      const cls = pts >= th[0] ? 'boom' : pts <= th[1] ? 'bust' : '';
+      const h = Math.max(2, Math.round(pts / best * 72));
+      bars += `<i class="${cls}" style="height:${h}px" title="wk ${w} vs ${WK.teams[g[1]] || '?'} — ${pts} pts"></i>`;
     }
     xlab += `<span>${w}</span>`;
   }
@@ -1809,10 +1858,11 @@ function showPlayer(key, season) {
   const log = '<table><thead><tr><th>Wk</th><th class="l">Opp</th>' +
     cols.map(c => `<th>${NLAB[c] || c}</th>`).join('') + '<th>Pts</th></tr></thead><tbody>' +
     p[8].map(g => {
-      const cls = g[2] >= th[0] ? 'd2' : g[2] <= th[1] ? 'dm2' : '';
+      const pts = wkPts(g);
+      const cls = pts >= th[0] ? 'd2' : pts <= th[1] ? 'dm2' : '';
       return `<tr><td>${g[0]}</td><td class="l">${WK.teams[g[1]] || '—'}</td>` +
         cols.map(c => `<td>${g[SI[c]]}</td>`).join('') +
-        `<td class="${cls}" style="font-weight:650">${g[2]}</td></tr>`;
+        `<td class="${cls}" style="font-weight:650">${pts}</td></tr>`;
     }).join('') + '</tbody>';
 
   // Position-aware stat columns, the same set the NFL stats tab uses, so a
@@ -1829,9 +1879,9 @@ function showPlayer(key, season) {
     cHead.map(([l, cls]) => `<th class="${cls}">${l}</th>`).join('') +
     '</tr></thead><tbody>' +
     all.map(x => {
-      const ax = nAgg(x, 1, WK_MAX), tx = WK.thresh[x[1]] || [99, -99];
-      const bm = x[8].filter(g => g[2] >= tx[0]).length;
-      const bs = x[8].filter(g => g[2] <= tx[1]).length;
+      const ax = nAgg(x, 1, WK_MAX), tx = wkThresh(x[1]);
+      const bm = x[8].filter(g => wkPts(g) >= tx[0]).length;
+      const bs = x[8].filter(g => wkPts(g) <= tx[1]).length;
       const cells = [
         `<button class="lnk" data-pk="${key}" data-ps="${x[3]}">${x[3]}</button>`,
         x[2],
@@ -2235,7 +2285,16 @@ const xPOS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
 const xSTREAM = p => p.pos === 'K' || p.pos === 'DEF';
 let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: null, pos2: '', view: 'picks'};
 let lView = 'picks';
-const xKey = p => 'x' + p.pid;                        // namespaced so PBAFFL stars never collide
+/* TARGETS ARE SHARED ACROSS BOTH LEAGUES.
+ *
+ * This used to be 'x' + p.pid -- namespaced so the two leagues could not collide.
+ * That was the wrong call: they draft the same NFL players, so a target starred
+ * on one board should be starred on the other, and Jamie asked for exactly that.
+ * Both sides now key on the repo's folded player_key, which build_board() has
+ * already checked collides with nobody (trap 1) -- 0 collisions across the pool.
+ * Defences are keyed def_<team> on both boards so they match too.
+ */
+const xKey = p => p.key;
 const xFmt = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1);
 const xRdPk = p => p.rd == null ? '—' : p.rd + '.' + String(p.pk).padStart(2, '0');
 
@@ -2842,7 +2901,11 @@ function draw() {
   } else {
     xBoard(); xLast(); xDrawPlan(); xStr(); xAnl();
   }
-  drawNFL(); drawVegas();                   // league-agnostic in both modes
+  drawNFL(); drawVegas();                   // shared, but NFL stats re-score by league
+  // an open profile card holds points scored under whichever league it was
+  // opened in, so re-render it rather than let it go stale behind the switch
+  const pm = document.getElementById('pModal');
+  if (curCard && pm && !pm.hidden) showPlayer(curCard.key, curCard.season);
 }
 applyLeague(false);
 draw();

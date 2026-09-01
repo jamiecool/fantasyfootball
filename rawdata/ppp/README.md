@@ -45,6 +45,27 @@ What *does* go stale is `board2026.psv` — see below.
   `{"players":{"filterIds":{"value":[ids]}}}`, in batches of about 40.
 - **Superflex is ESPN lineup slot 7.**
 
+## Scoring: full PPR, confirmed independently
+
+`league.json` says `reception: 1.0`, and that file arrived from the Cowork container
+with nothing in this repo having checked it. Verified 2026-09-01 the same way PBAFFL's
+half-PPR was — from outcomes, not from a settings page.
+
+Every other scoring rule matches PBAFFL exactly (0.04 pass yd, 4 pass TD, **−2 INT**,
+0.1 rush yd, 6 rush TD), so a reception is the only term that can separate the two.
+Solving for it against this league's own scored season totals, 2023–25:
+
+| | |
+|---|---|
+| least-squares reception value | **1.001 pts** (intercept −0.05) |
+| correlation with actual | **r = 1.0000** |
+| seasons within 3 points | 99% of 566 |
+| by position | WR 1.002, RB 1.001, TE 1.009, QB 1.027 |
+
+So the dashboard's NFL stats tab rescores every week by `points + 0.5 × receptions`
+when this league is selected, and that rescore is exact rather than approximate.
+Jamie confirmed PPR independently in conversation.
+
 ## Two things to know before trusting a number here
 
 **`board2026.psv` is a dated snapshot, not a live feed.** It was pulled 2026-09-01

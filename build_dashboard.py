@@ -372,12 +372,25 @@ _st = pw[pw["_pr"] <= pw["position"].map(STARTABLE_N).fillna(0)]
 THRESH = {p: [round(float(g["points"].quantile(0.85)), 1),
               round(float(g["points"].quantile(0.25)), 1)]
           for p, g in _st.groupby("position") if len(g) >= 200}
+# ...and the same thresholds under FULL PPR, for the Perennial Push view. The
+# stat lines are stored scored under PBAFFL's half-PPR, and the NFL stats tab is
+# shared between the two leagues, so a threshold measured in half-PPR points
+# would paint a full-PPR log almost entirely green. Every other scoring rule in
+# the two leagues is identical -- verified against PPP's own scored totals at
+# r = 1.0000 -- so one reception is the whole difference and the rescore is exact.
+_st_ppr = _st["points"] + 0.5 * _st["rec"]
+THRESH_PPR = {p: [round(float(g.quantile(0.85)), 1),
+                  round(float(g.quantile(0.25)), 1)]
+              for p, g in _st_ppr.groupby(_st["position"]) if len(g) >= 200}
 print("\nboom/bust thresholds from starter-quality weeks (p85 / p25):")
 for p, (b, u) in sorted(THRESH.items()):
     n = int((_st["position"] == p).sum())
-    print(f"  {p:3} boom >= {b:5.1f}   bust <= {u:5.1f}   ({n:,} weeks)")
+    pb, pu = THRESH_PPR[p]
+    print(f"  {p:3} boom >= {b:5.1f}   bust <= {u:5.1f}   ({n:,} weeks)"
+          f"   | full PPR {pb:5.1f} / {pu:5.1f}")
 
 D["wk"] = {"cols": WK_COLS, "teams": TEAMS, "ps": ps_rows, "thresh": THRESH,
+           "threshPpr": THRESH_PPR,
            "seasons": sorted({int(s) for s in pw["season"].unique()}, reverse=True)}
 
 # ---- 11. Vegas page --------------------------------------------------------
