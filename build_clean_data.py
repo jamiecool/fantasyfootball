@@ -932,41 +932,14 @@ if os.path.exists(_bio):
     bio = bio[[c for c in keep if c in bio.columns]].rename(columns=keep)
     bio = bio[bio["player_id"].notna()].drop_duplicates("player_id")
     # only carry people who actually appear in our data; the file has 25k
-    _ours = set(pd.read_sql("SELECT DISTINCT player_id FROM player_weeks", con)
-                if False else player_weeks["player_id"].dropna().unique())         if "player_weeks" in tables else set()
+    _ours = (set(player_weeks["player_id"].dropna().unique())
+             if "player_weeks" in tables else set())
     if _ours:
         bio = bio[bio["player_id"].isin(_ours)]
     bio["player_key"] = bio["player_name"].map(player_key)
     tables["player_bio"] = bio.reset_index(drop=True)
     _hit = bio["height_in"].notna().sum()
     print(f"\nplayer_bio: {len(bio)} players, {_hit} with height/weight "
-          f"({100 * _hit / max(len(bio), 1):.0f}%)")
-
-# --- player biography (see fetch_nflverse_players.py) -----------------------
-# Height, weight, birth date, college, draft slot. Joined on gsis_id, which
-# player_weeks already carries, so no name matching is involved and the
-# collision bugs that hit this project twice cannot reach it.
-_bio = os.path.join(NFLV, "players.csv")
-if os.path.exists(_bio):
-    bio = pd.read_csv(_bio, low_memory=False)
-    keep = {"gsis_id": "player_id", "display_name": "player_name",
-            "position": "position", "height": "height_in", "weight": "weight_lb",
-            "birth_date": "birth_date", "college_name": "college",
-            "rookie_season": "rookie_season", "draft_year": "draft_year",
-            "draft_round": "draft_round", "draft_pick": "draft_pick",
-            "draft_team": "draft_team", "status": "status"}
-    bio = bio[[c for c in keep if c in bio.columns]].rename(columns=keep)
-    bio = bio[bio["player_id"].notna()].drop_duplicates("player_id")
-    # only carry people who actually appear in our data; the file has 25k
-    _ours = set(pd.read_sql("SELECT DISTINCT player_id FROM player_weeks", con)
-                if False else player_weeks["player_id"].dropna().unique())         if "player_weeks" in tables else set()
-    if _ours:
-        bio = bio[bio["player_id"].isin(_ours)]
-    bio["player_key"] = bio["player_name"].map(player_key)
-    tables["player_bio"] = bio.reset_index(drop=True)
-    _hit = bio["height_in"].notna().sum()
-    print(f"
-player_bio: {len(bio)} players, {_hit} with height/weight "
           f"({100 * _hit / max(len(bio), 1):.0f}%)")
 
 # --- data freshness ---------------------------------------------------------
