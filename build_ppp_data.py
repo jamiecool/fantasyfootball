@@ -47,7 +47,7 @@ import os
 import statistics as st
 from collections import defaultdict
 
-from ppp_board import build_board
+from ppp_board import build_board, player_key
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "rawdata", "ppp")
@@ -236,9 +236,13 @@ D = dict(
     nUnderdog=DIAG["n_underdog"], nEspn=DIAG["n_espn"],
     qbTop3=qb_top3, qbcum=qbcum, board=board, rdstat=rdstat, posband=posband,
     qbedge=qbedge, poscount=poscount, bands=[f"{a}-{b}" for a, b in BANDS],
+    # `key` is the folded player_key, carried so a name in the past-drafts and
+    # roster views opens the same profile card the board does. Defences get the
+    # plain fold and simply never resolve -- nflverse has no D/ST stat lines, so
+    # the page falls back to plain text for them, which is the right answer.
     draft={str(y): [dict(o=p["o"], rd=p["rd"], pk=p["sl"], tm=p["tm"], n=p["n"],
                          pos=p["pos"], act=p["act"], prj=p["prj"], fin=p["fin"],
-                         st=p["st"], vor=p["vor"])
+                         st=p["st"], vor=p["vor"], key=player_key(p["n"]))
                     for p in picks if p["s"] == y] for y in SEASONS},
     teams=teams)
 

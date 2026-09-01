@@ -105,7 +105,6 @@
   .area{border-radius:999px;padding:1px 9px;font-size:13.1px;font-weight:600;
         border:1px solid var(--border);color:var(--ink2)}
   .kpi{font-variant-numeric:tabular-nums}
-  tr.arb td{background:color-mix(in srgb,var(--s1) 13%,transparent)}
   .stream td{color:var(--ink2)}
   /* snake pick labels read "13.148" -- wider than the auction planner's slot tags */
   #xplanPicks .slot .lab,#xplanRoster .slot .lab{width:76px;white-space:nowrap}
@@ -503,18 +502,10 @@
   <section class="panel" id="p-xboard" hidden>
     <div class="card">
       <h2>The 2026 board — ranked for superflex</h2>
-      <p class="note">Built the same way as the PBAFFL board, in two separate halves.
-        <b>Underdog's ADP orders players within a position</b> — sharp money, repriced
-        continuously — and <b>this league's own 2023–25 drafts weight across positions</b>,
-        by where the Nth-best player at each position actually went. That second half is
-        the only thing here that knows the league is superflex, and it knows it by
-        measurement rather than assumption: the first QB off the board goes at overall
-        pick 2 here, the fifth at 10, where the fifth RB goes at 20.
-        <b>No projection touches the ranking</b> — <b>Proj</b> is ESPN's number, carried
-        for information only. <b>Est. pick</b> is what the history says that slot costs,
-        <b>Rd.Pk</b> is it in an 18-round snake, and <b>ESPN rd</b> is where ESPN's
-        one-QB board puts him. No dollar figures — this is a snake draft.</p>
-      <div class="row" id="xbTiles"></div>
+      <!-- No explainer and no tiles above this table on purpose: the board is the
+           board, and on draft night the rows are the only thing wanted above the
+           fold. How it is built is documented where it belongs -- ppp_board.py,
+           README.md and CLAUDE.md -- and each column carries a title= tooltip. -->
       <div class="legend" id="xbLeg"></div>
       <div class="filters">
         <input type="search" id="xq" aria-label="Filter the board by player" placeholder="filter players…">
@@ -1871,10 +1862,14 @@ function showPlayer(key, season) {
   // when an Age cell was added and its header silently was not, and every
   // column after Tm was mislabelled with nothing on screen to show it.
   const cCols = NCOLS[pos] || NCOLS[''];
+  // PBAFFL is an auction and Perennial Push is a snake draft, so the price
+  // columns are meaningless in the second league -- and worse than meaningless,
+  // because the franchise that paid is a team in the OTHER league.
+  const isPB = LG === 'pbaffl';
   const cHead = [['Year', ''], ['Tm', 'l'], ['Age', ''], ['G', '']]
     .concat(cCols.map(c => [NLAB[c] || c, '']))
-    .concat([['Pts', ''], ['PPG', ''], ['Pos rk', ''], ['Boom', ''], ['Bust', ''],
-             ['PBAFFL $', ''], ['Bought by', 'l']]);
+    .concat([['Pts', ''], ['PPG', ''], ['Pos rk', ''], ['Boom', ''], ['Bust', '']])
+    .concat(isPB ? [['PBAFFL $', ''], ['Bought by', 'l']] : []);
   const career = '<table><thead><tr>' +
     cHead.map(([l, cls]) => `<th class="${cls}">${l}</th>`).join('') +
     '</tr></thead><tbody>' +
@@ -1892,9 +1887,7 @@ function showPlayer(key, season) {
         ax.pts, ax.ppg,
         x[6] == null ? '\u2014' : x[1] + x[6],
         bm, bs,
-        x[4] == null ? '\u2014' : '$' + x[4],
-        x[5] || '\u2014',
-      ]);
+      ]).concat(isPB ? [x[4] == null ? '\u2014' : '$' + x[4], x[5] || '\u2014'] : []);
       if (cells.length !== cHead.length) console.error('career table column mismatch');
       return `<tr${x[3] === p[3] ? ' style="font-weight:650"' : ''}>` +
         cells.map((v, i) => `<td class="${cHead[i][1]}">${v}</td>`).join('') +
@@ -1912,7 +1905,7 @@ function showPlayer(key, season) {
       `<div class="tile"><div class="v">${p[6] == null ? '—' : pos + p[6]}</div><div class="k">finish at position</div></div>` +
       `<div class="tile"><div class="v">${boom}</div><div class="k">boom weeks (≥ ${th[0]})</div></div>` +
       `<div class="tile"><div class="v">${bust}</div><div class="k">bust weeks (≤ ${th[1]})</div></div>` +
-      `<div class="tile"><div class="v">${p[4] == null ? '—' : '$' + p[4]}</div><div class="k">${p[4] == null ? 'undrafted here' : 'paid by ' + p[5]}</div></div>` +
+      (isPB ? `<div class="tile"><div class="v">${p[4] == null ? '—' : '$' + p[4]}</div><div class="k">${p[4] == null ? 'undrafted here' : 'paid by ' + p[5]}</div></div>` : '') +
     '</div>' +
     `<h3>Week by week, ${p[3]} — boom green, bust red, grey = no game</h3>` +
     `<div class="glog">${bars}</div><div class="glogx">${xlab}</div>` +
@@ -1920,16 +1913,16 @@ function showPlayer(key, season) {
       `scores among starter-quality ${pos}s — 20 points is a big week for a tight end and a ` +
       `mediocre one for a quarterback, so each position is judged against its own.</p>` +
     `<h3>Game log, ${p[3]}</h3><div class="scroll" style="max-height:320px">${log}</table></div>` +
-    `<h3>Points per game each season, against what he cost</h3>` +
+    (isPB ? `<h3>Points per game each season, against what he cost</h3>` +
     `<div id="pChart"></div>` +
     `<p class="note" style="margin-top:6px">Bar is what he averaged. The line across it is ` +
     `what his price implied — the PPG of whoever actually finished at his price rank ` +
     `that season. <b style="color:var(--div-pos)">Green</b> cleared it, ` +
     `<b style="color:var(--div-neg)">red</b> did not, ` +
     `<b style="color:var(--s1)">blue</b> means he WAS the player at that rank so there was ` +
-    `nothing to beat, and grey means he went undrafted here.</p>` +
+    `nothing to beat, and grey means he went undrafted here.</p>` : '') +
     `<h3>Every season on record</h3><div class="scroll" style="max-height:300px">${career}</table></div>`;
-  $n('pChart').replaceChildren(careerChart(all));
+  if (isPB) $n('pChart').replaceChildren(careerChart(all));   // no #pChart in snake mode
 
   bindLinks($n('pBody'));
   $n('pModal').hidden = false;
@@ -2298,24 +2291,7 @@ const xKey = p => p.key;
 const xFmt = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1);
 const xRdPk = p => p.rd == null ? '—' : p.rd + '.' + String(p.pk).padStart(2, '0');
 
-function xTiles() {
-  const b = PPP.board, c = PPP.curves;
-  const arb = b.filter(p => p.gap != null && p.gap >= 24).length;
-  const t = [
-    ['18', 'rounds, snake', 'full PPR, superflex'],
-    [Math.round(c.QB[1]), 'the pick QB1 goes here', 'RB1 at ' + Math.round(c.RB[1]) +
-     ', TE1 at ' + Math.round(c.TE[1])],
-    [PPP.qbTop3, 'QBs inside rounds 1–3', 'the room takes ' + PPP.qbcum[2] + ' by then'],
-    [PPP.nUnderdog, 'ranked on Underdog ADP', PPP.nEspn + ' on ESPN ADP (K/DEF)'],
-    [arb, 'players 2+ rounds cheaper', "than ESPN's one-QB board"]
-  ];
-  document.getElementById('xbTiles').innerHTML = t.map(([v, k, s]) =>
-    `<div class="tile"><div class="v kpi">${v}</div><div class="k">${k}` +
-    (s ? `<br><span style="color:var(--muted)">${s}</span>` : '') + `</div></div>`).join('');
-}
-
 function xBoard() {
-  xTiles();
   const sel = document.getElementById('xposf');
   if (sel.options.length === 1)
     xPOS.forEach(p => sel.add(new Option(p, p)));
@@ -2327,10 +2303,14 @@ function xBoard() {
   if (xState.arb) rows = rows.filter(p => p.gap != null && p.gap >= 24);
   const head = `<thead><tr>
     <th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>
-    <th>Est. pick</th><th>UD</th><th>Proj</th><th>ESPN rd</th><th>Move</th></tr></thead>`;
+    <th title="Where this league itself took the ${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]} equivalent at that position and rank. This is what sorts the board.">Est. pick</th>
+    <th title="Underdog's ordering within the position — the sharp market, and what sets each player's rank.">UD</th>
+    <th title="ESPN's projection. Shown for information only; it does not affect the sort.">Proj</th>
+    <th title="The round ESPN's one-QB board would have him going in.">ESPN rd</th>
+    <th title="How far this board has him ahead of, or behind, ESPN.">Move</th></tr></thead>`;
   const body = rows.map(p => {
     const gapRd = p.gap == null ? null : Math.round(p.gap / 12 * 10) / 10;
-    const cls = (p.gap != null && p.gap >= 24) ? ' class="arb"' : (xSTREAM(p) ? ' class="stream"' : '');
+    const cls = xSTREAM(p) ? ' class="stream"' : '';
     const mv = gapRd == null ? '—'
       : gapRd >= 0.8 ? `<span class="up">${gapRd.toFixed(1)} rd earlier</span>`
       : gapRd <= -0.8 ? `<span class="dn">${Math.abs(gapRd).toFixed(1)} rd later</span>`
@@ -2338,7 +2318,7 @@ function xBoard() {
     return `<tr${cls}>
       <td class="l kpi" style="color:var(--muted)">${p.rank == null ? '—' : p.rank}</td>
       <td class="l" style="font-weight:650">${xRdPk(p)}</td>
-      <td class="l">${starHtml(xKey(p))}${p.n}${noteHtml(xKey(p))}</td>
+      <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${p.prank}</span></td>
       <td class="l" style="color:var(--ink2)">${p.tm}</td>
       <td style="font-weight:650">${p.pick == null ? '—' : xFmt(p.pick)}</td>
@@ -2353,13 +2333,11 @@ function xBoard() {
   t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="10" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
   bindStars(t);
   bindNotes(t);                  // notes share a key with PBAFFL now, same as targets
+  bindLinks(t);                  // ...and so does the profile card
+  // The colour key earns its place -- it decodes what is on screen. The prose that
+  // used to follow it did not; the column definitions live on the headers' tooltips.
   document.getElementById('xbLeg').innerHTML =
-    '<span><i style="background:color-mix(in srgb,var(--s1) 40%,transparent)"></i>2+ rounds cheaper than ESPN has him</span>' +
-    xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('') +
-    `<span style="color:var(--muted)">Est. pick = where this league itself took the ` +
-    `${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]} equivalent at ` +
-    `that position and rank. UD = Underdog's ordering, which sets the rank. ` +
-    `Proj is ESPN's projection — shown for information, it does not affect the sort.</span>`;
+    xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('');
 }
 
 function xLast() {
@@ -2406,7 +2384,7 @@ function xLast() {
       <th>vs round</th></tr></thead><tbody>` +
     rows.map(p => `<tr>
       <td class="l" style="font-weight:650">${p.rd}.${String(p.pk).padStart(2, '0')}</td>
-      <td class="l">${p.n}</td>
+      <td class="l">${pLink(p.n, p.key, +yr)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span></td>
       <td class="l" style="color:var(--ink2)">${tname[p.tm] ? tname[p.tm].ab : p.tm}</td>
       <td>${p.act == null ? '—' : xFmt(p.act)}</td>
@@ -2414,6 +2392,7 @@ function xLast() {
       <td class="l fin">${p.fin || ''}${p.st ? '' : p.fin ? ' <span style="color:var(--muted)">(bench)</span>' : ''}</td>
       <td class="${shade(p.vor)}">${p.vor == null ? '—' : (p.vor > 0 ? '+' : '') + xFmt(p.vor)}</td></tr>`).join('') +
     '</tbody>';
+  bindLinks(document.getElementById('xlastT'));
   if (xState.view === 'rosters') xRosters();
   document.getElementById('xdvLeg').innerHTML =
     '<span><i style="background:var(--div-pos)"></i>beat the average return of its round</span>' +
@@ -2631,7 +2610,7 @@ function xPlanPicks() {
       : reach ? ` <span class="up" title="board rank ${r.rank}, pick ${no}">reach — could wait</span>` : '';
     html += `<div class="slot${r ? '' : ' empty'}">
       <span class="lab">${rd}.${String(no).padStart(3, ' ')}</span>
-      <span class="nm">${r ? starHtml(xKey(r)) + esc(r.n) +
+      <span class="nm">${r ? starHtml(xKey(r)) + pLink(r.n, r.key, 0) +
         ` <span style="color:var(--muted)">${r.pos}${r.prank} &middot; ${r.tm}</span>` + badge
         : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span>
@@ -2658,7 +2637,7 @@ function xPlanRoster() {
       const r = idx >= 0 ? pool.splice(idx, 1)[0][1] : null;
       html += `<div class="slot start${r ? '' : ' empty'}">
         <span class="lab" style="width:74px">${pos}</span>
-        <span class="nm">${r ? esc(r.n) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+        <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
         <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
     }
   });
@@ -2666,10 +2645,11 @@ function xPlanRoster() {
   for (let i = 0; i < XBENCH; i++) {
     const r = s.bench[i];
     html += `<div class="slot bench${r ? '' : ' empty'}"><span class="lab" style="width:74px"></span>
-      <span class="nm">${r ? esc(r.n) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+      <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
   }
   document.getElementById('xplanRoster').innerHTML = html;
+  bindLinks(document.getElementById('xplanRoster'));
 }
 
 function xPlanPool() {
@@ -2688,7 +2668,7 @@ function xPlanPool() {
     '<th class="l">pos</th><th>Est. pick</th><th>Proj</th><th></th></tr></thead><tbody>' +
     rows.map(r => `<tr>
       <td class="l" style="color:var(--muted)">${r.rank == null ? '—' : r.rank}</td>
-      <td class="l">${starHtml(xKey(r))}${esc(r.n)}${noteHtml(xKey(r))}
+      <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}
         <span style="color:var(--muted)">${r.tm}</span></td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
       <td style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
@@ -2697,6 +2677,7 @@ function xPlanPool() {
     '</tbody>';
   bindStars(t);
   bindNotes(t);
+  bindLinks(t);
   t.querySelectorAll('[data-xadd]').forEach(b => b.onclick = () => {
     const pid = b.dataset.xadd, p = xById[pid], pl = xCur();
     if (pl.ids.includes(pid)) return;
@@ -2828,7 +2809,7 @@ function xRosters() {
       <td class="l sl">${slotLabel(slot)}</td>
       <td class="l" style="color:var(--muted);width:44px">${p ? p.rd + '.' + String(p.pk).padStart(2, '0') : ''}</td>
       <td class="l" style="width:44px">${p ? `<span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span>` : ''}</td>
-      <td class="l nmcell">${p ? esc(p.n) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="l nmcell">${p ? pLink(p.n, p.key, +yr) : '<span style="color:var(--muted)">—</span>'}</td>
       <td style="width:52px">${p && p.act != null ? xFmt(p.act) : ''}</td>
       <td class="l" style="width:44px;color:var(--ink2)">${p ? (p.fin || '') : ''}</td></tr>`;
     const rows = L.starters.map(([s, p]) => line(s, p, '')).join('') +
@@ -2841,6 +2822,7 @@ function xRosters() {
       `${Math.round(t.haul)} drafted &middot; ${posCounts(mine, 'pos')}</span>`;
     return rosterCard(head, sub, rows);
   }).join('');
+  bindLinks(host);
 }
 
 function lRosters() {
