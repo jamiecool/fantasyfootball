@@ -59,8 +59,22 @@ def write_state(payload):
     # floor here for a while: the page posted them but this function only knew
     # about three keys, so PPP plans never left the browser that made them.
     xplans = payload.get("xplans", [])
-    if not isinstance(targets, list) or not all(isinstance(t, str) for t in targets):
-        raise ValueError("targets must be a list of player keys")
+    # Targets carry WHICH LEAGUE they are for: both / ppr / half. Older saves are
+    # a plain list of keys, from before that existed; those were league-agnostic
+    # by definition, so they are read as "both" rather than dropped.
+    if isinstance(targets, list):
+        if not all(isinstance(t, str) for t in targets):
+            raise ValueError("targets given as a list must be a list of player keys")
+        targets = {t: "both" for t in targets}
+    elif isinstance(targets, dict):
+        bad = {v for v in targets.values()} - {"both", "ppr", "half"}
+        if bad:
+            raise ValueError("target scope must be both/ppr/half, got "
+                             + ", ".join(sorted(map(repr, bad))))
+        if not all(isinstance(k, str) for k in targets):
+            raise ValueError("target keys must be player keys")
+    else:
+        raise ValueError("targets must be a map of player key -> both/ppr/half")
     if not isinstance(notes, dict) or not all(isinstance(v, str) for v in notes.values()):
         raise ValueError("notes must be a map of player key -> text")
     if not isinstance(plans, list):
@@ -72,8 +86,9 @@ def write_state(payload):
         "saved_at": time.strftime("%Y-%m-%d %H:%M"),
         "saved_by": whoami(),
         # sorted so two people editing produce a line-by-line diff git can merge,
-        # rather than a reordered blob that always conflicts
-        "targets": sorted(set(targets)),
+        # rather than a reordered blob that always conflicts. A map now, one
+        # player per line, which merges the same way a sorted list did.
+        "targets": {k: targets[k] for k in sorted(targets)},
         "notes": {k: notes[k] for k in sorted(notes) if notes[k].strip()},
         "plans": plans,
         "xplans": xplans,
@@ -113,7 +128,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 with open(STATE, encoding="utf-8") as f:
                     return self._json(200, json.load(f))
             except FileNotFoundError:
-                return self._json(200, {"saved_at": "", "saved_by": "", "targets": [],
+                return self._json(200, {"saved_at": "", "saved_by": "", "targets": {},
                                         "notes": {}, "plans": [], "xplans": []})
             except Exception as e:                           # noqa: BLE001
                 return self._json(500, {"error": repr(e)})

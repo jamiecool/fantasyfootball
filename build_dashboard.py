@@ -436,7 +436,7 @@ _st = os.path.join(ROOT, "shared", "board_state.json")
 try:
     D["shared"] = json.load(open(_st, encoding="utf-8"))
 except Exception:                                            # noqa: BLE001
-    D["shared"] = {"saved_at": "", "saved_by": "", "targets": [], "notes": {},
+    D["shared"] = {"saved_at": "", "saved_by": "", "targets": {}, "notes": {},
                    "plans": []}
 _s = D["shared"]
 print(f"\nshared board state: {len(_s.get('targets', []))} targets, "

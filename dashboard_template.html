@@ -12,6 +12,7 @@
     --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
     --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
     --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300;
+    --tg-both:#d99b00; --tg-ppr:#7c4dcc; --tg-half:#12946a;
     --good:#006300; --bad:#e34948;
     --div-pos:#008300; --div-neg:#e34948;
   }
@@ -21,6 +22,7 @@
     --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
     --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+    --tg-both:#e0aa1f; --tg-ppr:#a279e8; --tg-half:#2bb583;
     --good:#0ca30c; --bad:#e66767;
     --div-pos:#008300; --div-neg:#e66767;
   }}
@@ -30,6 +32,7 @@
     --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
     --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300;
+    --tg-both:#e0aa1f; --tg-ppr:#a279e8; --tg-half:#2bb583;
     --good:#0ca30c; --bad:#e66767;
     --div-pos:#008300; --div-neg:#e66767;
   }
@@ -197,13 +200,18 @@
   .tagn{color:var(--muted)}
   .area{color:var(--ink2);font-weight:600}
   .btn.on{border-color:var(--s1);color:var(--ink);font-weight:650}
-  /* Target star. The glyph carries the state (filled vs hollow), so colour is
-     reinforcement only -- it still reads with the colour stripped out. */
+  /* Target star, four states: off, both leagues, PPR only, half-PPR only.
+     Colour alone must not be the only carrier -- the glyph goes hollow to
+     filled, and the title says which league in words, so it survives being
+     read by someone who cannot separate the three hues. */
   .star{background:none;border:0;padding:0 5px 0 0;margin:0;cursor:pointer;
         font-size:17.5px;line-height:1;color:var(--axis);vertical-align:-1px}
-  .star:hover{color:var(--s4)}
-  .star.on{color:var(--s4)}
+  .star:hover{color:var(--tg-both)}
+  .star.on{color:var(--tg-both)}          /* both -- yellow */
+  .star.ppr{color:var(--tg-ppr)}          /* full PPR only -- purple */
+  .star.half{color:var(--tg-half)}        /* half-PPR only -- green */
   .star:focus-visible{outline:2px solid var(--s1);border-radius:3px}
+  .tglegend i.sq{width:9px;height:9px;border-radius:2px;display:inline-block}
   /* Note marker. Always visible once a note exists; otherwise it only appears
      on row hover, so an empty board is not a wall of affordances. */
   .note-i{background:none;border:0;padding:0 0 0 6px;margin:0;cursor:pointer;
@@ -361,12 +369,8 @@
   </section>
   <section class="panel" id="p-nfl" hidden>
     <div class="card">
-      <h2>NFL stats — scored under PBAFFL rules</h2>
-      <p class="note">Half-PPR with this league's <b>&minus;2 interceptions</b>, not Yahoo's
-        &minus;1 default, so these totals differ from any published stat page. Set a week
-        range to ask a narrower question — <b>weeks 15&ndash;17</b> is our playoffs.
-        Click a player for his game log. Built from nflverse play-by-play, which covers
-        QB/RB/WR/TE/K only — <b>team defences are not in this dataset</b>.</p>
+      <h2 id="nfHead">NFL stats</h2>
+      <p class="note" id="nfNote"></p>
       <div class="filters">
         <select id="nSeason" aria-label="Choose a season" style="font-weight:650"></select>
         <select id="nPos" aria-label="Filter NFL stats by position">
@@ -386,7 +390,7 @@
         <span class="spacer" style="flex:1"></span>
         <span class="meter" id="nCount"></span>
       </div>
-      <div class="scroll" style="max-height:74vh"><table id="nT" aria-label="NFL stats scored under PBAFFL rules"></table></div>
+      <div class="scroll" style="max-height:74vh"><table id="nT" aria-label="NFL stats, scored under the selected league's rules"></table></div>
     </div>
   </section>
 
@@ -678,7 +682,7 @@ const POSC = {QB:'--s1', RB:'--s2', WR:'--s3', TE:'--s4', K:'--s5', DEF:'--s6'};
    the file the new baseline and the pending copy is dropped.
 
    Theme stays local. It is a preference, not a shared decision. */
-const SHARED = D.shared || {targets: [], notes: {}, plans: []};
+const SHARED = D.shared || {targets: {}, notes: {}, plans: []};
 const PENDING_KEY = 'pbaffl_pending_v1';
 let dirty = false;
 
@@ -689,7 +693,7 @@ function stashPending() {
   dirty = true;
   try {
     localStorage.setItem(PENDING_KEY, JSON.stringify(
-      {targets: [...targets], notes: notes, plans: plans,
+      {targets: tgOut(), notes: notes, plans: plans,
        xplans: (typeof xplans !== 'undefined' ? xplans : []),
        basedOn: SHARED.saved_at || ''}));
   } catch (e) { /* storage blocked; edits last for this page view only */ }
@@ -716,7 +720,44 @@ function dropPending() {
    Keyed on player_key, the same canonical id the profile links use, so a star
    set on the board is the same star in the planner even where the two datasets
    spell a name differently. */
-let targets = new Set(SHARED.targets || []);
+/* TARGETS CARRY WHICH LEAGUE THEY ARE FOR.
+ *
+ *   both  yellow   a target in PBAFFL and in Perennial Push
+ *   ppr   purple   full PPR only, i.e. Perennial Push
+ *   half  green    half-PPR only, i.e. PBAFFL
+ *
+ * A Map rather than a Set so .has() and .size keep working unchanged at the
+ * couple of dozen call sites that only ask "is he starred at all".
+ *
+ * Older saves hold a plain array of keys, from before targets were league-aware.
+ * Those were league-agnostic by definition, so they come back as `both` -- which
+ * is also why `both` is the first state the toggle reaches.
+ */
+const TG_CYCLE = [undefined, 'both', 'ppr', 'half'];
+const TG_LABEL = {both: 'both leagues', ppr: 'full PPR only (Perennial Push)',
+                  half: 'half-PPR only (PBAFFL)'};
+function toTargets(v) {
+  const m = new Map();
+  if (Array.isArray(v)) v.forEach(k => { if (k) m.set(k, 'both'); });
+  else if (v && typeof v === 'object')
+    Object.keys(v).forEach(k => { if (TG_LABEL[v[k]]) m.set(k, v[k]); });
+  return m;
+}
+// serialised with sorted keys, one per line, so two people starring different
+// players still produce a diff git can merge -- same contract as notes
+const tgOut = () => Object.fromEntries([...targets].sort((a, b) => a[0] < b[0] ? -1 : 1));
+
+/* Does this star count for the league currently on screen? A `half` target is
+   still drawn green on the PPR board -- you want to see that you rate him --
+   but "targets only" there is asking about THIS league. */
+const tgScope = () => LG === 'ppp' ? 'ppr' : 'half';
+function tgHit(key) {
+  const st = targets.get(key);
+  return st === 'both' || st === tgScope();
+}
+const tgCount = () => [...targets.keys()].filter(tgHit).length;
+
+let targets = toTargets(SHARED.targets);
 
 /* ONE-TIME MIGRATION of the second league's old target keys.
  *
@@ -732,8 +773,8 @@ if (PPP) {
   const byPid = {};
   PPP.board.forEach(p => byPid['x' + p.pid] = p.key);
   let moved = 0;
-  [...targets].forEach(k => {
-    if (byPid[k]) { targets.delete(k); targets.add(byPid[k]); moved++; }
+  [...targets.keys()].forEach(k => {
+    if (byPid[k]) { const st = targets.get(k); targets.delete(k); targets.set(byPid[k], st); moved++; }
   });
   // NOT stashPending() here: it reads notes/plans/xplans, which are declared
   // further down and would still be in the temporal dead zone. Marking dirty is
@@ -802,17 +843,35 @@ document.getElementById('nText').onkeydown = e => {
   if (e.key === 'Escape') closeNote();
 };
 
+/* The star's three colours mean three different things, and a colour with no
+   key is a puzzle. So both boards name them in words -- and "targets only" on
+   each board counts only the ones that apply to THAT league. */
+function tgLegend() {
+  return '<span class="tglegend" style="color:var(--muted)">stars: '
+    + '<i class="sq" style="background:var(--tg-both)"></i> both'
+    + '<i class="sq" style="background:var(--tg-ppr);margin-left:9px"></i> PPR'
+    + '<i class="sq" style="background:var(--tg-half);margin-left:9px"></i> half-PPR'
+    + '</span>';
+}
+
 function starHtml(key) {
   if (!key) return '';                       // no key (DEF, some rookies) -> no star
-  const on = targets.has(key);
-  return `<button class="star${on ? ' on' : ''}" data-star="${key}" aria-pressed="${on}" ` +
-         `title="${on ? 'remove from targets' : 'mark as a target'}">${on ? '★' : '☆'}</button>`;
+  const st = targets.get(key);
+  const nextI = (TG_CYCLE.indexOf(st) + 1) % TG_CYCLE.length;
+  const next = TG_CYCLE[nextI];
+  const cls = st === 'both' ? ' on' : st === 'ppr' ? ' ppr' : st === 'half' ? ' half' : '';
+  return `<button class="star${cls}" data-star="${key}" aria-pressed="${!!st}" ` +
+         `title="${st ? 'Target: ' + TG_LABEL[st] : 'Not a target'}` +
+         ` — click for ${next ? TG_LABEL[next] : 'off'}"` +
+         `>${st ? '★' : '☆'}</button>`;
 }
 function bindStars(root) {
   (root || document).querySelectorAll('button[data-star]').forEach(b => b.onclick = ev => {
     ev.stopPropagation();                    // never trigger the row's own handler
     const k = b.dataset.star;
-    if (targets.has(k)) targets.delete(k); else targets.add(k);
+    // off -> both -> ppr -> half -> off
+    const next = TG_CYCLE[(TG_CYCLE.indexOf(targets.get(k)) + 1) % TG_CYCLE.length];
+    if (next) targets.set(k, next); else targets.delete(k);
     saveTargets();
     // redraw only the surfaces that show stars, so a click stays instant
     if (LG === 'pbaffl') { boardTable(); drawPlan(); } else { xBoard(); xDrawPlan(); }
@@ -879,7 +938,7 @@ function boardTable() {
   let rows = D.board.filter(r => (!q || r.player_name.toLowerCase().includes(q)) &&
                                  (!pf || r.position === pf) &&
                                  (!tf || r.nfl_team === tf) &&
-                                 (!tgtOnly || targets.has(r.player_key)));
+                                 (!tgtOnly || tgHit(r.player_key)));
   // Gap against YAHOO, on OVERALL rank -- we draft in the Yahoo app, so their
   // ADP is what the room is anchored to. Positive means Yahoo has him later
   // than our board does, i.e. the room is likely to let him go cheap.
@@ -962,8 +1021,9 @@ function boardTable() {
   const tb = document.getElementById('tgtOnly');
   tb.classList.toggle('on', tgtOnly);
   tb.setAttribute('aria-pressed', tgtOnly);
+  const nT = tgCount();
   tb.textContent = (tgtOnly ? '★' : '☆') + ' targets only' +
-                   (targets.size ? '  (' + targets.size + ')' : '');
+                   (nT ? '  (' + nT + ')' : '');
   // Shade is never the only encoding -- the signed number sits in the same cell.
   // Two scales, one swatch set each, one shared caveat. The earlier version ran
   // to three lines of legend above a table that has to be scanned fast.
@@ -990,7 +1050,7 @@ function boardTable() {
         '<span style="flex-basis:100%;height:0"></span>' +
         '<span style="color:var(--muted)">Both are already inside ADP, so they are sanity ' +
         'checks while scanning, not reasons to bid. Neither affects sorting. Hover either ' +
-        'for the underlying numbers.</span>');
+        'for the underlying numbers.</span>') + tgLegend();
   document.querySelectorAll('#boardT th[data-k]').forEach(th => th.onclick = () => {
     sortA = sortK === th.dataset.k ? !sortA : true; sortK = th.dataset.k; boardTable(); });
 }
@@ -1371,7 +1431,7 @@ function planPool() {
   const rows = D.board.filter(function (r) {
     return (!q || r.player_name.toLowerCase().indexOf(q) >= 0) &&
            (!pf || r.position === pf) && (!hide || !taken[r.player_name]) &&
-           (!tgt || targets.has(r.player_key));
+           (!tgt || tgHit(r.player_key));
   }).slice(0, 300);
   document.getElementById('planPool').innerHTML =
     '<thead><tr><th class="l" style="cursor:default">#</th>' +
@@ -1634,6 +1694,27 @@ function fillTeams() {
 }
 
 function drawNFL() {
+  // THIS TAB IS SHARED, SO IT HAS TO SAY WHOSE RULES IT IS USING. The numbers
+  // already re-score by league; the heading used to claim PBAFFL regardless,
+  // which is worse than no label -- a full-PPR total under a half-PPR heading
+  // reads as a bug in the data rather than a mislabel.
+  const isPB = LG === 'pbaffl';
+  $n('nfHead').textContent = 'NFL stats — scored under '
+    + (isPB ? 'PBAFFL' : 'Perennial Push') + ' rules';
+  $n('nfNote').innerHTML = (isPB
+      ? "Half-PPR with this league's <b>&minus;2 interceptions</b>, not Yahoo's &minus;1 "
+        + 'default, so these totals differ from any published stat page. Set a week range '
+        + 'to ask a narrower question — <b>weeks 15&ndash;17</b> is our playoffs. '
+      : '<b>Full PPR</b> — a reception is worth twice what it is in PBAFFL, so every '
+        + 'pass-catcher scores higher here and the order changes. Interceptions are '
+        + '&minus;2, as in PBAFFL. Set a week range to ask a narrower question. ')
+    + 'Click a player for his game log. Built from nflverse play-by-play, which covers '
+    + 'QB/RB/WR/TE/K only — <b>team defences are not in this dataset</b>.';
+
+  // switching leagues while sorted by $ would leave the table sorted on a column
+  // that is no longer there, with no header to click to get out of it
+  if (!isPB && nSort === 'price') { nSort = 'pts'; nAsc = false; }
+
   const season = +$n('nSeason').value, pos = $n('nPos').value;
   const team = $n('nTeam').value;
   const w1 = +$n('nW1').value, w2 = +$n('nW2').value;
@@ -1684,7 +1765,9 @@ function drawNFL() {
     '<th data-k="team" class="l">Tm</th><th data-k="g">G</th>' +
     cols.map(c => `<th data-k="${c}">${NLAB[c] || c}</th>`).join('') +
     '<th data-k="pts">Pts</th><th data-k="ppg">PPG</th>' +
-    '<th data-k="price" title="what PBAFFL paid for him that year">$</th>' +
+    // PBAFFL is an auction; Perennial Push is a snake draft with no prices at
+    // all, and the figure would be what a team in the OTHER league paid.
+    (isPB ? '<th data-k="price" title="what PBAFFL paid for him that year">$</th>' : '') +
     '</tr></thead>';
 
   $n('nT').innerHTML = head + '<tbody>' + rows.slice(0, 1500).map((r, i) =>
@@ -1697,7 +1780,7 @@ function drawNFL() {
     `<td class="l">${r.team}</td><td>${r.a.g}</td>` +
     cols.map(c => `<td>${get(r, c)}</td>`).join('') +
     `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td><td>${r.a.ppg.toFixed(1)}</td>` +
-    `<td title="${r.by || ''}">${r.price == null ? '—' : '$' + r.price}</td>` +
+    (isPB ? `<td title="${r.by || ''}">${r.price == null ? '—' : '$' + r.price}</td>` : '') +
     '</tr>').join('') + '</tbody>';
 
   $n('nCount').textContent = rows.length.toLocaleString() + ' players · weeks ' +
@@ -2110,7 +2193,8 @@ function deadZones() {
         lp = read('pbaffl_plans_v1');
   const got = {targets: 0, notes: 0, plans: 0};
 
-  if (Array.isArray(lt)) lt.forEach(k => { if (k && !targets.has(k)) { targets.add(k); got.targets++; } });
+  if (Array.isArray(lt)) lt.forEach(k => {
+    if (k && !targets.has(k)) { targets.set(k, 'both'); got.targets++; } });
   if (ln && typeof ln === 'object')
     Object.keys(ln).forEach(k => { if (ln[k] && !notes[k]) { notes[k] = ln[k]; got.notes++; } });
   if (Array.isArray(lp) && lp.length) {
@@ -2138,7 +2222,7 @@ function deadZones() {
     try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
     return;
   }
-  if (Array.isArray(p.targets)) targets = new Set(p.targets);
+  if (p.targets) targets = toTargets(p.targets);
   if (p.notes) notes = p.notes;
   if (Array.isArray(p.plans) && p.plans.length) plans = p.plans;
   dirty = true;
@@ -2191,7 +2275,7 @@ async function saveShared(auto) {
       // xplans is the second league's snake plans. It used to be left out of this
       // body, so PPP plans lived in localStorage and never reached the shared file
       // -- they did not survive a different browser, let alone a clone.
-      body: JSON.stringify({targets: [...targets], notes: notes, plans: plans,
+      body: JSON.stringify({targets: tgOut(), notes: notes, plans: plans,
                             xplans: xplans}),
     });
   } catch (e) {
@@ -2242,7 +2326,7 @@ async function syncShared() {
   if (dirty) return;                        // never clobber unsaved edits
   if (SHARED.saved_at && live.saved_at <= SHARED.saved_at) return;
   SHARED.saved_at = live.saved_at; SHARED.saved_by = live.saved_by;
-  targets = new Set(live.targets || []);
+  targets = toTargets(live.targets);
   notes = Object.assign({}, live.notes || {});
   plans = (live.plans && live.plans.length)
     ? JSON.parse(JSON.stringify(live.plans)) : plans;
@@ -2328,7 +2412,7 @@ function xBoard() {
   if (xState.hideStream) rows = rows.filter(p => !xSTREAM(p));
   if (xState.pos) rows = rows.filter(p => p.pos === xState.pos);
   if (xState.q) { const q = xState.q.toLowerCase(); rows = rows.filter(p => p.n.toLowerCase().includes(q)); }
-  if (xState.tgt) rows = rows.filter(p => targets.has(xKey(p)));
+  if (xState.tgt) rows = rows.filter(p => tgHit(xKey(p)));
   if (xState.arb) rows = rows.filter(p => p.gap != null && p.gap >= 24);
   const head = `<thead><tr>
     <th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>
@@ -2365,8 +2449,13 @@ function xBoard() {
   bindLinks(t);                  // ...and so does the profile card
   // The colour key earns its place -- it decodes what is on screen. The prose that
   // used to follow it did not; the column definitions live on the headers' tooltips.
+  const xtb = document.getElementById('xtgtOnly');
+  if (xtb) { const nT = tgCount();
+    xtb.textContent = (xState.tgt ? '★' : '☆') + ' targets only'
+      + (nT ? '  (' + nT + ')' : ''); }
   document.getElementById('xbLeg').innerHTML =
-    xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('');
+    xPOS.map(p => `<span><i style="background:var(${POSC[p]})"></i>${p}</span>`).join('')
+    + tgLegend();
 }
 
 function xLast() {
@@ -2792,7 +2881,7 @@ function xPlanPool() {
   const nGone = PPP.board.filter(isGone).length;
   const rows = PPP.board.filter(r =>
     (!q || r.n.toLowerCase().includes(q)) && (!pf || r.pos === pf) &&
-    (!hide || !taken.has(r.pid)) && (!tgt || targets.has(xKey(r))) &&
+    (!hide || !taken.has(r.pid)) && (!tgt || tgHit(xKey(r))) &&
     !isGone(r)).slice(0, 300);
   const t = document.getElementById('xplanPool');
   t.innerHTML = '<thead><tr><th class="l" style="cursor:default">Est. pick</th>' +
