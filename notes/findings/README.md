@@ -3,7 +3,23 @@
 One file per analysis. **Read this page before citing any finding** — the
 audit below is what stops a retracted result being quoted as live.
 
-## Findings so far
+## ⚠ Two leagues, two numbering schemes, no crossover
+
+Everything on this page below this section is **PBAFFL** — the Yahoo auction league —
+and its findings are numbered **1–11**.
+
+**Perennial Push** (ESPN snake, superflex, full PPR) has its own file and its own
+numbering, **PPP-1..PPP-4**, so the two can never be confused in a citation:
+
+- [`ppp-draft-shape.md`](ppp-draft-shape.md) — what shapes a PPP draft. The quarterback
+  deadline (PPP-1), the round 4–6 QB dead zone (PPP-2), the RB and WR cliffs (PPP-3),
+  and what full PPR actually does to receiver value (PPP-4). Plus a "did not show up"
+  list to be read as unproven rather than absent. Script: `analyze_ppp_shape.py`.
+
+**Nothing transfers in either direction.** Different draft format, different scoring,
+different roster. A PBAFFL finding is a statement about an auction.
+
+## Findings so far (PBAFFL)
 
 Established:
 

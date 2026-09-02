@@ -100,6 +100,14 @@ derived only from its own drafts, and they live in `build_ppp_data.py` rather th
 `strategy_rules.py` for exactly that reason.
 
 The one genuinely shared thing is the NFL stats and Vegas tabs, which are league-agnostic.
+Those now re-score by the selected league — PPP is **full PPR**, verified independently
+from its own scored totals at r = 1.0000, so a week is worth `points + 0.5 × receptions`
+there. Targets and notes are shared across both leagues, keyed on `player_key`.
+
+**PPP's own findings live in `notes/findings/ppp-draft-shape.md`**, numbered PPP-1..PPP-4
+so they can never be confused with PBAFFL's 1–11. The headline one: leave the second
+quarterback past round 9 and the season is gone (−2.58 wins, n=8 on the thin side, but
+corroborated by supply and by returns). Script: `analyze_ppp_shape.py`.
 
 Its board is priced by the settled method (see below), so it depends on Underdog ADP
 being fresh in exactly the way the PBAFFL board does.
