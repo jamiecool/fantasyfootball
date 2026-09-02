@@ -162,6 +162,12 @@
                            box-shadow:inset 2px 0 0 var(--s1)}
   #xplanPicks .slot:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
   .slot .grip{color:var(--muted);font-size:13px;width:11px;cursor:grab;user-select:none}
+  /* the cut control: quiet until it is doing something */
+  #xplanPicks .btn.cut{opacity:.32;padding:0 6px;font-size:12.5px}
+  #xplanPicks .slot:hover .btn.cut,#xplanPicks .slot:focus-within .btn.cut{opacity:.75}
+  #xplanPicks .btn.cut.on{opacity:1;border-color:var(--s1);color:var(--s1);font-weight:650}
+  #xplanPicks .slot.cutrow{border-top:2px solid var(--s1)}
+  #xplanPicks .slot.cutrow .lab{color:var(--s1)}
   .slot .grip[hidden]{visibility:hidden;display:inline}
   .chk{font-size:15px;color:var(--ink2);display:flex;align-items:center;gap:5px}
   .bar{height:7px;border-radius:4px;background:var(--grid);overflow:hidden;
@@ -592,16 +598,11 @@
         <h2>Add players</h2>
         <p class="note"><b>Rd.Pk</b> is where this league's own history says that player goes.
           Adding him drops him at your earliest pick he could realistically last to — then drag
-          him wherever you actually want him. As the draft moves, put the pick you are on into
-          <b>gone by</b> and everyone who would already be off the board disappears.</p>
+          him wherever you actually want him. To narrow this list as the draft moves, press
+          <b>cut</b> on one of your picks on the left.</p>
         <div class="filters">
           <input type="search" id="xpq" aria-label="Search players to add to the plan" placeholder="search…">
           <select id="xppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
-          <label class="chk" style="gap:6px">gone by
-            <input type="text" id="xpgone" inputmode="decimal" style="width:66px"
-              placeholder="2.3 or 15"
-              aria-label="Hide players the board has going before this pick. Accepts a round.pick like 2.3, or an overall board rank like 15.">
-          </label>
           <label class="chk"><input type="checkbox" id="xphide" checked> hide picked</label>
           <label class="chk"><input type="checkbox" id="xptgt"> ★ targets only</label>
           <span id="xpgoneN" class="lgnote" style="flex-basis:100%;margin:0"></span>
@@ -2300,7 +2301,11 @@ if (HAVE_PPP) document.getElementById('lgSel').onchange = e => {
 /* ================= Perennial Push renderers ================= */
 const xPOS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
 const xSTREAM = p => p.pos === 'K' || p.pos === 'DEF';
-let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: null, pos2: '', view: 'picks'};
+let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: null,
+              pos2: '', view: 'picks',
+              // overall pick the board is "cut" at, set from the pick list. Deliberately
+              // NOT persisted: it describes where a live draft has got to, not a plan.
+              goneAt: null};
 let lView = 'picks';
 /* TARGETS ARE SHARED ACROSS BOTH LEAGUES.
  *
@@ -2632,17 +2637,24 @@ function xPlanPicks() {
     const badge = !r ? '' : gone
       ? ` <span class="dn" title="board rank ${r.rank}, pick ${no}">unlikely to last</span>`
       : reach ? ` <span class="up" title="board rank ${r.rank}, pick ${no}">reach — could wait</span>` : '';
-    html += `<div class="slot${r ? '' : ' empty'}" data-slot="${i}"
+    const cutHere = xState.goneAt === no;
+    html += `<div class="slot${r ? '' : ' empty'}${cutHere ? ' cutrow' : ''}" data-slot="${i}"
       ${r ? `draggable="true" tabindex="0" role="listitem"
       aria-label="Round ${rd}, pick ${no}: ${r.n}. Drag to another round, or hold Alt and press up or down to move him."`
           : 'aria-label="Round ' + rd + ', pick ' + no + ': empty"'}>
       <span class="grip" aria-hidden="true"${r ? '' : ' hidden'}>&#8942;&#8942;</span>
-      <span class="lab">${rd}.${String(no).padStart(3, ' ')}</span>
+      <span class="lab" title="${no}${no % 10 === 1 && no % 100 !== 11 ? 'st' : no % 10 === 2 && no % 100 !== 12 ? 'nd' : no % 10 === 3 && no % 100 !== 13 ? 'rd' : 'th'} overall"
+        >${rd}.${String((no - 1) % XTEAMS + 1).padStart(2, '0')}</span>
       <span class="nm">${r ? starHtml(xKey(r)) + pLink(r.n, r.key, 0) +
         ` <span style="color:var(--muted)">${r.pos}${r.prank} &middot; ${r.tm}</span>` + badge
         : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span>
-      ${r ? `<button class="btn mini" data-xdrop="${i}" aria-label="remove">&times;</button>` : ''}
+      <button class="btn mini cut${cutHere ? ' on' : ''}" data-cut="${no}"
+        title="${cutHere ? 'Show the whole board again'
+                         : 'Hide players the board has going before pick ' + no}"
+        aria-pressed="${cutHere}">${cutHere ? 'all' : 'cut'}</button>
+      ${r ? `<button class="btn mini" data-xdrop="${i}" aria-label="remove">&times;</button>`
+          : '<span style="width:22px"></span>'}
     </div>`;
   });
   const host = document.getElementById('xplanPicks');
@@ -2652,6 +2664,17 @@ function xPlanPicks() {
   host.querySelectorAll('[data-xdrop]').forEach(b => b.onclick = ev => {
     ev.stopPropagation();
     xCur().ids[+b.dataset.xdrop] = null; xSavePlans(); xDrawPlan();
+  });
+  // "cut" marks the board at one of YOUR picks: everything the board has going
+  // before it is dropped from the pool, so what is left is roughly what will
+  // still be there when your turn comes. Pressing it again shows everything.
+  // Anchored to your own picks rather than a typed number because those are the
+  // only cut points that matter -- and it is a draft, not a data-entry exercise.
+  host.querySelectorAll('[data-cut]').forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    const no = +b.dataset.cut;
+    xState.goneAt = xState.goneAt === no ? null : no;
+    xDrawPlan();
   });
   bindPickDrag(host);
 }
@@ -2753,30 +2776,12 @@ function xPlanRoster() {
   bindLinks(document.getElementById('xplanRoster'));
 }
 
-/* "GONE BY" -- the live-draft filter.
- *
- * Reads either a round.pick as it is written on a draft board (2.3) or a plain
- * overall rank (15), because during a draft you are looking at one or the other
- * and should not have to convert. Returns the board rank to cut below, or null.
- */
-function xGoneRank(raw) {
-  const s = String(raw || '').trim();
-  if (!s) return null;
-  const m = s.match(/^(\d+)\s*[.:]\s*(\d+)$/);
-  if (m) {
-    const rd = +m[1], pk = +m[2];
-    if (rd < 1 || pk < 1 || pk > XTEAMS) return null;
-    return (rd - 1) * XTEAMS + pk;
-  }
-  return /^\d+$/.test(s) ? +s : null;
-}
-
 function xPlanPool() {
   const q = document.getElementById('xpq').value.toLowerCase();
   const pf = document.getElementById('xppos').value;
   const hide = document.getElementById('xphide').checked;
   const tgt = document.getElementById('xptgt').checked;
-  const gone = xGoneRank(document.getElementById('xpgone').value);
+  const gone = xState.goneAt;              // set by "cut" on one of your picks
   const sel = document.getElementById('xppos');
   if (sel.options.length === 1) xPOS.forEach(p => sel.add(new Option(p, p)));
   const taken = new Set(xCur().ids.filter(Boolean));
@@ -2790,23 +2795,27 @@ function xPlanPool() {
     (!hide || !taken.has(r.pid)) && (!tgt || targets.has(xKey(r))) &&
     !isGone(r)).slice(0, 300);
   const t = document.getElementById('xplanPool');
-  t.innerHTML = '<thead><tr><th class="l" style="cursor:default">Rd.Pk</th><th class="l">player</th>' +
-    '<th class="l">pos</th><th>Est. pick</th><th>Proj</th><th></th></tr></thead><tbody>' +
+  t.innerHTML = '<thead><tr><th class="l" style="cursor:default">Est. pick</th>' +
+    '<th class="l">Rd.Pk</th><th class="l">player</th>' +
+    '<th class="l">pos</th><th>Proj</th><th></th></tr></thead><tbody>' +
     rows.map(r => `<tr draggable="true" data-xpid="${r.pid}"
         title="Drag him onto the round you want to simulate taking him">
-      <td class="l" style="font-weight:650" title="${r.rank == null ? 'streamed — no board rank' : 'board rank ' + r.rank}">${xRdPk(r)}</td>
+      <td class="l" style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
+      <td class="l" style="color:var(--ink2)" title="${r.rank == null ? 'streamed — no board rank' : 'board rank ' + r.rank}">${xRdPk(r)}</td>
       <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}
         <span style="color:var(--muted)">${r.tm}</span></td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
-      <td style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
       <td style="color:var(--muted)">${xFmt(r.prj)}</td>
       <td><button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
     '</tbody>';
   // Say what the filter removed. A pool that silently drops 40 players looks
   // like a short board, and on draft night that is the wrong thing to wonder about.
   const note = document.getElementById('xpgoneN');
+  // Say the cut in BOTH notations. The pick list and the board agree on the
+  // round.pick form now, but "30th overall" is the number you hear called out.
   if (note) note.textContent = gone == null ? ''
-    : `${nGone} hidden as already gone · showing from ${xRdPk({rd: Math.floor((gone - 1) / XTEAMS) + 1, pk: (gone - 1) % XTEAMS + 1})} on`;
+    : `cut at ${xRdPk({rd: Math.floor((gone - 1) / XTEAMS) + 1, pk: (gone - 1) % XTEAMS + 1})}`
+      + ` (${gone}th overall) — ${nGone} hidden as already gone`;
   bindStars(t);
   bindNotes(t);
   bindLinks(t);
@@ -2875,8 +2884,8 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
     if (xplans.length < 2) return;               // never leave the planner empty
     xplans.splice(xactive, 1); xactive = 0; xSavePlans(); xDrawPlan();
   });
-  ['xpq', 'xppos', 'xphide', 'xptgt', 'xpgone'].forEach(id =>
-    on(id, (id === 'xpq' || id === 'xpgone') ? 'input' : 'change', xPlanPool));
+  ['xpq', 'xppos', 'xphide', 'xptgt'].forEach(id =>
+    on(id, id === 'xpq' ? 'input' : 'change', xPlanPool));
 })();
 
 /* ---- Perennial Push filter wiring ---- */
