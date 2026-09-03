@@ -1720,6 +1720,98 @@ let nTeamSort = 'pts', nTeamAsc = false;
 let nView = 'players';
 function drawNFLAny() { nView === 'teams' ? drawNFLTeams() : drawNFL(); }
 
+/* THE TEAM CARD. Same modal as the player card, so close, Escape and the
+ * click-outside all behave identically.
+ *
+ * Answers the question a player row cannot: an offence is a fixed amount of
+ * work split between a handful of men, so "who else is on DET" decides whether
+ * the back you are about to draft gets the carries or shares them. Grouped by
+ * position, sorted within it, and each player carries his SHARE of the team's
+ * fantasy points -- which is where a committee gives itself away.
+ *
+ * Honours the week range, so 15-17 shows who was actually producing when the
+ * fantasy playoffs were on.
+ */
+let curTeam = null;
+
+function showTeam(team, season) {
+  const w1 = +$n('nW1').value || 1, w2 = +$n('nW2').value || WK_MAX;
+  curTeam = {team: team, season: season};
+  const men = WK.ps.filter(p => p[3] === season && p[2] === team)
+    .map(p => ({p: p, name: p[0], pos: p[1], key: p[9], a: nAgg(p, w1, w2)}))
+    .filter(r => r.a.g > 0);
+  if (!men.length) return;
+
+  const total = men.reduce((a, r) => a + r.a.pts, 0);
+  const agg = k => men.reduce((a, r) => a + r.a[k], 0);
+  const yds = agg('pass_yd') + agg('rush_yd');
+  const top = men.slice().sort((a, b) => b.a.pts - a.a.pts)[0];
+
+  // Rank within position across the WHOLE league, so "RB4" means something.
+  // Built ONCE per position rather than per player: the naive version re-scored
+  // every back in the league for every back on the roster and took a second to
+  // open, which is a second too many with a pick clock running.
+  const peers = {};
+  const lgRank = r => {
+    if (!peers[r.pos]) {
+      peers[r.pos] = WK.ps.filter(p => p[3] === season && p[1] === r.pos)
+        .map(p => nAgg(p, w1, w2).pts).sort((a, b) => b - a);
+    }
+    const arr = peers[r.pos];
+    let lo = 0, hi = arr.length;                 // first index with a lower score
+    while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] > r.a.pts) lo = m + 1; else hi = m; }
+    return lo + 1;
+  };
+
+  const group = pos => {
+    const g = men.filter(r => r.pos === pos).sort((a, b) => b.a.pts - a.a.pts);
+    if (!g.length) return '';
+    const cols = NCOLS[pos] || NCOLS[''];
+    return `<h3 style="margin:18px 0 6px">${pos}` +
+      `<span style="color:var(--muted);font-weight:400"> &middot; ` +
+      `${Math.round(g.reduce((a, r) => a + r.a.pts, 0))} pts, ` +
+      `${Math.round(100 * g.reduce((a, r) => a + r.a.pts, 0) / total)}% of the offence` +
+      `</span></h3>` +
+      '<table><thead><tr><th class="l">Player</th><th>Rk</th><th>G</th>' +
+      cols.map(c => `<th>${c === 'ypa' ? ypaLab(pos) : (NLAB[c] || c)}</th>`).join('') +
+      '<th>Pts</th><th>PPG</th><th>Share</th></tr></thead><tbody>' +
+      g.map(r => `<tr>
+        <td class="l">${pLink(r.name, r.key, season)}</td>
+        <td style="color:var(--muted)">${r.pos}${lgRank(r)}</td>
+        <td>${r.a.g}</td>` +
+        cols.map(c => `<td>${statCell(r.a, r.pos, c, false, r.a.g)}</td>`).join('') +
+        `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td>
+        <td>${r.a.ppg.toFixed(1)}</td>
+        <td>${Math.round(100 * r.a.pts / total)}%</td></tr>`).join('') +
+      '</tbody></table>';
+  };
+
+  const tile = (v, k) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`;
+  $n('pBody').innerHTML =
+    `<h2>${team} &mdash; ${season}</h2>` +
+    `<p class="pHead">${men.length} players with a game` +
+    (w1 === 1 && w2 === WK_MAX ? '' : ` &middot; weeks ${w1}–${w2}`) +
+    ` &middot; scored under ${LG === 'pbaffl' ? 'PBAFFL' : 'Perennial Push'} rules</p>` +
+    '<div class="row" style="margin:12px 0 4px">' +
+      tile(total.toFixed(1), 'fantasy points') +
+      tile(yds ? Math.round(100 * agg('pass_yd') / yds) + '%' : '—', 'of yards through the air') +
+      tile(Math.round(100 * top.a.pts / total) + '%', 'from ' + top.name.split(' ').slice(-1)[0]) +
+      tile(agg('pass_td') + agg('rush_td') + agg('rec_td'), 'touchdowns') +
+    '</div>' +
+    ['QB', 'RB', 'WR', 'TE', 'K'].map(group).join('');
+  bindLinks($n('pBody'));
+  $n('pModal').hidden = false;
+  $n('pModal').scrollTop = 0;
+}
+
+// any team abbreviation on the stats tab opens its card
+function bindTeams(root) {
+  (root || document).querySelectorAll('button[data-tm]').forEach(b =>
+    b.onclick = e => { e.stopPropagation(); showTeam(b.dataset.tm, +b.dataset.ts); });
+}
+const tLink = (team, season) =>
+  `<button class="lnk" data-tm="${team}" data-ts="${season}">${team}</button>`;
+
 function drawNFLTeams() {
   const season = +$n('nSeason').value, pos = $n('nPos').value;
   const w1 = +$n('nW1').value, w2 = +$n('nW2').value;
@@ -1768,7 +1860,7 @@ function drawNFLTeams() {
     '<th class="l">Top scorer</th></tr></thead><tbody>' +
     rows.map((r, i) => `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
-      <td class="l"><b>${r.team}</b></td>
+      <td class="l"><b>${tLink(r.team, season)}</b></td>
       <td>${r.n}</td>
       <td style="font-weight:650">${r.pts.toFixed(1)}</td>
       <td style="color:var(--ink2)">${Math.round(r.QB)}</td>
@@ -1785,6 +1877,7 @@ function drawNFLTeams() {
     </tr>`).join('') + '</tbody>';
   $n('nCount').textContent = rows.length + ' teams · weeks ' + w1 + '–' + w2
     + (pos ? ' · ' + pos + ' only' : '');
+  bindTeams($n('nTeamT'));
   $n('nTeamT').querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
     const k = th.dataset.k;
     nTeamAsc = nTeamSort === k ? !nTeamAsc : (k === 'team');
@@ -1871,7 +1964,7 @@ function drawNFL() {
     // rank is WITHIN position and belongs on the badge, same as the board
     `<td class="l"><span class="pos" style="background:var(${POSC[r.position] || '--muted'})">` +
       `${r.position}${r.rank}</span></td>` +
-    `<td class="l">${r.team}</td><td>${r.age == null ? '—' : r.age}</td>` +
+    `<td class="l">${tLink(r.team, season)}</td><td>${r.age == null ? '—' : r.age}</td>` +
     `<td>${r.a.g}</td>` +
     cols.map(c => `<td>${get(r, c)}</td>`).join('') +
     `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td><td>${r.a.ppg.toFixed(1)}</td>` +
@@ -1886,6 +1979,7 @@ function drawNFL() {
     nSort = k; drawNFL();
   });
   bindLinks($n('nT'));
+  bindTeams($n('nT'));
 }
 
 
@@ -2020,6 +2114,7 @@ let curCard = null;
 
 function showPlayer(key, season) {
   curCard = {key: key, season: season};
+  curTeam = null;                    // the two cards share one modal
   const all = (PIDX[key] || []).slice().sort((a, b) => b[3] - a[3]);
   if (!all.length) return;
   // asked-for season if we have it, else his most recent -- clicking a 2026
@@ -3227,7 +3322,10 @@ function draw() {
   // an open profile card holds points scored under whichever league it was
   // opened in, so re-render it rather than let it go stale behind the switch
   const pm = document.getElementById('pModal');
-  if (curCard && pm && !pm.hidden) showPlayer(curCard.key, curCard.season);
+  if (pm && !pm.hidden) {
+    if (curTeam) showTeam(curTeam.team, curTeam.season);
+    else if (curCard) showPlayer(curCard.key, curCard.season);
+  }
 }
 applyLeague(false);
 draw();
