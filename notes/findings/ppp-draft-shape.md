@@ -1,12 +1,14 @@
 # Perennial Push — what shapes a draft (`analyze_ppp_shape.py`)
 
-⚠ **These are PPP findings and are numbered PPP-1..PPP-4 on purpose.** The PBAFFL
+⚠ **These are PPP findings and are numbered PPP-1..PPP-5 on purpose.** The PBAFFL
 findings are numbered 1..11 and none of them transfer in either direction — different
 draft format (snake vs auction), different scoring (full PPR vs half), different roster
 (superflex, 18 rounds, a FLEX). Do not cite a PPP finding in a PBAFFL argument.
 
-Established 2026-09-01, from five seasons of PPP's own drafts: **2021–2025, 62
-team-seasons, 1,116 picks.** One exception is flagged at PPP-4, which uses nine.
+Established 2026-09-01 onward, from five seasons of PPP's own drafts: **2021–2025, 62
+team-seasons, 1,116 picks.** Two exceptions are flagged where they appear — PPP-4 and
+PPP-5 both use nine seasons of nflverse data, because they are statements about NFL
+scoring and supply rather than about this room.
 
 Published as a draft-night page:
 <https://claude.ai/code/artifact/8f957b3a-0556-4780-aad5-17d9c01b2bc3>
@@ -142,3 +144,75 @@ from rounds 1–3.
   the board's pick curve uses that window. Wrong instinct: the curve is deliberately
   short because draft behaviour goes stale, and an NFL scoring fact has the opposite
   requirement. Jamie caught the imprecision.
+
+---
+
+## PPP-5 — the flex is a non-decision in full PPR, and RB in half-PPR
+
+Established 2026-09-03 (`analyze_ppp_flex.py`). Uses nflverse `final_ranks` and
+`player_weeks`, 2017–2025, because the question is about the NFL's supply of
+flex-quality players rather than about what this room happened to draft.
+
+**The question is about the margin, not the top.** PPP starts 2 RB, 3 WR, 1 TE and
+one FLEX across 12 teams, so the dedicated slots consume **24 RB, 36 WR and 12 TE**
+before the flex chooses anything. It is never "is an elite back better than an elite
+receiver" — it is RB25 against WR37.
+
+| first available to the flex | mean | median |
+| --- | --- | --- |
+| RB25 | 172.9 | 168.8 |
+| WR37 | 169.0 | 168.4 |
+| TE13 | 139.9 | 139.5 |
+
+### Weekly, which is how the slot is actually set, they are indistinguishable
+
+4,575 player-weeks from the flex pool, scored full PPR:
+
+| pos | mean | median | p10 | p90 | under 5 pts | 20+ pts |
+| --- | --- | --- | --- | --- | --- | --- |
+| RB | 10.5 | 9.4 | 2.6 | 20.4 | 24% | 11% |
+| WR | 10.6 | 9.4 | 2.6 | 20.8 | 24% | 12% |
+| TE | 8.2 | 7.2 | 1.6 | 16.2 | **36%** | 5% |
+
+Same mean, same median, same floor, same ceiling, same bust rate. **And the same
+durability** — 14.6 games against 14.5, which kills the "backs get hurt more"
+intuition at this depth. Week by week the better start was the RB 43% of the time
+and the WR 57%, with symmetric margins (6.5 against 6.1) and an overall difference
+of **−0.61 points a week**.
+
+### There is a crossover, and it is small
+
+Same rank offset into each pool, so it is like for like:
+
+| offset into the pool | RB | WR | WR − RB | WR won |
+| --- | --- | --- | --- | --- |
+| 1st available | 172.9 | 169.0 | −3.9 | 33% |
+| 4th | 164.5 | 160.4 | −4.1 | 33% |
+| 6th | 154.8 | 155.3 | +0.5 | 56% |
+| 9th | 143.1 | 148.5 | +5.4 | 67% |
+| 12th | 135.4 | 142.4 | +7.0 | 67% |
+
+**A good flex back beats a good flex receiver; a bad one loses to a bad one.** If
+your flex candidate is RB25–28 take the back, and past that take the receiver. Worth
+4–7 points across a whole season either way, which is **under half a point a game** —
+real, and far too small to draft around.
+
+Filling all twelve flex spots with the best available each season splits
+**RB 45% / WR 53% / TE 2%**. A coin flip, as the weekly numbers say it should be.
+
+### ⚠ This does NOT transfer to PBAFFL, and that is the interesting part
+
+| flex pool, 12 deep | RB | WR | TE | verdict |
+| --- | --- | --- | --- | --- |
+| **full PPR** (PPP) | 153.6 | 154.6 | 118.7 | WR by **1.0** |
+| **half-PPR** (PBAFFL) | 137.5 | 127.3 | 96.0 | **RB by 10.2** |
+
+Halving the reception flips the answer, because a flex-quality receiver's points are
+far more reception-dependent than a flex-quality back's. In PBAFFL the same weekly
+table shows RB ahead 9.4 to 8.7 and busting less often (29% against 33%).
+
+**Actionable:** in PPP, stop treating the flex as a position to plan for — draft the
+best player and let the slot sort itself out. **Never flex a tight end** outside the
+top 12; TE13+ busts 36% of weeks against 24% for the other two. In PBAFFL the flex
+does not exist (no FLEX slot), so the half-PPR column is a statement about that
+league's scoring only, not advice.
