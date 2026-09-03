@@ -43,6 +43,26 @@ STARTERS = {"QB": 1, "RB": 2, "WR": 3, "TE": 1, "K": 1, "DEF": 1}
 # in 2024 while WR rose to 47.7% -- so nine-year averages price the wrong market.
 PRICE_SEASONS = (2023, 2025)
 
+# ---------------------------------------------------------------------------
+# A DELIBERATE THUMB ON THE SCALE, and the only one in this file.
+#
+# Jamie's read for 2026 (2026-09-03): quarterbacks will go for less in PBAFFL
+# this year than the room's recent average. Everything else here is measured;
+# this is a judgement, so it is a single named constant rather than something
+# smuggled into a curve, and setting it to 0 restores the pure historical board.
+#
+# QB_SHIFT_POOL_PCT is expressed in POINTS OF THE TOTAL POOL, not as a percentage
+# of QB spend. Those differ by an order of magnitude and the distinction matters:
+# quarterbacks are only ~9.7% of the board, so "5% off QB spend" would move about
+# $12 across 283 players and change nothing anybody could see, while 5 points of
+# the pool moves ~$121 and roughly halves what quarterbacks cost.
+#
+# Of the money freed, HALF goes to running backs by instruction; the remainder is
+# spread across WR/TE/K/DEF in proportion to what they already command, which
+# preserves the shape of each of those markets rather than inventing a new one.
+QB_SHIFT_POOL_PCT = 5.0        # points of the total pool taken off quarterbacks
+QB_SHIFT_TO_RB = 0.50          # share of the freed money going to running backs
+
 # ---------------------------------------------------- 1. positional curves
 #
 # Underdog supplies the ORDERING inside each position -- Jamie's judgement,
@@ -131,6 +151,76 @@ adp = pd.concat([ud, kd], ignore_index=True).drop_duplicates("player_key")
 
 adp["pos_rank"] = adp.groupby("position")["adp"].rank(method="first").astype(int)
 adp["est_price"] = [price_for(r.position, r.pos_rank) for r in adp.itertuples()]
+
+
+def apply_pos_shift(df):
+    """Move QB_SHIFT_POOL_PCT of the pool off QB and onto everyone else.
+
+    SCALES THE MONEY ABOVE THE $1 FLOOR, not the price. That distinction is the
+    whole of this function: 22 of the 36 quarterbacks on the board are already
+    at $1 and cannot contribute a cent, so the discretionary QB money is $199 of
+    the $235, and a cut has to come out of that. Scaling raw prices and clipping
+    at $1 reaches nearly the same totals by accident, through a few rounds of
+    rounding error; doing it on purpose is one pass, exact, and says what it
+    means.
+
+        new = 1 + (old - 1) * k,   k = (target - n) / (current - n)
+
+    The visible consequence is worth stating plainly rather than discovering on
+    draft night: taking 5 points of the POOL off quarterbacks is not a 5% haircut
+    on a quarterback. It is a ~60% cut to every dollar above the floor, so QB1
+    goes from $36 to about $15.
+    """
+    total0 = df["est_price"].sum()
+    want_off = round(total0 * QB_SHIFT_POOL_PCT / 100)
+    qb = df.position == "QB"
+    room = int(df.loc[qb, "est_price"].sum() - qb.sum())     # money above the floor
+    if want_off > room:
+        print(f"  ! asked to take ${want_off} off QB but only ${room} sits above "
+              f"the $1 floor -- clamping to ${room}")
+        want_off = room
+
+    spend = df.groupby("position")["est_price"].sum().to_dict()
+    to_rb = round(want_off * QB_SHIFT_TO_RB)
+    rest = want_off - to_rb
+    # the remainder is spread across the non-RB, non-QB positions in proportion
+    # to what they already command, which keeps the shape of those markets
+    others = {p: v for p, v in spend.items() if p not in ("QB", "RB")}
+    denom = sum(others.values()) or 1
+    targets = {p: v for p, v in spend.items()}
+    targets["QB"] -= want_off
+    targets["RB"] += to_rb
+    for p, v in others.items():
+        targets[p] = v + rest * v / denom
+
+    for pos, tgt in targets.items():
+        m = df.position == pos
+        n = int(m.sum())
+        cur = df.loc[m, "est_price"].sum()
+        above = cur - n
+        if above <= 0:
+            continue                                   # everyone already at $1
+        k = max(0.0, (tgt - n) / above)
+        df.loc[m, "est_price"] = (1 + (df.loc[m, "est_price"] - 1) * k)             .round().clip(lower=1).astype(int)
+    return df, total0, want_off, targets
+
+
+if QB_SHIFT_POOL_PCT:
+    _before = adp.groupby("position")["est_price"].sum().to_dict()
+    adp, _tot0, _off, _tg = apply_pos_shift(adp)
+    _after = adp.groupby("position")["est_price"].sum().to_dict()
+    print("\nPOSITIONAL SHIFT APPLIED (Jamie's 2026 read, not a measurement)")
+    print(f"  taking {QB_SHIFT_POOL_PCT}% of the ${_tot0:,} pool off quarterbacks "
+          f"= ${_off}; half to RB, the rest spread by current share\n")
+    print(f"  {'pos':>5}{'before':>9}{'target':>9}{'after':>8}"
+          f"{'share before':>15}{'share after':>13}")
+    for pos in ("QB", "RB", "WR", "TE", "K", "DEF"):
+        if pos not in _before:
+            continue
+        a, b = _before[pos], _after.get(pos, 0)
+        print(f"  {pos:>5}{a:>9}{_tg[pos]:>9.0f}{b:>8}"
+              f"{100*a/_tot0:>14.1f}%{100*b/sum(_after.values()):>12.1f}%")
+    print(f"  {'TOTAL':>5}{_tot0:>9}{'':>9}{sum(_after.values()):>8}")
 # board order is by what the player will cost, not by raw ADP, because the
 # positions are on different price scales
 adp = adp.sort_values(["est_price", "adp"], ascending=[False, True]).reset_index(drop=True)
