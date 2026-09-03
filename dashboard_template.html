@@ -376,6 +376,10 @@
       <h2 id="nfHead">NFL stats</h2>
       <div class="filters">
         <select id="nSeason" aria-label="Choose a season" style="font-weight:650"></select>
+        <span class="segwrap" role="group" aria-label="Choose a view">
+          <button class="btn" id="nvPlayers" aria-pressed="true">players</button>
+          <button class="btn" id="nvTeams" aria-pressed="false">by NFL team</button>
+        </span>
         <select id="nPos" aria-label="Filter NFL stats by position">
           <option value="">all positions</option>
           <option>QB</option><option>RB</option><option>WR</option>
@@ -393,7 +397,8 @@
         <span class="spacer" style="flex:1"></span>
         <span class="meter" id="nCount"></span>
       </div>
-      <div class="scroll" style="max-height:74vh"><table id="nT" aria-label="NFL stats, scored under the selected league's rules"></table></div>
+      <div class="scroll" style="max-height:74vh" id="nPlayWrap"><table id="nT" aria-label="NFL stats, scored under the selected league's rules"></table></div>
+      <div class="scroll" style="max-height:74vh" id="nTeamWrap" hidden><table id="nTeamT" aria-label="Fantasy production by NFL team"></table></div>
     </div>
   </section>
 
@@ -1660,10 +1665,24 @@ const $n = id => document.getElementById(id);
         else $n('nW1').value = $n('nW2').value;
       }
       if (id === 'nSeason' || id === 'nPos') fillTeams();
-      drawNFL();
+      drawNFLAny();
     }));
-  $n('nFull').onclick = () => { $n('nW1').value = 1; $n('nW2').value = WK_MAX; drawNFL(); };
-  $n('nPlayoff').onclick = () => { $n('nW1').value = 15; $n('nW2').value = 17; drawNFL(); };
+  $n('nFull').onclick = () => { $n('nW1').value = 1; $n('nW2').value = WK_MAX; drawNFLAny(); };
+  $n('nPlayoff').onclick = () => { $n('nW1').value = 15; $n('nW2').value = 17; drawNFLAny(); };
+  // the team view aggregates every team, so the per-team filter and the player
+  // search have nothing to act on there -- disable rather than leave them lying
+  const nSetView = v => {
+    nView = v;
+    const teams = v === 'teams';
+    $n('nPlayWrap').hidden = teams;
+    $n('nTeamWrap').hidden = !teams;
+    $n('nvPlayers').setAttribute('aria-pressed', String(!teams));
+    $n('nvTeams').setAttribute('aria-pressed', String(teams));
+    ['nTeam', 'nQ', 'nPG'].forEach(id => { $n(id).disabled = teams; });
+    drawNFLAny();
+  };
+  $n('nvPlayers').onclick = () => nSetView('players');
+  $n('nvTeams').onclick = () => nSetView('teams');
   $n('pClose').onclick = () => $n('pModal').hidden = true;
   $n('pModal').onclick = e => { if (e.target.id === 'pModal') $n('pModal').hidden = true; };
   addEventListener('keydown', e => { if (e.key === 'Escape') $n('pModal').hidden = true; });
@@ -1682,6 +1701,96 @@ function fillTeams() {
   sel.innerHTML = '<option value="">all NFL teams</option>' +
     teams.map(x => `<option>${x}</option>`).join('');
   if (teams.includes(keep)) sel.value = keep;   // survive a season change
+}
+
+/* WHICH OFFENCES PRODUCE FANTASY POINTS.
+ *
+ * The same weekly rows the player table uses, summed by the NFL team a player
+ * was on that season. It answers a different question from the Vegas tab: Vegas
+ * is what the market EXPECTS an offence to score in real points, this is what
+ * its skill players ACTUALLY returned in fantasy ones -- and the split across
+ * QB/RB/WR/TE says whether an offence supports several startable players or
+ * funnels everything to one man.
+ *
+ * Respects the position filter, the week range and the selected league's
+ * scoring, because it is built from the same nAgg/wkPts the player view uses.
+ */
+let nTeamSort = 'pts', nTeamAsc = false;
+
+let nView = 'players';
+function drawNFLAny() { nView === 'teams' ? drawNFLTeams() : drawNFL(); }
+
+function drawNFLTeams() {
+  const season = +$n('nSeason').value, pos = $n('nPos').value;
+  const w1 = +$n('nW1').value, w2 = +$n('nW2').value;
+
+  const T = {};
+  WK.ps.filter(p => p[3] === season && (!pos || p[1] === pos)).forEach(p => {
+    const a = nAgg(p, w1, w2);
+    if (!a.g) return;
+    const t = T[p[2]] || (T[p[2]] = {team: p[2], pts: 0, n: 0, g: 0,
+      QB: 0, RB: 0, WR: 0, TE: 0, K: 0, pass_yd: 0, rush_yd: 0, rec_yd: 0,
+      td: 0, top: null});
+    t.pts += a.pts; t.n++; t.g += a.g;
+    if (t[p[1]] !== undefined) t[p[1]] += a.pts;
+    t.pass_yd += a.pass_yd; t.rush_yd += a.rush_yd; t.rec_yd += a.rec_yd;
+    t.td += a.pass_td + a.rush_td + a.rec_td;
+    if (!t.top || a.pts > t.top.pts) t.top = {name: p[0], pts: a.pts, pos: p[1], key: p[9]};
+  });
+  let rows = Object.values(T);
+  rows.forEach(r => {
+    r.pts = Math.round(r.pts * 10) / 10;
+    // how concentrated the offence is: what share of its fantasy points came
+    // from its single best player. 40%+ is a funnel, low 20s is a committee.
+    r.conc = r.pts ? Math.round(100 * r.top.pts / r.pts) : 0;
+    const yds = r.pass_yd + r.rush_yd;
+    r.passpc = yds ? Math.round(100 * r.pass_yd / yds) : 0;
+  });
+  rows.sort((a, b) => {
+    const f = r => nTeamSort === 'team' ? r.team
+      : nTeamSort === 'top' ? r.top.pts : r[nTeamSort];
+    const x = f(a), y = f(b);
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * (nTeamAsc ? 1 : -1);
+  });
+
+  const cols = [['team', 'Tm', 'l'], ['n', 'Plyrs', ''], ['pts', 'Pts', ''],
+    ['QB', 'QB', ''], ['RB', 'RB', ''], ['WR', 'WR', ''], ['TE', 'TE', ''],
+    ['pass_yd', 'PaYd', ''], ['rush_yd', 'RuYd', ''], ['td', 'TD', ''],
+    ['passpc', 'Pass%', ''], ['conc', 'Top%', '']];
+  const TIP = {n: 'players with a game in this range',
+    pts: "total fantasy points from this team's skill players",
+    passpc: 'passing yards as a share of passing + rushing yards',
+    conc: "share of the team's fantasy points from its single best player — high is a funnel, low is a committee"};
+  $n('nTeamT').innerHTML =
+    '<thead><tr><th class="l" style="cursor:default">#</th>' +
+    cols.map(([k, lab, cls]) =>
+      `<th data-k="${k}" class="${cls}"${TIP[k] ? ` title="${TIP[k]}"` : ''}>${lab}</th>`).join('') +
+    '<th class="l">Top scorer</th></tr></thead><tbody>' +
+    rows.map((r, i) => `<tr>
+      <td class="l" style="color:var(--muted)">${i + 1}</td>
+      <td class="l"><b>${r.team}</b></td>
+      <td>${r.n}</td>
+      <td style="font-weight:650">${r.pts.toFixed(1)}</td>
+      <td style="color:var(--ink2)">${Math.round(r.QB)}</td>
+      <td style="color:var(--ink2)">${Math.round(r.RB)}</td>
+      <td style="color:var(--ink2)">${Math.round(r.WR)}</td>
+      <td style="color:var(--ink2)">${Math.round(r.TE)}</td>
+      <td style="color:var(--muted)">${r.pass_yd}</td>
+      <td style="color:var(--muted)">${r.rush_yd}</td>
+      <td>${r.td}</td>
+      <td>${r.passpc}%</td>
+      <td>${r.conc}%</td>
+      <td class="l">${pLink(r.top.name, r.top.key, season)}
+        <span style="color:var(--muted)">${r.top.pos} · ${r.top.pts.toFixed(0)}</span></td>
+    </tr>`).join('') + '</tbody>';
+  $n('nCount').textContent = rows.length + ' teams · weeks ' + w1 + '–' + w2
+    + (pos ? ' · ' + pos + ' only' : '');
+  $n('nTeamT').querySelectorAll('th[data-k]').forEach(th => th.onclick = () => {
+    const k = th.dataset.k;
+    nTeamAsc = nTeamSort === k ? !nTeamAsc : (k === 'team');
+    nTeamSort = k; drawNFLTeams();
+  });
+  bindLinks($n('nTeamT'));
 }
 
 function drawNFL() {
@@ -3114,7 +3223,7 @@ function draw() {
   } else {
     xBoard(); xLast(); xDrawPlan(); xStr(); xAnl();
   }
-  drawNFL(); drawVegas();                   // shared, but NFL stats re-score by league
+  drawNFLAny(); drawVegas();                // shared, but NFL stats re-score by league
   // an open profile card holds points scored under whichever league it was
   // opened in, so re-render it rather than let it go stale behind the switch
   const pm = document.getElementById('pModal');
