@@ -1605,12 +1605,15 @@ const YPA_OF = {
   WR: ['rec_yd', 'tgt', 'Y/T', 'receiving yards per target'],
   TE: ['rec_yd', 'tgt', 'Y/T', 'receiving yards per target'],
 };
-function ypaOf(agg, position) {
+function ypaFrom(get, position) {
   const d = YPA_OF[position];
   if (!d) return null;
-  const den = agg[d[1]];
-  return den ? Math.round(agg[d[0]] / den * 10) / 10 : null;
+  const den = get(d[1]);
+  return den ? Math.round(get(d[0]) / den * 10) / 10 : null;
 }
+const ypaOf = (agg, position) => ypaFrom(k => agg[k], position);
+// a single game's row is a flat array, indexed through SI rather than named
+const ypaOfGame = (g, position) => ypaFrom(k => g[SI[k]], position);
 // one accessor for every stat cell, so the table and the career log cannot drift
 function statCell(agg, position, k, perGame, games) {
   if (k === 'ypa') {
@@ -2145,12 +2148,17 @@ function showPlayer(key, season) {
   }
 
   const log = '<table><thead><tr><th>Wk</th><th class="l">Opp</th>' +
-    cols.map(c => `<th>${NLAB[c] || c}</th>`).join('') + '<th>Pts</th></tr></thead><tbody>' +
+    cols.map(c => `<th>${c === 'ypa' ? ypaLab(pos) : (NLAB[c] || c)}</th>`).join('') +
+    '<th>Pts</th></tr></thead><tbody>' +
     p[8].map(g => {
       const pts = wkPts(g);
       const cls = pts >= th[0] ? 'd2' : pts <= th[1] ? 'dm2' : '';
       return `<tr><td>${g[0]}</td><td class="l">${WK.teams[g[1]] || '—'}</td>` +
-        cols.map(c => `<td>${g[SI[c]]}</td>`).join('') +
+        cols.map(c => {
+          if (c !== 'ypa') return `<td>${g[SI[c]]}</td>`;
+          const v = ypaOfGame(g, pos);       // no attempts that week -> no rate
+          return `<td>${v == null ? '—' : v.toFixed(1)}</td>`;
+        }).join('') +
         `<td class="${cls}" style="font-weight:650">${pts}</td></tr>`;
     }).join('') + '</tbody>';
 
