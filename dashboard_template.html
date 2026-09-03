@@ -148,7 +148,11 @@
   .meter b{color:var(--ink);font-size:17.5px}
   .plangrid{display:grid;grid-template-columns:minmax(340px,1fr) minmax(340px,1fr);
             gap:16px;align-items:start}
-  @media (max-width:900px){.plangrid{grid-template-columns:1fr}}
+  /* The pool needs ~530px for seven columns without a horizontal scrollbar.
+     Two of those plus the gap and the page gutters is about 1200, so stack
+     below that rather than let the pool scroll sideways -- a table you have to
+     scroll to reach the add button is unusable mid-draft. */
+  @media (max-width:1200px){.plangrid{grid-template-columns:1fr}}
   .slot{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid var(--grid)}
   .slot .lab{width:38px;color:var(--muted);font-size:13.8px;font-weight:650}
   .slot .nm{flex:1;font-size:15.6px}
@@ -166,6 +170,9 @@
   #xplanPicks .slot:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
   .slot .grip{color:var(--muted);font-size:13px;width:11px;cursor:grab;user-select:none}
   /* the cut control: quiet until it is doing something */
+  #xplanPool th,#xplanPool td{padding:6px 4px}
+  #xplanPool th:first-child,#xplanPool td:first-child{padding-left:8px}
+  #xplanPool td.acts{white-space:nowrap;display:flex;gap:4px;justify-content:flex-end}
   #xplanPicks .btn.cut,#xplanPool .btn.cut{opacity:.32;padding:0 6px;font-size:12.5px}
   #xplanPicks .slot:hover .btn.cut,#xplanPicks .slot:focus-within .btn.cut,
   #xplanPool tr:hover .btn.cut,#xplanPool tr:focus-within .btn.cut{opacity:.85}
@@ -524,17 +531,18 @@
         </span>
         <select id="xposf2" aria-label="Filter by position"><option value="">all positions</option></select>
       </div>
-      <div class="row" id="xlTiles"></div>
-      <div class="scroll" style="max-height:38vh"><table id="xteamT" aria-label="Team draft summary"></table></div>
+      <div class="legend" id="xdvLeg"></div>
       <div id="xPickWrap">
-        <h2 style="margin-top:20px">Pick by pick</h2>
-        <div class="legend" id="xdvLeg"></div>
-        <div class="scroll" style="max-height:60vh"><table id="xlastT" aria-label="Every pick in the selected season"></table></div>
+        <div class="scroll" style="max-height:78vh"><table id="xlastT" aria-label="Every pick in the selected season"></table></div>
       </div>
       <div id="xRostWrap" hidden>
-        <h2 style="margin-top:20px">Post-draft rosters</h2>
         <div class="rgrid" id="xRosters"></div>
       </div>
+    </div>
+    <div class="row" id="xlTiles"></div>
+    <div class="card">
+      <h2>By team</h2>
+      <div class="scroll" style="max-height:none"><table id="xteamT" aria-label="Team draft summary"></table></div>
     </div>
   </section>
 
@@ -1535,6 +1543,11 @@ const WK_MAX = 18;
  * points with r = 1.0000 across 566 player-seasons.
  */
 const REC_I = SI.rec;
+// A positional finish depends on the scoring: p[6] is ranked under PBAFFL's
+// half-PPR, p[12] under Perennial Push's full PPR. McConkey finished WR29 in one
+// and WR30 in the other. The auction price chart keeps using p[6] deliberately --
+// it compares a finish against what an AUCTION paid, which is PBAFFL's world.
+const wkPosRank = p => (LG === 'ppp' ? p[12] : p[6]);
 const wkPts = g => LG === 'ppp' ? Math.round((g[2] + 0.5 * g[REC_I]) * 10) / 10 : g[2];
 const wkThresh = pos =>
   (LG === 'ppp' ? (WK.threshPpr || WK.thresh) : WK.thresh)[pos] || [99, -99];
@@ -1927,7 +1940,7 @@ function showPlayer(key, season) {
       ].concat(cCols.map(c => ax[c]))
        .concat([
         ax.pts, ax.ppg,
-        x[6] == null ? '\u2014' : x[1] + x[6],
+        wkPosRank(x) == null ? '\u2014' : x[1] + wkPosRank(x),
         bm, bs,
       ]).concat(isPB ? [x[4] == null ? '\u2014' : '$' + x[4], x[5] || '\u2014'] : []);
       if (cells.length !== cHead.length) console.error('career table column mismatch');
@@ -1944,7 +1957,7 @@ function showPlayer(key, season) {
     '<div class="row" style="margin:12px 0 4px">' +
       `<div class="tile"><div class="v">${a.pts}</div><div class="k">points, ${p[3]}</div></div>` +
       `<div class="tile"><div class="v">${a.ppg}</div><div class="k">per game (${a.g} played)</div></div>` +
-      `<div class="tile"><div class="v">${p[6] == null ? '—' : pos + p[6]}</div><div class="k">finish at position</div></div>` +
+      `<div class="tile"><div class="v">${wkPosRank(p) == null ? '—' : pos + wkPosRank(p)}</div><div class="k">finish at position</div></div>` +
       `<div class="tile"><div class="v">${boom}</div><div class="k">boom weeks (≥ ${th[0]})</div></div>` +
       `<div class="tile"><div class="v">${bust}</div><div class="k">bust weeks (≤ ${th[1]})</div></div>` +
       (isPB ? `<div class="tile"><div class="v">${p[4] == null ? '—' : '$' + p[4]}</div><div class="k">${p[4] == null ? 'undrafted here' : 'paid by ' + p[5]}</div></div>` : '') +
@@ -2425,10 +2438,13 @@ function xLast() {
     : v >= 90 ? 'd3' : v >= 45 ? 'd2' : v >= 15 ? 'd1'
     : v <= -90 ? 'dm3' : v <= -45 ? 'dm2' : v <= -15 ? 'dm1' : 'd0';
   document.getElementById('xlastT').innerHTML =
-    `<thead><tr><th class="l">Pick</th><th class="l">Player</th><th class="l">Pos</th>
+    `<thead><tr><th class="l" style="cursor:default"
+        title="Counts within whatever is filtered — filter to QB and this is which quarterback he was">#</th>
+      <th class="l">Pick</th><th class="l">Player</th><th class="l">Pos</th>
       <th class="l">Drafted by</th><th>Points</th><th>Proj</th><th class="l">Finished</th>
       <th>vs round</th></tr></thead><tbody>` +
-    rows.map(p => `<tr>
+    rows.map((p, i) => `<tr>
+      <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td class="l" style="font-weight:650">${p.rd}.${String(p.pk).padStart(2, '0')}</td>
       <td class="l">${pLink(p.n, p.key, +yr)}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span></td>
@@ -2812,21 +2828,21 @@ function xPlanPool() {
     (!hide || !taken.has(r.pid)) && (!tgt || tgHit(xKey(r))) &&
     !isGone(r)).slice(0, 300);
   const t = document.getElementById('xplanPool');
-  t.innerHTML = '<thead><tr><th class="l" style="cursor:default">Est. pick</th>' +
+  t.innerHTML = '<thead><tr><th class="l" style="cursor:default"'
+    + ' title="Where this league has historically taken that slot">Est.</th>' +
     '<th class="l">Rd.Pk</th><th class="l">player</th>' +
-    '<th class="l">pos</th><th>Proj</th><th></th><th></th></tr></thead><tbody>' +
+    '<th class="l">pos</th><th>Proj</th><th></th></tr></thead><tbody>' +
     rows.map(r => `<tr draggable="true" data-xpid="${r.pid}"
         title="Drag him onto the round you want to simulate taking him">
       <td class="l" style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
       <td class="l" style="color:var(--ink2)" title="${r.rank == null ? 'streamed — no board rank' : 'board rank ' + r.rank}">${xRdPk(r)}</td>
-      <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}
-        <span style="color:var(--muted)">${r.tm}</span></td>
+      <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}<span style="color:var(--muted);margin-left:6px">${r.tm}</span></td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
       <td style="color:var(--muted)">${xFmt(r.prj)}</td>
-      <td>${r.rank == null ? '' :
+      <td class="acts">${r.rank == null ? '' :
         `<button class="btn mini cut" data-pcut="${r.rank}"
-           title="Everyone above him is gone — hide them">cut</button>`}</td>
-      <td><button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
+           title="Everyone above him is gone — hide them">cut</button>`
+        }<button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
     '</tbody>';
   // Say what the filter removed. A pool that silently drops 40 players looks
   // like a short board, and on draft night that is the wrong thing to wonder about.

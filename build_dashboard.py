@@ -307,9 +307,21 @@ _price = pd.read_sql("""SELECT season, player_key, price, franchise
                         FROM draft_picks""", con)
 _price = {(r.season, r.player_key): (int(r.price), r.franchise)
           for r in _price.itertuples()}
-_rank = pd.read_sql("""SELECT season, player_key, pos_rank, overall_rank
-                       FROM final_ranks""", con)
-_rank = {(r.season, r.player_key): (int(r.pos_rank), int(r.overall_rank))
+# pos_rank in final_ranks is computed under PBAFFL's HALF-PPR scoring. The NFL
+# stats tab and the player card are shared with Perennial Push, which is full
+# PPR, so a positional finish taken straight from that column is the wrong
+# league's answer -- Ladd McConkey finished WR29 half-PPR and WR30 full PPR in
+# 2025. Rank him under both and let the page pick.
+_rank = pd.read_sql("""SELECT season, player_key, position, pos_rank, overall_rank,
+                              points_ppr, games FROM final_ranks""", con)
+_rp = _rank[_rank["games"] > 0].copy()
+_rp["pos_rank_ppr"] = (_rp.groupby(["season", "position"])["points_ppr"]
+                       .rank(ascending=False, method="first").astype(int))
+_rank = _rank.merge(_rp[["season", "player_key", "pos_rank_ppr"]],
+                    on=["season", "player_key"], how="left")
+_rank = {(r.season, r.player_key): (int(r.pos_rank), int(r.overall_rank),
+                                   int(r.pos_rank_ppr) if pd.notna(r.pos_rank_ppr)
+                                   else None)
          for r in _rank.itertuples()}
 
 # WHAT THE PRICE BOUGHT, in the same unit as the outcome.
@@ -347,14 +359,14 @@ for (season, key), g in pw.groupby(["season", "player_key"], sort=False):
     g = g.sort_values("week")
     first = g.iloc[0]
     price, franchise = _price.get((season, key), (None, ""))
-    pos_rank, ovr = _rank.get((season, key), (None, None))
+    pos_rank, ovr, pos_rank_ppr = _rank.get((season, key), (None, None, None))
     games = [[int(r.week), TIDX.get(r.opponent, -1), round(float(r.points), 1)]
              + [int(getattr(r, c)) for c in WK_COLS] for r in g.itertuples()]
     prank = PRICE_RANK.get((season, key))
     exp = expected_ppg(season, first.position, prank) if prank else None
     ps_rows.append([first.player_name, first.position, first.nfl_team, int(season),
                     price, franchise, pos_rank, ovr, games, key,
-                    exp, int(prank) if prank else None])
+                    exp, int(prank) if prank else None, pos_rank_ppr])
 # heaviest scorers first so the default view needs no sort pass
 ps_rows.sort(key=lambda r: -sum(x[2] for x in r[8]))
 
@@ -365,8 +377,8 @@ ps_rows.sort(key=lambda r: -sum(x[2] for x in r[8]))
 # 15% of their weeks, bust the bottom 25% -- and every position is judged
 # against the players you would actually have started there.
 STARTABLE_N = {"QB": 12, "RB": 24, "WR": 36, "TE": 12, "K": 12}
-_startable = {(s, k) for (s, k), (pr, _o) in _rank.items()}
-_pr = {(s, k): pr for (s, k), (pr, _o) in _rank.items()}
+_startable = {(s, k) for (s, k) in _rank}
+_pr = {(s, k): v[0] for (s, k), v in _rank.items()}
 pw["_pr"] = [_pr.get((r.season, r.player_key), 999) for r in pw.itertuples()]
 _st = pw[pw["_pr"] <= pw["position"].map(STARTABLE_N).fillna(0)]
 THRESH = {p: [round(float(g["points"].quantile(0.85)), 1),
