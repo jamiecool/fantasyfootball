@@ -166,8 +166,9 @@
   #xplanPicks .slot:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
   .slot .grip{color:var(--muted);font-size:13px;width:11px;cursor:grab;user-select:none}
   /* the cut control: quiet until it is doing something */
-  #xplanPicks .btn.cut{opacity:.32;padding:0 6px;font-size:12.5px}
-  #xplanPicks .slot:hover .btn.cut,#xplanPicks .slot:focus-within .btn.cut{opacity:.75}
+  #xplanPicks .btn.cut,#xplanPool .btn.cut{opacity:.32;padding:0 6px;font-size:12.5px}
+  #xplanPicks .slot:hover .btn.cut,#xplanPicks .slot:focus-within .btn.cut,
+  #xplanPool tr:hover .btn.cut,#xplanPool tr:focus-within .btn.cut{opacity:.85}
   #xplanPicks .btn.cut.on{opacity:1;border-color:var(--s1);color:var(--s1);font-weight:650}
   #xplanPicks .slot.cutrow{border-top:2px solid var(--s1)}
   #xplanPicks .slot.cutrow .lab{color:var(--s1)}
@@ -354,10 +355,6 @@
       </div>
       <div class="scroll" id="lPickWrap"><table id="lastT" aria-label="Last season — every pick"></table></div>
       <div id="lRostWrap" hidden>
-        <p class="note">What every roster looked like coming out of the auction, slotted into this league's
-          starting lineup — QB, two RB, three WR, TE, K and D/ST — with everyone else on the bench. Slots are
-          filled by full-season points, so this is the best lineup the draft could have fielded, not what was
-          started week to week. Cards are ordered by where the team finished.</p>
         <div class="rgrid" id="lRosters"></div>
       </div>
     </div>
@@ -370,7 +367,6 @@
   <section class="panel" id="p-nfl" hidden>
     <div class="card">
       <h2 id="nfHead">NFL stats</h2>
-      <p class="note" id="nfNote"></p>
       <div class="filters">
         <select id="nSeason" aria-label="Choose a season" style="font-weight:650"></select>
         <select id="nPos" aria-label="Filter NFL stats by position">
@@ -397,17 +393,10 @@
   <section class="panel" id="p-vegas" hidden>
     <div class="card">
       <h2>Implied team totals &mdash; what the betting market expects each offence to score</h2>
-      <p class="note">Priced by people risking money and repriced continuously, which makes it
-        the sharpest read available on team scoring. It is <b>already inside ADP</b> &mdash;
-        everyone setting a draft price has seen these numbers too &mdash; so this is a
-        cross-check, not an edge. <b>wk&nbsp;15&ndash;17</b> is our playoff window. Season
-        figures from Sharp Football Analysis, weekly lines from nflverse.</p>
       <div class="scroll" style="max-height:70vh"><table id="vegT" aria-label="Implied team totals from the betting market"></table></div>
     </div>
     <div class="card">
       <h2>2026 games priced so far</h2>
-      <p class="note">Books have posted only the opening weeks, so the season-long numbers
-        above are the usable ones until the rest fills in.</p>
       <div class="filters"><select id="vegWk" aria-label="Choose a week"></select></div>
       <div class="scroll" style="max-height:44vh"><table id="vegWT" aria-label="2026 games priced so far"></table></div>
     </div>
@@ -473,11 +462,6 @@
   <section class="panel" id="p-anl" hidden>
     <div class="card">
       <h2>Where the dead money is, position by position</h2>
-      <p class="note">Return per dollar of production above replacement, by price band.
-        <b>1.0 means the band paid for itself.</b> Bars are 95% bootstrap intervals; a band
-        only counts as settled when its whole interval sits clear of 1.0. Log scale, because
-        these are ratios &mdash; 2&times; above and 0.5&times; below are the same size of
-        effect, and a linear axis would let the cheap bands crush everything else.</p>
       <div id="dzChart"></div>
       <div class="legend" id="dzLeg"></div>
       <div class="scroll" style="max-height:52vh;margin-top:14px"><table id="dzT" aria-label="Return per dollar by price band and position"></table></div>
@@ -485,36 +469,25 @@
 
     <div class="card">
       <h2>Did each price tier return its share of the value?</h2>
-      <p class="note">Share of value delivered ÷ share of money spent, over 1,514 skill
-         picks across nine seasons. Above 1.0 means the tier returned more than it cost.
-         This uses actual outcomes — no projections.</p>
       <div id="tier"></div>
       <div class="scroll" style="max-height:none;margin-top:12px"><table id="tierT" aria-label="Value delivered versus money spent, by price tier"></table></div>
     </div>
     <div class="card">
       <h2>Chance a pick returned a startable season</h2>
-      <p class="note">Startable = finished inside the league's starter count at the position
-         (top 12 QB / 24 RB / 36 WR / 12 TE). Cells with fewer than 25 picks are marked —
-         they cannot support a conclusion.</p>
       <div class="legend" id="stLeg"></div>
       <div id="startable"></div>
     </div>
     <div class="card">
       <h2>Share of league spend by position</h2>
-      <p class="note">Percent of the $2,400 pool spent at each position, by season.</p>
       <div class="legend" id="psLeg"></div>
       <div id="posshare"></div>
     </div>
     <div class="card">
       <h2>FFC vs Underdog ADP</h2>
-      <p class="note">Each dot is a player. The diagonal is agreement. Dots above it are
-         drafted earlier on Underdog than on FFC; below, the reverse. The board uses FFC,
-         so a big gap means the price could be materially wrong for this league.</p>
       <div id="scatter"></div>
     </div>
     <div class="card">
       <h2>Biggest disagreements</h2>
-      <p class="note">Sorted by absolute gap. These are the players whose price is least trustworthy.</p>
       <div class="scroll"><table id="mktT" aria-label="Biggest disagreements between price sources"></table></div>
     </div>
   </section>
@@ -543,8 +516,6 @@
   <section class="panel" id="p-xlast" hidden>
     <div class="card">
       <h2 id="xlastH">Every pick</h2>
-      <p class="note">Five seasons of this league's drafts, with what each pick actually scored
-        under these rules and how that compares with the average return of its round.</p>
       <div class="filters">
         <select id="xseason" aria-label="Choose a season" style="font-weight:650"></select>
         <span class="segwrap" role="group" aria-label="Choose a view">
@@ -562,10 +533,6 @@
       </div>
       <div id="xRostWrap" hidden>
         <h2 style="margin-top:20px">Post-draft rosters</h2>
-        <p class="note">What every team walked out of the draft holding, slotted into this league's starting
-          lineup — QB, two RB, three WR, TE, superflex, flex, K and D/ST — with everyone else on the bench.
-          Slots are filled by full-season points, so this is the best lineup the draft could have fielded,
-          not what was started week to week. Cards are ordered by where the team finished.</p>
         <div class="rgrid" id="xRosters"></div>
       </div>
     </div>
@@ -585,25 +552,11 @@
     <div class="plangrid">
       <div class="card">
         <input id="xplanName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
-        <p class="note"><b>Drag any pick onto another round</b> to simulate taking him there —
-          dropping him on an occupied round swaps the two. Players can be dragged in from the
-          pool on the right as well, and <b>Alt + ↑ / ↓</b> moves a selected pick without a
-          mouse. Adding a player only <em>starts</em> him at the earliest pick the board says he
-          could last to; move him wherever you actually want to take him.</p>
-        <p class="note">A pick is flagged when the board ranks a player well ahead of where you
-          would be taking him — he is unlikely to still be there. <b>Exp</b> is his expected
-          points under this league's scoring, used to total a roster and fill its starting slots
-          — a different job from ranking the board, and the one place a projection is the right
-          currency.</p>
         <div id="xplanPicks"></div>
         <div id="xplanRoster" style="margin-top:14px"></div>
       </div>
       <div class="card">
         <h2>Add players</h2>
-        <p class="note"><b>Rd.Pk</b> is where this league's own history says that player goes.
-          Adding him drops him at your earliest pick he could realistically last to — then drag
-          him wherever you actually want him. To narrow this list as the draft moves, press
-          <b>cut</b> on one of your picks on the left.</p>
         <div class="filters">
           <input type="search" id="xpq" aria-label="Search players to add to the plan" placeholder="search…">
           <select id="xppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
@@ -623,9 +576,6 @@
   <section class="panel" id="p-xstr" hidden>
     <div class="card">
       <h2>What five seasons of this league say</h2>
-      <p class="note">Every rule below is derived from Perennial Push's own drafts, 2021–2025,
-        scored under its own rules. None of PBAFFL's auction findings carry over — different
-        draft format, different scoring, different roster.</p>
       <div class="ruleset" id="xRules"></div>
     </div>
   </section>
@@ -633,22 +583,15 @@
   <section class="panel" id="p-xanl" hidden>
     <div class="card">
       <h2>The quarterback gap</h2>
-      <p class="note">Mean points returned by quarterbacks against the running backs, receivers and
-        tight ends taken in the same rounds. In a superflex league the middle rounds are where the
-        room stops paying for quarterbacks and the value does not.</p>
       <div class="legend" id="xQbLeg"></div>
       <div id="xQbChart"></div>
     </div>
     <div class="card">
       <h2>What a round is worth</h2>
-      <p class="note">Average points returned per pick by round, with the share of picks that finished
-        as a startable player at their position.</p>
       <div id="xRdChart"></div>
     </div>
     <div class="card">
       <h2>When each position stops paying</h2>
-      <p class="note">Share of picks that finished startable, by position and round band.
-        Faint lines are bands with fewer than 25 picks.</p>
       <div class="legend" id="xPosLeg"></div>
       <div id="xPosChart"></div>
     </div>
@@ -1701,15 +1644,6 @@ function drawNFL() {
   const isPB = LG === 'pbaffl';
   $n('nfHead').textContent = 'NFL stats — scored under '
     + (isPB ? 'PBAFFL' : 'Perennial Push') + ' rules';
-  $n('nfNote').innerHTML = (isPB
-      ? "Half-PPR with this league's <b>&minus;2 interceptions</b>, not Yahoo's &minus;1 "
-        + 'default, so these totals differ from any published stat page. Set a week range '
-        + 'to ask a narrower question — <b>weeks 15&ndash;17</b> is our playoffs. '
-      : '<b>Full PPR</b> — a reception is worth twice what it is in PBAFFL, so every '
-        + 'pass-catcher scores higher here and the order changes. Interceptions are '
-        + '&minus;2, as in PBAFFL. Set a week range to ask a narrower question. ')
-    + 'Click a player for his game log. Built from nflverse play-by-play, which covers '
-    + 'QB/RB/WR/TE/K only — <b>team defences are not in this dataset</b>.';
 
   // switching leagues while sorted by $ would leave the table sorted on a column
   // that is no longer there, with no header to click to get out of it
@@ -2017,18 +1951,9 @@ function showPlayer(key, season) {
     '</div>' +
     `<h3>Week by week, ${p[3]} — boom green, bust red, grey = no game</h3>` +
     `<div class="glog">${bars}</div><div class="glogx">${xlab}</div>` +
-    `<p class="note" style="margin-top:8px">Boom and bust are ${pos}'s own p85 / p25 weekly ` +
-      `scores among starter-quality ${pos}s — 20 points is a big week for a tight end and a ` +
-      `mediocre one for a quarterback, so each position is judged against its own.</p>` +
     `<h3>Game log, ${p[3]}</h3><div class="scroll" style="max-height:320px">${log}</table></div>` +
     (isPB ? `<h3>Points per game each season, against what he cost</h3>` +
-    `<div id="pChart"></div>` +
-    `<p class="note" style="margin-top:6px">Bar is what he averaged. The line across it is ` +
-    `what his price implied — the PPG of whoever actually finished at his price rank ` +
-    `that season. <b style="color:var(--div-pos)">Green</b> cleared it, ` +
-    `<b style="color:var(--div-neg)">red</b> did not, ` +
-    `<b style="color:var(--s1)">blue</b> means he WAS the player at that rank so there was ` +
-    `nothing to beat, and grey means he went undrafted here.</p>` : '') +
+    `<div id="pChart"></div>` : '') +
     `<h3>Every season on record</h3><div class="scroll" style="max-height:300px">${career}</table></div>`;
   if (isPB) $n('pChart').replaceChildren(careerChart(all));   // no #pChart in snake mode
 
@@ -2401,6 +2326,9 @@ let lView = 'picks';
  * Defences are keyed def_<team> on both boards so they match too.
  */
 const xKey = p => p.key;
+// 1st/2nd/3rd/4th, and 11th-13th which are the ones a naive rule gets wrong
+const ord = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th'
+  : n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th');
 const xFmt = v => v == null ? '' : (Math.round(v * 10) / 10).toFixed(1);
 const xRdPk = p => p.rd == null ? '—' : p.rd + '.' + String(p.pk).padStart(2, '0');
 
@@ -2732,7 +2660,7 @@ function xPlanPicks() {
       aria-label="Round ${rd}, pick ${no}: ${r.n}. Drag to another round, or hold Alt and press up or down to move him."`
           : 'aria-label="Round ' + rd + ', pick ' + no + ': empty"'}>
       <span class="grip" aria-hidden="true"${r ? '' : ' hidden'}>&#8942;&#8942;</span>
-      <span class="lab" title="${no}${no % 10 === 1 && no % 100 !== 11 ? 'st' : no % 10 === 2 && no % 100 !== 12 ? 'nd' : no % 10 === 3 && no % 100 !== 13 ? 'rd' : 'th'} overall"
+      <span class="lab" title="${ord(no)} overall"
         >${rd}.${String((no - 1) % XTEAMS + 1).padStart(2, '0')}</span>
       <span class="nm">${r ? starHtml(xKey(r)) + pLink(r.n, r.key, 0) +
         ` <span style="color:var(--muted)">${r.pos}${r.prank} &middot; ${r.tm}</span>` + badge
@@ -2886,7 +2814,7 @@ function xPlanPool() {
   const t = document.getElementById('xplanPool');
   t.innerHTML = '<thead><tr><th class="l" style="cursor:default">Est. pick</th>' +
     '<th class="l">Rd.Pk</th><th class="l">player</th>' +
-    '<th class="l">pos</th><th>Proj</th><th></th></tr></thead><tbody>' +
+    '<th class="l">pos</th><th>Proj</th><th></th><th></th></tr></thead><tbody>' +
     rows.map(r => `<tr draggable="true" data-xpid="${r.pid}"
         title="Drag him onto the round you want to simulate taking him">
       <td class="l" style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
@@ -2895,6 +2823,9 @@ function xPlanPool() {
         <span style="color:var(--muted)">${r.tm}</span></td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
       <td style="color:var(--muted)">${xFmt(r.prj)}</td>
+      <td>${r.rank == null ? '' :
+        `<button class="btn mini cut" data-pcut="${r.rank}"
+           title="Everyone above him is gone — hide them">cut</button>`}</td>
       <td><button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
     '</tbody>';
   // Say what the filter removed. A pool that silently drops 40 players looks
@@ -2902,12 +2833,20 @@ function xPlanPool() {
   const note = document.getElementById('xpgoneN');
   // Say the cut in BOTH notations. The pick list and the board agree on the
   // round.pick form now, but "30th overall" is the number you hear called out.
-  if (note) note.textContent = gone == null ? ''
+  if (note) note.innerHTML = gone == null ? ''
     : `cut at ${xRdPk({rd: Math.floor((gone - 1) / XTEAMS) + 1, pk: (gone - 1) % XTEAMS + 1})}`
-      + ` (${gone}th overall) — ${nGone} hidden as already gone`;
+      + ` (${ord(gone)} overall) — ${nGone} hidden `
+      + '<button class="btn mini" id="xpShowAll">show all</button>';
   bindStars(t);
   bindNotes(t);
   bindLinks(t);
+  t.querySelectorAll('[data-pcut]').forEach(b => b.onclick = ev => {
+    ev.stopPropagation();
+    xState.goneAt = +b.dataset.pcut;
+    xDrawPlan();
+  });
+  const sa = document.getElementById('xpShowAll');
+  if (sa) sa.onclick = () => { xState.goneAt = null; xDrawPlan(); };
   // a pool row can be dragged straight onto the round you want him in, which is
   // the whole point -- the add button's auto-placement is only a default
   t.querySelectorAll('tr[data-xpid]').forEach(tr => {
@@ -2916,20 +2855,17 @@ function xPlanPool() {
       ev.dataTransfer.effectAllowed = 'move';
     });
   });
+  // ADD PUTS HIM IN THE EARLIEST EMPTY SLOT. Nothing cleverer.
+  //
+  // This used to guess: the earliest of your picks the board said he could still
+  // last to, with kickers and defences shunted to round 13. Both guesses were
+  // defensible and both were wrong to make -- you can drag him anywhere in a
+  // second, and a tool that quietly decides where a player goes is one you have
+  // to argue with before you can use it.
   t.querySelectorAll('[data-xadd]').forEach(b => b.onclick = () => {
-    const pid = b.dataset.xadd, p = xById[pid], pl = xCur();
+    const pid = b.dataset.xadd, pl = xCur();
     if (pl.ids.includes(pid)) return;
-    const mine = xMyPicks(pl.slot);
-    let slot;
-    if (p.rank == null) {
-      // kickers and defences carry no board rank and cost nothing to wait on:
-      // five seasons say never before round 13, so that is where they land
-      slot = pl.ids.findIndex((v, i) => !v && i >= 12);
-    } else {
-      // earliest of my picks where he could still plausibly be on the board
-      slot = pl.ids.findIndex((v, i) => !v && mine[i] >= p.rank);
-    }
-    if (slot < 0) slot = pl.ids.findIndex(v => !v);
+    const slot = pl.ids.findIndex(v => !v);
     if (slot < 0) return;                        // all eighteen picks used
     pl.ids[slot] = pid;
     xSavePlans(); xDrawPlan();

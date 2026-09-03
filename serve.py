@@ -95,7 +95,23 @@ def write_state(payload):
     }
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     if os.path.exists(STATE):
+        # ONE .bak IS NOT A BACKUP. It held exactly one save, so two writes in
+        # quick succession -- which autosave makes routine -- destroyed the only
+        # copy of whatever came before. That is how a finished 11-pick draft plan
+        # was lost on 2026-09-02, overwritten and then overwritten again before
+        # anyone noticed. Keep a dated history instead; it is a few KB a day.
         shutil.copy2(STATE, STATE + ".bak")
+        hist = os.path.join(os.path.dirname(STATE), "history")
+        os.makedirs(hist, exist_ok=True)
+        shutil.copy2(STATE, os.path.join(
+            hist, time.strftime("board_state_%Y%m%d_%H%M%S.json")))
+        # keep the most recent 200 -- roughly a fortnight of heavy drafting
+        old = sorted(f for f in os.listdir(hist) if f.startswith("board_state_"))
+        for f in old[:-200]:
+            try:
+                os.remove(os.path.join(hist, f))
+            except OSError:
+                pass
     tmp = STATE + ".tmp"
     with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         json.dump(rec, f, indent=2, sort_keys=False, ensure_ascii=False)

@@ -25,6 +25,10 @@ rawdata/vegas/team_week_implied.csv
 # serve.py keeps a one-deep backup each time the Save button writes the shared
 # state. Local safety net, not history -- git already has that.
 shared/*.bak
+# Dated copies of every board-state save, kept 200 deep. Local safety net after a
+# plan was lost to a single overwritten .bak -- git holds the history that is
+# meant to be shared, this holds the one that stops an accident being permanent.
+shared/history/
 shared/*.tmp
 
 # Excel lock files (created while a workbook is open)
@@ -56,3 +60,6 @@ rawdata/nflverse/players.csv
 # you do not want to negotiate with your partner. Claude Code reads it alongside
 # CLAUDE.md but it never leaves your machine.
 CLAUDE.local.md
+
+# ESPN cookies (espn_s2 + SWID) -- secrets, never commit
+espn_credentials.json
