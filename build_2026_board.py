@@ -46,21 +46,22 @@ PRICE_SEASONS = (2023, 2025)
 # ---------------------------------------------------------------------------
 # A DELIBERATE THUMB ON THE SCALE, and the only one in this file.
 #
-# Jamie's read for 2026 (2026-09-03): quarterbacks will go for less in PBAFFL
-# this year than the room's recent average. Everything else here is measured;
-# this is a judgement, so it is a single named constant rather than something
-# smuggled into a curve, and setting it to 0 restores the pure historical board.
+# Jamie's read for 2026 (2026-09-03): quarterbacks will go for a bit less in
+# PBAFFL this year than the room's recent average. Everything else here is
+# measured; this is a judgement, so it is a single named constant rather than
+# something smuggled into a curve, and setting it to 0 restores the pure
+# historical board.
 #
-# QB_SHIFT_POOL_PCT is expressed in POINTS OF THE TOTAL POOL, not as a percentage
-# of QB spend. Those differ by an order of magnitude and the distinction matters:
-# quarterbacks are only ~9.7% of the board, so "5% off QB spend" would move about
-# $12 across 283 players and change nothing anybody could see, while 5 points of
-# the pool moves ~$121 and roughly halves what quarterbacks cost.
+# THE UNIT IS A PERCENTAGE OF QB SPEND, not of the total pool. Quarterbacks are
+# ~9.7% of this board, so the two readings differ by an order of magnitude --
+# 5% of QB spend is about $12, where 5 points of the pool would be $121 and would
+# roughly halve what a quarterback costs. "A bit less" is the former, and it is
+# the reading Jamie confirmed.
 #
 # Of the money freed, HALF goes to running backs by instruction; the remainder is
 # spread across WR/TE/K/DEF in proportion to what they already command, which
 # preserves the shape of each of those markets rather than inventing a new one.
-QB_SHIFT_POOL_PCT = 5.0        # points of the total pool taken off quarterbacks
+QB_SPEND_CUT_PCT = 5.0         # percent taken off TOTAL QUARTERBACK SPEND
 QB_SHIFT_TO_RB = 0.50          # share of the freed money going to running backs
 
 # ---------------------------------------------------- 1. positional curves
@@ -153,8 +154,35 @@ adp["pos_rank"] = adp.groupby("position")["adp"].rank(method="first").astype(int
 adp["est_price"] = [price_for(r.position, r.pos_rank) for r in adp.itertuples()]
 
 
+def _round_to_total(vals, target, floor=1):
+    """Round floats to whole dollars so the SUM lands exactly on target.
+
+    Naive rounding loses the shift entirely at small magnitudes. Giving running
+    backs $6 more means eight cents each across 74 of them, every one of which
+    rounds to nothing -- so the money comes off quarterbacks and simply
+    evaporates, which is worse than not moving it.
+
+    Largest remainder instead: floor everyone, then hand the leftover dollars out
+    one at a time to whoever was closest to rounding up. $6 to the RB market
+    becomes $1 each to the six backs with the strongest claim on it, which is
+    what "six more dollars on running backs" has to mean in a market priced in
+    whole dollars.
+    """
+    v = vals.astype(float)
+    base = v.apply(lambda x: max(floor, int(x)))
+    short = int(target) - int(base.sum())
+    if short > 0:                                   # hand out the remainder
+        order = (v - base).sort_values(ascending=False).index[:short]
+        base.loc[order] += 1
+    elif short < 0:                                 # claw back, never below floor
+        cand = base[base > floor]
+        order = (v - base).loc[cand.index].sort_values().index[:-short]
+        base.loc[order] -= 1
+    return base.astype(int)
+
+
 def apply_pos_shift(df):
-    """Move QB_SHIFT_POOL_PCT of the pool off QB and onto everyone else.
+    """Take QB_SPEND_CUT_PCT off total quarterback spend, give it to everyone else.
 
     SCALES THE MONEY ABOVE THE $1 FLOOR, not the price. That distinction is the
     whole of this function: 22 of the 36 quarterbacks on the board are already
@@ -172,8 +200,8 @@ def apply_pos_shift(df):
     goes from $36 to about $15.
     """
     total0 = df["est_price"].sum()
-    want_off = round(total0 * QB_SHIFT_POOL_PCT / 100)
     qb = df.position == "QB"
+    want_off = round(df.loc[qb, "est_price"].sum() * QB_SPEND_CUT_PCT / 100)
     room = int(df.loc[qb, "est_price"].sum() - qb.sum())     # money above the floor
     if want_off > room:
         print(f"  ! asked to take ${want_off} off QB but only ${room} sits above "
@@ -201,17 +229,19 @@ def apply_pos_shift(df):
         if above <= 0:
             continue                                   # everyone already at $1
         k = max(0.0, (tgt - n) / above)
-        df.loc[m, "est_price"] = (1 + (df.loc[m, "est_price"] - 1) * k)             .round().clip(lower=1).astype(int)
+        want = 1 + (df.loc[m, "est_price"] - 1) * k
+        df.loc[m, "est_price"] = _round_to_total(want, round(tgt))
     return df, total0, want_off, targets
 
 
-if QB_SHIFT_POOL_PCT:
+if QB_SPEND_CUT_PCT:
     _before = adp.groupby("position")["est_price"].sum().to_dict()
     adp, _tot0, _off, _tg = apply_pos_shift(adp)
     _after = adp.groupby("position")["est_price"].sum().to_dict()
     print("\nPOSITIONAL SHIFT APPLIED (Jamie's 2026 read, not a measurement)")
-    print(f"  taking {QB_SHIFT_POOL_PCT}% of the ${_tot0:,} pool off quarterbacks "
-          f"= ${_off}; half to RB, the rest spread by current share\n")
+    print(f"  taking {QB_SPEND_CUT_PCT}% off quarterback spend: "
+          f"${_before.get('QB', 0)} -> ${_before.get('QB', 0) - _off} (${_off} freed); "
+          f"half to RB, the rest spread by current share\n")
     print(f"  {'pos':>5}{'before':>9}{'target':>9}{'after':>8}"
           f"{'share before':>15}{'share after':>13}")
     for pos in ("QB", "RB", "WR", "TE", "K", "DEF"):
