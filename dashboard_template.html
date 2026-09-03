@@ -1577,17 +1577,52 @@ function bindLinks(root) {
 // completions is noise, and footballguys gets this right: the position picks
 // the columns.
 const NCOLS = {
-  QB: ['cmp', 'att', 'pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
-  RB: ['car', 'rush_yd', 'rush_td', 'tgt', 'rec', 'rec_yd', 'rec_td', 'fum_lost'],
-  WR: ['tgt', 'rec', 'rec_yd', 'rec_td', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
-  TE: ['tgt', 'rec', 'rec_yd', 'rec_td', 'fum_lost'],
+  QB: ['cmp', 'att', 'pass_yd', 'ypa', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
+  RB: ['car', 'rush_yd', 'ypa', 'rush_td', 'tgt', 'rec', 'rec_yd', 'rec_td', 'fum_lost'],
+  WR: ['tgt', 'rec', 'rec_yd', 'ypa', 'rec_td', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
+  TE: ['tgt', 'rec', 'rec_yd', 'ypa', 'rec_td', 'fum_lost'],
   K:  ['fg', 'fg_att', 'fg_long', 'pat'],
-  '': ['pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'rec', 'rec_yd', 'rec_td'],
+  '': ['pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'rec', 'rec_yd', 'ypa'],
 };
+
+/* YARDS PER ATTEMPT, where "attempt" means a different thing at every position:
+   a pass for a quarterback, a carry for a back, a TARGET for a receiver. One
+   global formula would be wrong for two positions out of three, so it is
+   computed from the row's own position and labelled accordingly -- nobody should
+   be able to read a receiver's number as a passer's.
+
+   Target rather than reception for the pass-catchers on purpose: in full PPR the
+   catch itself scores, so yards per target measures the efficiency that actually
+   pays, and yards per reception flatters a player who drops half his looks. */
+const YPA_OF = {
+  QB: ['pass_yd', 'att', 'Y/A', 'passing yards per attempt'],
+  RB: ['rush_yd', 'car', 'Y/C', 'rushing yards per carry'],
+  WR: ['rec_yd', 'tgt', 'Y/T', 'receiving yards per target'],
+  TE: ['rec_yd', 'tgt', 'Y/T', 'receiving yards per target'],
+};
+function ypaOf(agg, position) {
+  const d = YPA_OF[position];
+  if (!d) return null;
+  const den = agg[d[1]];
+  return den ? Math.round(agg[d[0]] / den * 10) / 10 : null;
+}
+// one accessor for every stat cell, so the table and the career log cannot drift
+function statCell(agg, position, k, perGame, games) {
+  if (k === 'ypa') {
+    const v = ypaOf(agg, position);
+    return v == null ? '—' : v.toFixed(1);   // a RATE: never divided by games
+  }
+  const v = agg[k];
+  if (!perGame || NMAX[k]) return v;
+  return (v / games).toFixed(1);
+}
 const NLAB = {cmp:'Cmp', att:'Att', pass_yd:'PaYd', pass_td:'PaTD', int:'INT',
   car:'Car', rush_yd:'RuYd', rush_td:'RuTD', tgt:'Tgt', rec:'Rec', rec_yd:'ReYd',
   rec_td:'ReTD', fum_lost:'FL', fg:'FG', fg_att:'FGA', fg_long:'Lng', pat:'PAT',
-  st_td:'STTD', two_pt:'2PT'};
+  st_td:'STTD', two_pt:'2PT', ypa:'Y/A'};
+// in a single-position view the header can name the actual denominator
+const ypaLab = pos => (YPA_OF[pos] || [,, 'Y/A'])[2];
+const ypaTip = pos => (YPA_OF[pos] || [,,, 'yards per attempt — per position: passes for a QB, carries for a back, targets for a receiver'])[3];
 // fg_long is a season best, not a running total -- summing it invents 200-yard kicks
 const NMAX = {fg_long: 1};
 
@@ -1672,7 +1707,8 @@ function drawNFL() {
                  (!team || p[2] === team) &&
                  (!q || p[0].toLowerCase().includes(q)))
     .map(p => ({p: p, name: p[0], key: p[9], position: p[1], team: p[2],
-                price: p[4], by: p[5], a: nAgg(p, w1, w2)}))
+                price: p[4], by: p[5], a: nAgg(p, w1, w2),
+                age: ageOn((D.bio[p[9]] || {}).born, p[3])}))
     .filter(r => r.a.g > 0);
 
   // Rank within position FOR THIS RANGE -- the whole point of a week filter is
@@ -1685,15 +1721,13 @@ function drawNFL() {
   const cols = NCOLS[pos] || NCOLS[''];
   // "per game" divides the counting stats only. Pts stays a total and PPG stays
   // a rate, so the toggle never leaves two columns showing the same number.
-  const get = (r, k) => {
-    const v = r.a[k];
-    if (!pg || NMAX[k]) return v;              // a season-best long is not a rate
-    return (v / r.a.g).toFixed(1);
-  };
+  const get = (r, k) => statCell(r.a, r.position, k, pg, r.a.g);
   rows.sort((a, b) => {
     const f = r => nSort === 'name' ? r.name : nSort === 'position' ? r.position
       : nSort === 'team' ? r.team : nSort === 'rank' ? r.rank
       : nSort === 'price' ? (r.price == null ? -1 : r.price)
+      : nSort === 'age' ? (r.age == null ? -1 : r.age)
+      : nSort === 'ypa' ? (ypaOf(r.a, r.position) ?? -1)
       : nSort === 'g' ? r.a.g : (nSort === 'pts' || nSort === 'ppg') ? r.a[nSort]
       : +get(r, nSort);
     const x = f(a), y = f(b);
@@ -1709,8 +1743,12 @@ function drawNFL() {
     '<th class="l" style="cursor:default">#</th>' +
     '<th data-k="name" class="l">Player</th>' +
     '<th data-k="rank" class="l" title="rank within position over the selected weeks">Pos</th>' +
-    '<th data-k="team" class="l">Tm</th><th data-k="g">G</th>' +
-    cols.map(c => `<th data-k="${c}">${NLAB[c] || c}</th>`).join('') +
+    '<th data-k="team" class="l">Tm</th>' +
+    '<th data-k="age" title="age on 1 September of that season">Age</th>' +
+    '<th data-k="g">G</th>' +
+    cols.map(c => c === 'ypa'
+      ? `<th data-k="ypa" title="${ypaTip(pos)}">${ypaLab(pos)}</th>`
+      : `<th data-k="${c}">${NLAB[c] || c}</th>`).join('') +
     '<th data-k="pts">Pts</th><th data-k="ppg">PPG</th>' +
     // PBAFFL is an auction; Perennial Push is a snake draft with no prices at
     // all, and the figure would be what a team in the OTHER league paid.
@@ -1724,7 +1762,8 @@ function drawNFL() {
     // rank is WITHIN position and belongs on the badge, same as the board
     `<td class="l"><span class="pos" style="background:var(${POSC[r.position] || '--muted'})">` +
       `${r.position}${r.rank}</span></td>` +
-    `<td class="l">${r.team}</td><td>${r.a.g}</td>` +
+    `<td class="l">${r.team}</td><td>${r.age == null ? '—' : r.age}</td>` +
+    `<td>${r.a.g}</td>` +
     cols.map(c => `<td>${get(r, c)}</td>`).join('') +
     `<td style="font-weight:650">${r.a.pts.toFixed(1)}</td><td>${r.a.ppg.toFixed(1)}</td>` +
     (isPB ? `<td title="${r.by || ''}">${r.price == null ? '—' : '$' + r.price}</td>` : '') +
@@ -1922,7 +1961,7 @@ function showPlayer(key, season) {
   // because the franchise that paid is a team in the OTHER league.
   const isPB = LG === 'pbaffl';
   const cHead = [['Year', ''], ['Tm', 'l'], ['Age', ''], ['G', '']]
-    .concat(cCols.map(c => [NLAB[c] || c, '']))
+    .concat(cCols.map(c => [c === 'ypa' ? ypaLab(pos) : (NLAB[c] || c), '']))
     .concat([['Pts', ''], ['PPG', ''], ['Pos rk', ''], ['Boom', ''], ['Bust', '']])
     .concat(isPB ? [['PBAFFL $', ''], ['Bought by', 'l']] : []);
   const career = '<table><thead><tr>' +
@@ -1937,7 +1976,7 @@ function showPlayer(key, season) {
         x[2],
         ageOn((D.bio[key] || {}).born, x[3]) ?? '\u2014',
         ax.g,
-      ].concat(cCols.map(c => ax[c]))
+      ].concat(cCols.map(c => statCell(ax, x[1], c, false, ax.g)))
        .concat([
         ax.pts, ax.ppg,
         wkPosRank(x) == null ? '\u2014' : x[1] + wkPosRank(x),
