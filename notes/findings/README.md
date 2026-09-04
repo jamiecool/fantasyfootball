@@ -9,7 +9,7 @@ Everything on this page below this section is **PBAFFL** — the Yahoo auction l
 and its findings are numbered **1–11**.
 
 **Perennial Push** (ESPN snake, superflex, full PPR) has its own file and its own
-numbering, **PPP-1..PPP-6**, so the two can never be confused in a citation:
+numbering, **PPP-1..PPP-7**, so the two can never be confused in a citation:
 
 - [`ppp-draft-shape.md`](ppp-draft-shape.md) — what shapes a PPP draft. The quarterback
   deadline (PPP-1), the round 4–6 QB dead zone (PPP-2), the RB and WR cliffs (PPP-3),
@@ -18,7 +18,10 @@ numbering, **PPP-1..PPP-6**, so the two can never be confused in a citation:
   up" list to be read as unproven rather than absent.
   PPP-6 measures how closely the room drafts to ESPN's within-position order
   (rho 0.95-0.97) and finds reaching punished where fading is not.
-  Scripts: `analyze_ppp_shape.py`, `analyze_ppp_flex.py`, `analyze_ppp_espn.py`.
+  PPP-7 prices the FLEX slot itself: worth ~18 pts to every RB and ~15 to every WR,
+  nothing to a QB, and tight end is a relative loser despite being eligible.
+  Scripts: `analyze_ppp_shape.py`, `analyze_ppp_flex.py`, `analyze_ppp_espn.py`,
+  `analyze_ppp_flexvalue.py`.
 
 **Nothing transfers in either direction.** Different draft format, different scoring,
 different roster. A PBAFFL finding is a statement about an auction.

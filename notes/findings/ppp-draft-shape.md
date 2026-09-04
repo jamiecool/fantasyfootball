@@ -1,6 +1,6 @@
 # Perennial Push — what shapes a draft (`analyze_ppp_shape.py`)
 
-⚠ **These are PPP findings and are numbered PPP-1..PPP-6 on purpose.** The PBAFFL
+⚠ **These are PPP findings and are numbered PPP-1..PPP-7 on purpose.** The PBAFFL
 findings are numbered 1..11 and none of them transfer in either direction — different
 draft format (snake vs auction), different scoring (full PPR vs half), different roster
 (superflex, 18 rounds, a FLEX). Do not cite a PPP finding in a PBAFFL argument.
@@ -282,3 +282,78 @@ measuring it against the position's overall mean rewards it for exactly the thin
 under test, and measuring a fade against that mean penalises it the same way.
 Against the round, the asymmetry appears and the conclusion flips for fading.
 Both tables are printed by the script so the difference stays visible.
+
+---
+
+## PPP-7 — the FLEX is worth ~18 points to every RB and ~15 to every WR, and nothing to a QB
+
+Established 2026-09-03 (`analyze_ppp_flexvalue.py`), nflverse 2017–2025, full PPR.
+
+PPP starts 1 QB / 2 RB / 3 WR / 1 TE / 1 SUPERFLEX / **1 FLEX** / K / DEF. Strip the
+flex and you have what most people mean by "a superflex league" — the same roster
+one starter shorter. So the flex's entire effect is measurable as one thing:
+
+**It deepens demand, which pushes replacement level down.** With 12 teams the flex
+adds twelve more skill starters, and a position's value over replacement rises by
+exactly the amount its replacement level falls — for every player at that position
+at once, elite and marginal alike.
+
+### Who actually fills it (measured, not assumed)
+
+| | flex spots won | extra starters per team |
+| --- | --- | --- |
+| WR | 57 of 108 (52.8%) | 0.53 |
+| RB | 49 of 108 (45.4%) | 0.45 |
+| TE | **2 of 108 (1.9%)** | 0.02 |
+
+### What that does to replacement
+
+| pos | no flex | with flex | replacement falls |
+| --- | --- | --- | --- |
+| QB | QB24 = 179.5 | QB24 = 179.5 | **0.0** |
+| **RB** | RB24 = 176.7 | **RB29 = 158.3** | **18.3** |
+| **WR** | WR36 = 170.3 | **WR42 = 155.3** | **15.0** |
+| TE | TE12 = 144.5 | TE12 = 144.5 | **0.0** |
+
+### The result
+
+Value over replacement for a top-5 player:
+
+| pos | no flex | with flex | gain | |
+| --- | --- | --- | --- | --- |
+| QB | 175.4 | 175.4 | 0.0 | 0.0% |
+| **RB** | 156.1 | 174.4 | **+18.3** | **+11.7%** |
+| **WR** | 151.9 | 166.9 | **+15.0** | **+9.9%** |
+| TE | 80.5 | 80.5 | 0.0 | 0.0% |
+
+As a share of total elite VOR — which is what decides who goes before whom:
+
+| pos | no flex | with flex | shift |
+| --- | --- | --- | --- |
+| QB | 31.1% | 29.4% | **−1.7** |
+| RB | 27.7% | 29.2% | **+1.5** |
+| WR | 26.9% | 27.9% | +1.0 |
+| TE | 14.3% | 13.5% | −0.8 |
+
+**Quarterback pays for the flex.** It is the one position that cannot fill the slot
+(the superflex seat is separate and already counted), so it is the only one whose
+replacement level does not move while everyone else's falls.
+
+### The part that is not obvious
+
+**Tight end is a relative LOSER despite being flex-eligible.** TEs win 1.9% of flex
+spots, so TE replacement does not move at all — meanwhile RB and WR gain — and TE's
+share of elite value falls 0.8 points. *The flex is nominally RB/WR/TE and
+functionally RB/WR.*
+
+### How much is it worth acting on
+
+A 1.5–1.7 point shift in share is **modest** — it does not reorder the board, and it
+is much smaller than the superflex effect itself (PPP-3: QB1 goes at overall pick 2
+here). Read it as: relative to a no-flex superflex league, backs and receivers
+should go slightly earlier and quarterbacks and tight ends slightly later. It is a
+tiebreak, not a strategy.
+
+**Caveat:** replacement level is a league-wide supply-and-demand quantity, so it
+assumes the twelve flex spots are filled with the best available. Real managers do
+not, which makes the true effect a little smaller than the numbers above.
