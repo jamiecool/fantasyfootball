@@ -357,3 +357,41 @@ tiebreak, not a strategy.
 **Caveat:** replacement level is a league-wide supply-and-demand quantity, so it
 assumes the twelve flex spots are filled with the best available. Real managers do
 not, which makes the true effect a little smaller than the numbers above.
+
+### Two ways to say it, and they are not the same number
+
+Jamie's framing was that the flex "dilutes the weight of QB points in any given
+week". Measured directly — the mean points of the men who actually start, times how
+many start:
+
+| pos | share of lineup points, no flex | with flex | shift |
+| --- | --- | --- | --- |
+| QB | 28.4% | 26.1% | **−2.3** |
+| RB | 25.4% | 27.1% | +1.7 |
+| WR | 36.4% | 37.7% | +1.3 |
+| TE | 9.8% | 9.2% | −0.6 |
+
+Same direction, slightly larger than the −1.7 above. **They differ because share of
+POINTS counts the ~180 points a replacement quarterback hands you for free, and
+draft value only concerns the part you cannot get for free.** QB has the highest
+replacement level of any position, so more of a quarterback's total is free — which
+is why his share of *points* falls further than his share of *value*. The −1.7 is
+the one to draft on; the −2.3 is the one you feel on a Sunday.
+
+### The flex helps the middle of a position far more than the top
+
+The drop in replacement is a FLAT +18.3 to every running back's VOR and +15.0 to
+every receiver's. Flat in points is steeply progressive in percentage:
+
+| | RB1 | RB3 | RB6 | RB10 | RB15 | RB20 |
+| --- | --- | --- | --- | --- | --- | --- |
+| VOR gain | +8.5% | +12.1% | +18.1% | +29.2% | +49.6% | **+112%** |
+
+| | WR1 | WR3 | WR6 | WR12 | WR20 | WR30 |
+| --- | --- | --- | --- | --- | --- | --- |
+| VOR gain | +7.4% | +10.2% | +13.5% | +20.9% | +33.0% | **+89%** |
+
+So the flex barely moves the elite — RB1 gains 8.5% — and roughly doubles what a
+fringe starter is worth. **It is a mid-round effect, not a first-round one**, which
+squares with PPP-3: the flex is why receiver holds its startable rate a band longer
+than back does.
