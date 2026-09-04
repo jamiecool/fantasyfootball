@@ -1,6 +1,6 @@
 # Perennial Push — what shapes a draft (`analyze_ppp_shape.py`)
 
-⚠ **These are PPP findings and are numbered PPP-1..PPP-7 on purpose.** The PBAFFL
+⚠ **These are PPP findings and are numbered PPP-1..PPP-8 on purpose.** The PBAFFL
 findings are numbered 1..11 and none of them transfer in either direction — different
 draft format (snake vs auction), different scoring (full PPR vs half), different roster
 (superflex, 18 rounds, a FLEX). Do not cite a PPP finding in a PBAFFL argument.
@@ -395,3 +395,79 @@ So the flex barely moves the elite — RB1 gains 8.5% — and roughly doubles wh
 fringe starter is worth. **It is a mid-round effect, not a first-round one**, which
 squares with PPP-3: the flex is why receiver holds its startable rate a band longer
 than back does.
+
+---
+
+## PPP-8 — RBs *are* undervalued here, but not for the reason that makes 3-RB a plan
+
+Established 2026-09-03 (`analyze_ppp_thesis.py`). Jamie's thesis: the room drafts
+off generic **superflex** cheat sheets, which assume no FLEX; those undervalue
+running backs; so the play is three top backs, using the flex to bank a large
+positional delta.
+
+Two separable claims. **The market claim survives. The strategy claim does not.**
+
+### The market claim: substantially right
+
+The board's order (Underdog within position + this league's own pick curve across
+positions) against a value-over-replacement ranking, run twice with **only the
+replacement level changed** — so the difference between the columns is the flex and
+nothing else. Board rank minus valuation rank; **positive = the room lets him last
+longer than that valuation justifies.** Top 60 of the board, where the picks are:
+
+| pos | vs no-flex | vs flex-aware | **the flex alone** |
+| --- | --- | --- | --- |
+| QB | +3.6 | −2.8 | **−6.4** |
+| **RB** | +2.5 | **+9.7** | **+7.2** |
+| WR | −16.2 | −11.4 | +4.7 |
+| TE | +12.3 | +3.3 | **−9.0** |
+
+**The flex alone accounts for 7.2 board places of running-back undervaluation** —
+the largest flex effect of any position, and the mechanism Jamie named. Five of the
+eight players a flex-aware valuation puts in its top 36 that the board does not are
+backs: Achane (value 13, board 44), Jeanty (17/37), Love (20/46), Henry (21/40),
+Hall (24/49).
+
+Two honest qualifications:
+
+- **The room is not flex-blind.** The board correlates better with the flex-aware
+  ranking (rho 0.910) than the no-flex one (0.879). They are partially pricing it.
+- **The WR half is not the flex.** Receivers go 16.2 places earlier than an ESPN
+  projection values them and the flex claws back only 4.7 of that. Most of the WR
+  overdraft is Underdog and ESPN disagreeing, which the flex has no bearing on.
+
+### The strategy claim: it does not produce a delta
+
+Simulated from the 1.01, QB timing held at its optimum, 200 drafts each with
+availability jittered by 8 picks:
+
+| strategy | mean | p10 | p90 |
+| --- | --- | --- | --- |
+| best available (RB where it falls) | **2180** | 2059 | 2276 |
+| 3 RB forced, rounds 1, 2, 4 | **2180** | 2089 | 2260 |
+| 3 RB forced, rounds 1–3 | 2172 | 2080 | 2257 |
+| 4 RB forced, rounds 1–4 | 2129 | 2058 | 2198 |
+
+Three backs is **free, not profitable** — inside a rounding error of best-available,
+and exactly equal to it if the third comes in round 4 rather than 3. A fourth costs
+50 points.
+
+**Why there is no delta: PPP-5.** The flex is a coin flip between RB and WR — same
+mean, same median, same floor, same ceiling. The third back fills the flex, but the
+receiver you passed on would have filled it about as well. *The slot does not create
+the edge.*
+
+### What survives, and how to use it
+
+**The gain is in buying mispriced players, not in owning the slot.** Take the backs
+when the room lets them last past their flex-aware value — that is real and worth
+about seven board places. Do not force a third if the board is not offering one
+cheap, because the flex will not reward you for it.
+
+Which is a narrower instruction than "get three top backs", and it points at the
+same players.
+
+**Caveat:** the valuation is projection-based (`exp`), so "the board disagrees with
+value" partly means "Underdog disagrees with ESPN". The decomposition above is what
+separates the flex from that disagreement; the middle column is contaminated and the
+right-hand column is not.
