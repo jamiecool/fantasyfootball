@@ -1,6 +1,6 @@
 # Perennial Push — what shapes a draft (`analyze_ppp_shape.py`)
 
-⚠ **These are PPP findings and are numbered PPP-1..PPP-5 on purpose.** The PBAFFL
+⚠ **These are PPP findings and are numbered PPP-1..PPP-6 on purpose.** The PBAFFL
 findings are numbered 1..11 and none of them transfer in either direction — different
 draft format (snake vs auction), different scoring (full PPR vs half), different roster
 (superflex, 18 rounds, a FLEX). Do not cite a PPP finding in a PBAFFL argument.
@@ -216,3 +216,69 @@ best player and let the slot sort itself out. **Never flex a tight end** outside
 top 12; TE13+ busts 36% of weeks against 24% for the other two. In PBAFFL the flex
 does not exist (no FLEX slot), so the half-PPR column is a statement about that
 league's scoring only, not advice.
+
+---
+
+## PPP-6 — the room drafts almost exactly down ESPN's within-position order
+
+Established 2026-09-03 (`analyze_ppp_espn.py`), 2021–25 excluding 2023.
+
+⚠ **This uses ESPN's preseason PROJECTIONS, not its published rank list.** The rank
+list for a past preseason is not on disk and is not retrievable — ESPN serves the
+current season's ranks, and both board snapshots are 2026. The projections are
+demonstrably preseason rather than retro-fitted (actual comes in at 0.81–0.91 of
+projection every season; a retro-fit would sit at 1.00). Swapping in the real rank
+list would be a refinement, not a correction. **2023 is excluded** — ESPN did not
+retain those projections; only 37 of 216 picks carry one.
+
+Only *within* position is compared. This league is superflex and ESPN's board is
+built for one quarterback, so comparing overall order would re-measure that known
+mismatch (PPP-3) rather than the room's judgement.
+
+### Agreement is very high, and stable
+
+Spearman between ESPN's projected order and the order taken:
+
+| season | QB | RB | WR | TE | all |
+| --- | --- | --- | --- | --- | --- |
+| 2021 | 0.96 | 0.96 | 0.94 | 0.94 | 0.97 |
+| 2022 | 0.96 | 0.94 | 0.96 | 0.95 | 0.97 |
+| 2024 | 0.92 | 0.97 | 0.98 | 0.94 | 0.98 |
+| **2025** | **0.95** | **0.95** | **0.96** | **0.86** | **0.97** |
+| all | 0.95 | 0.96 | 0.96 | 0.93 | 0.97 |
+
+| pos | n | mean gap, places | within 3 | within 5 |
+| --- | --- | --- | --- | --- |
+| TE | 87 | **1.7** | 84% | 97% |
+| QB | 136 | 2.2 | 82% | 90% |
+| RB | 252 | 3.7 | 63% | 79% |
+| WR | 307 | **4.1** | 60% | 74% |
+
+The room is tightest where the position is thin (TE, QB) and loosest where there
+is most to argue about (WR, RB). 2025's TE at 0.86 is the loosest cell on record.
+
+### Deviation is asymmetric: reaching is punished, fading is not
+
+Measured against **the round the pick was taken in**:
+
+| pos | reached 5+ places early | agreed | faded 5+ places late |
+| --- | --- | --- | --- |
+| QB | +2.2 (n=8) | +18.3 (n=119) | **+78.5 (n=9)** |
+| RB | **−39.9 (n=32)** | −7.4 (n=183) | +5.2 (n=37) |
+| WR | −10.7 (n=47) | +1.0 (n=209) | +1.0 (n=51) |
+| TE | −15.5 (n=5) | −1.6 (n=81) | −13.5 (n=1) |
+| **ALL** | **−20.0 (n=92)** | +1.5 (n=592) | **+9.5 (n=98)** |
+
+**Reaching past ESPN's order cost 20 points against the round; letting a player
+fade did not cost anything.** At running back reaching cost ~40. The QB fade
+figure is +78.5 but rests on n=9 and should not be leant on.
+
+### ⚠ The yardstick decides the answer, and the obvious one is wrong
+
+Scored against the *position's* mean instead, the same split reads reached −31.6,
+agreed +8.2, faded −20.0 — i.e. "agreeing with ESPN is best and both deviations
+hurt". That is an artefact: **a reach is by definition an earlier pick**, so
+measuring it against the position's overall mean rewards it for exactly the thing
+under test, and measuring a fade against that mean penalises it the same way.
+Against the round, the asymmetry appears and the conclusion flips for fading.
+Both tables are printed by the script so the difference stays visible.
