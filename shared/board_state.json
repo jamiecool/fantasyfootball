@@ -1,8 +1,9 @@
 {
-  "saved_at": "2026-09-07 12:52",
+  "saved_at": "2026-09-07 17:44",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
+    "brockbowers": "ppr",
     "calebwilliams": "both",
     "chasebrown": "both",
     "chrisolave": "ppr",
@@ -44,9 +45,11 @@
     "kennethwalker": "both",
     "khalilshakir": "both",
     "kylepitts": "both",
+    "kylermurray": "both",
     "laddmcconkey": "ppr",
     "lamarjackson": "ppr",
     "lutherburden": "both",
+    "maliknabers": "both",
     "malikwillis": "both",
     "matthewstafford": "both",
     "michaelwilson": "both",
@@ -191,6 +194,27 @@
         "Ja'Marr Chase",
         "Bo Nix"
       ]
+    },
+    {
+      "name": "LA Stack",
+      "picks": [
+        "Omarion Hampton",
+        "Quentin Johnston",
+        "Matthew Stafford",
+        "Puka Nacua",
+        "Jordan Mason",
+        "Chase Brown",
+        "Dallas Goedert",
+        "Rome Odunze",
+        "Davante Adams"
+      ]
+    },
+    {
+      "name": "DRAFTED",
+      "live": true,
+      "picks": [],
+      "bid": {},
+      "paid": {}
     }
   ],
   "xplans": [

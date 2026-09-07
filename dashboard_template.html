@@ -140,6 +140,9 @@
        border-radius:7px;padding:5px 9px;font:inherit;font-size:15.6px}
   .planbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
   .planbar .spacer{flex:1}
+  .planbar .meter{flex-basis:100%;line-height:1.7}      /* the draft-night meter is long: give it its own line */
+  .slot input.slotbid{border-style:dashed}
+  .slot.empty .slotbid{visibility:visible}
   .btn{background:var(--surface);color:var(--ink);border:1px solid var(--border);
        border-radius:7px;padding:5px 11px;font:inherit;font-size:15.6px;cursor:pointer}
   .btn:hover{background:var(--plane)}
@@ -168,6 +171,11 @@
        font-variant-numeric:tabular-nums;background:var(--plane);color:var(--ink);
        border:1px solid var(--border);border-radius:6px}
   .slot input.paid::placeholder{color:var(--muted);font-weight:400;font-size:13px}
+  #planPool input.paid{width:58px;padding:2px 6px;font:inherit;font-size:14.5px;font-weight:650;text-align:right;
+       font-variant-numeric:tabular-nums;background:var(--plane);color:var(--ink);
+       border:1px solid var(--border);border-radius:6px}
+  #planPool input.paid::placeholder{color:var(--muted);font-weight:400}
+  #planPool input.paid:focus-visible{outline:2px solid var(--s1);outline-offset:-1px}
   .slot input.paid:focus-visible{outline:2px solid var(--s1);outline-offset:-1px}
   .slot span.paid{display:inline-block;border-color:transparent;background:none}
   .slot.empty .paid{visibility:hidden}
@@ -1419,12 +1427,26 @@ function planStats(p) {
   rows.forEach(r => { byPos[r.position] = (byPos[r.position] || 0) + price(r); });
   const top3 = rows.slice().sort((a, b) => price(b) - price(a))
     .slice(0, 3).reduce((a, r) => a + price(r), 0);
+  // SLOT BUDGETS: money allocated to a lineup slot that has no player yet ("$25 for
+  // the QB spot, $60 for RB1"). Keyed QB1, RB2, WR3, BENCH4 ... in p.slots. A slot's
+  // budget counts as planned only while the slot is empty; once a player lands in
+  // it, his bid or price takes over. Starters fill most-expensive-first, so "empty"
+  // means the last N slots of a position.
+  const slotKeys = [];
+  Object.keys(NEED).forEach(pos => {
+    const filled = starters.filter(r => r.position === pos).length;
+    for (let i = filled + 1; i <= NEED[pos]; i++) slotKeys.push(pos + i);
+  });
+  for (let i = bench.length + 1; i <= BENCH_SLOTS; i++) slotKeys.push('BENCH' + i);
+  const slotBudget = slotKeys.reduce((a, k) => a + ((p.slots && p.slots[k] != null && p.slots[k] !== '') ? +p.slots[k] : 0), 0);
+  const total = spend + slotBudget;
   return {
-    rows: rows, starters: starters, bench: bench, spend: spend, missing: missing,
-    byPos: byPos, top3: top3, price: price, left: BUD - spend, slots: SPOTS - rows.length,
+    rows: rows, starters: starters, bench: bench, spend: total, missing: missing,
+    playersSpend: spend, slotBudget: slotBudget, emptySlots: slotKeys,
+    byPos: byPos, top3: top3, price: price, left: BUD - total, slots: SPOTS - rows.length,
     projStart: Math.round(starters.reduce((a, r) => a + (r.proj_points || 0), 0)),
-    legal: missing.length === 0 && rows.length <= SPOTS && spend <= BUD,
-    won: won, bought: won.size, paid: paid, planned: spend - paid,
+    legal: missing.length === 0 && rows.length <= SPOTS && total <= BUD,
+    won: won, bought: won.size, paid: paid, planned: total - paid,
     estOfWon: estOfWon, vsBoard: paid - estOfWon,             // + means paying over the board
     cashLeft: BUD - paid, openSlots: SPOTS - won.size,
     // the endgame rule from CLAUDE.md: keep >= $2 per remaining roster spot
@@ -1459,35 +1481,47 @@ function planBar() {
       ' spot' + (s.openSlots === 1 ? '' : 's') +
       ' <span style="color:var(--muted)">($' + (Math.round(s.perSlot * 10) / 10) + ' each' +
       (s.openSlots && s.perSlot < 2 ? ', <span class="dn">under the $2 floor</span>' : '') + ')</span>' +
-      ' &middot; planned ' + money(s.planned) + ' &rarr; <b class="' + (s.spend > BUD ? 'dn' : '') + '">' + money(s.spend) + '</b> ' +
+      ' &middot; planned ' + money(s.planned) +
+      (s.slotBudget ? ' <span style="color:var(--muted)">(' + money(s.playersSpend - s.paid) + ' players + ' + money(s.slotBudget) + ' open slots)</span>' : '') +
+      ' &rarr; <b class="' + (s.spend > BUD ? 'dn' : '') + '">' + money(s.spend) + '</b> ' +
       (s.spend > BUD ? '<span class="dn">' + money(s.spend - BUD) + ' over</span>'
                      : '<span class="up">' + money(BUD - s.spend) + ' under</span>') +
       bar(s.spend) +
       (s.bought ? 'vs board <span class="' + (s.vsBoard > 0 ? 'dn' : 'up') + '" title="what you paid for the ' + s.bought +
         ' won, minus what the board priced them at">' + (s.vsBoard > 0 ? '+' : '') + money(s.vsBoard) + '</span> &middot; ' : '') +
       s.bought + ' won, ' + (s.rows.length - s.bought) + ' planned &middot; ' + need
-    : '<b>' + money(s.spend) + '</b> / $' + BUD + bar(s.spend) +
-      money(s.left) + ' left &middot; ' + s.rows.length + '/' + SPOTS + ' picks &middot; ' + need;
+    : '<b>' + money(s.spend) + '</b> / $' + BUD +
+      (s.slotBudget ? ' <span style="color:var(--muted)">(' + money(s.playersSpend) + ' players + ' + money(s.slotBudget) + ' open slots)</span>' : '') +
+      bar(s.spend) + money(s.left) + ' left &middot; ' + s.rows.length + '/' + SPOTS + ' picks &middot; ' + need;
   const nm = document.getElementById('planName');
   if (document.activeElement !== nm) nm.value = cur().name;
 }
 
-function slotRow(lab, r, cls) {
+function slotRow(lab, r, cls, slotKey) {
   const p = cur(), live = isLive(p);
   const n = r ? r.player_name : '';
   const won = !!(r && paidOf(p, n) != null);
   const val = r ? (won ? paidOf(p, n) : bidOf(p, n)) : '';
+  // an EMPTY slot takes a budget of its own: what you mean to spend on whoever fills it
+  const slotVal = (!r && slotKey && p.slots && p.slots[slotKey] != null && p.slots[slotKey] !== '') ? p.slots[slotKey] : '';
   return '<div class="slot ' + cls + (r ? '' : ' empty') + (won ? ' won' : '') + '">' +
+    // one colour tag per row, on the left: a lineup slot wears its position colour and the
+    // player's rank stays plain; a bench row has no slot label, so the player's chip carries it
     '<span class="lab">' + (POSC[lab] ? '<span class="pos" style="background:var(' + POSC[lab] + ')">' + lab + '</span>' : lab) + '</span>' +
     '<span class="nm">' + (r ? starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + noteHtml(r.player_key) +
-      ' <span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' + r.position + r.blendrank + '</span>' +
-      ' <span style="color:var(--muted)">' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
+      (POSC[lab] ? ' <span style="color:var(--muted)">' + r.position + r.blendrank + ' &middot; ' + r.nfl_team + '</span>'
+                 : ' <span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' + r.position + r.blendrank + '</span>' +
+                   ' <span style="color:var(--muted)">' + r.nfl_team + '</span>') : '&mdash;') + '</span>' +
     '<span class="est" title="board price">' + (r ? '$' + r.est_price : '') + '</span>' +
     // one $ box per player: his budget while planned, his price once won
     (r ? '<input class="paid" type="number" min="0" max="' + BUD + '" inputmode="numeric" data-bid="' + esc(n) + '"' +
          ' value="' + val + '" aria-label="' + (won ? 'Price paid for ' : 'Budget for ') + esc(n) + '"' +
          ' title="' + (won ? 'What you paid' : 'Your budget for him — the board price until you change it') + '">'
-       : '<span class="paid" aria-hidden="true"></span>') +
+       : slotKey
+         ? '<input class="paid slotbid" type="number" min="0" max="' + BUD + '" inputmode="numeric" data-slotbid="' + slotKey + '"' +
+           ' value="' + slotVal + '" placeholder="$" aria-label="Budget for the ' + lab + ' slot"' +
+           ' title="Budget for this slot while it is empty. Counts as planned until a player fills it.">'
+         : '<span class="paid" aria-hidden="true"></span>') +
     (r && live ? '<button class="btn mini won' + (won ? ' on' : '') + '" data-won="' + esc(n) + '" aria-pressed="' + won +
          '" title="' + (won ? 'Won — click to undo' : 'Mark as won at this price') + '">' + (won ? '✓ won' : 'won') + '</button>' : '') +
     (r ? '<button class="btn mini" data-drop="' + esc(n) + '" aria-label="remove">&times;</button>' : '') +
@@ -1501,11 +1535,13 @@ function planRoster() {
   Object.keys(NEED).forEach(function (pos) {
     for (let i = 0; i < NEED[pos]; i++) {
       const idx = pool.findIndex(function (r) { return r.position === pos; });
-      html += slotRow(pos, idx >= 0 ? pool.splice(idx, 1)[0] : null, 'start');
+      html += slotRow(pos, idx >= 0 ? pool.splice(idx, 1)[0] : null, 'start', pos + (i + 1));
     }
   });
   html += '<div class="slot" style="border:0;padding-top:10px"><span class="lab">BENCH</span><span class="nm"></span></div>';
-  for (let i = 0; i < BENCH_SLOTS; i++) html += slotRow('', s.bench[i] || null, 'bench');
+  // bench rows read like the starters: the position chip on the left, rank plain
+  for (let i = 0; i < BENCH_SLOTS; i++)
+    html += slotRow(s.bench[i] ? s.bench[i].position : '', s.bench[i] || null, 'bench', 'BENCH' + (i + 1));
   const host = document.getElementById('planRoster');
   host.innerHTML = html;
   bindLinks(host);
@@ -1515,8 +1551,7 @@ function planRoster() {
     b.onclick = function () {
       const p = cur(), n = b.dataset.drop;
       p.picks = p.picks.filter(function (x) { return x !== n; });
-      if (p.bid) delete p.bid[n];
-      if (p.paid) delete p.paid[n];
+      if (p.paid) delete p.paid[n];                 // his target value (bid) is kept for next time
       savePlans(); drawPlan();
     };
   });
@@ -1528,6 +1563,16 @@ function planRoster() {
       const store = paidOf(p, n) != null ? (p.paid = p.paid || {}) : (p.bid = p.bid || {});
       if (inp.value === '') delete store[n];
       else store[n] = Math.max(0, Math.round(+inp.value) || 0);
+      savePlans(); planBar(); planCompare();
+    };
+    inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
+  });
+  host.querySelectorAll('input[data-slotbid]').forEach(function (inp) {
+    inp.oninput = function () {
+      const p = cur();
+      p.slots = p.slots || {};
+      if (inp.value === '') delete p.slots[inp.dataset.slotbid];
+      else p.slots[inp.dataset.slotbid] = Math.max(0, Math.round(+inp.value) || 0);
       savePlans(); planBar(); planCompare();
     };
     inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
@@ -1560,32 +1605,51 @@ function planPool() {
   }).slice(0, 300);
   document.getElementById('planPool').innerHTML =
     '<thead><tr><th class="l" style="cursor:default">#</th>' +
-    '<th class="l">player</th><th>$</th><th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
+    '<th class="l">player</th><th title="board price">$</th>' +
+    '<th title="Your number for him — the most you will pay. Set it before the draft; when you win him it becomes his price, and it seeds his budget on any plan you add him to.">my $</th>' +
+    '<th class="l">pos</th><th>tm</th><th></th></tr></thead><tbody>' +
     rows.map(function (r, i) {
+      const n = r.player_name;
+      const mine = (p.bid && p.bid[n] != null && p.bid[n] !== '') ? p.bid[n] : '';
       return '<tr><td class="l" style="color:var(--muted)">' + (i + 1) + '</td>' +
         '<td class="l">' + starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + noteHtml(r.player_key) + '</td>' +
-        '<td><b>$' + r.est_price + '</b></td>' +
+        '<td style="color:var(--ink2)">$' + r.est_price + '</td>' +
+        // TARGET VALUE: your max for a player you have not drafted yet, kept in the same
+        // `bid` map the roster uses, so winning him or adding him carries it over
+        '<td><input class="paid" type="number" min="0" max="' + BUD + '" inputmode="numeric" data-tbid="' + esc(n) + '"' +
+        ' value="' + mine + '" placeholder="' + r.est_price + '" aria-label="Your max for ' + esc(n) + '"></td>' +
         '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
         r.position + r.blendrank + '</span></td>' +
         '<td style="color:var(--ink2)">' + r.nfl_team + '</td>' +
         // on DRAFTED, adding a player means you just won him: one click, then type the price
         '<td><button class="btn mini' + (taken[r.player_name] ? '' : live ? ' won' : '') + '" data-add="' + esc(r.player_name) + '"' +
-        (live && !taken[r.player_name] ? ' title="Won him — adds to the draft at the board price; edit the price in the roster"' : '') + '>' +
+        (live && !taken[r.player_name] ? ' title="Won him — adds to the draft at your number (or the board price); edit it in the roster"' : '') + '>' +
         (taken[r.player_name] ? '&check;' : live ? 'won' : '+') + '</button></td></tr>';
     }).join('') + '</tbody>';
   bindLinks(document.getElementById('planPool'));
   bindStars(document.getElementById('planPool'));
   bindNotes(document.getElementById('planPool'));
+  // typing a target value: saved as you type, no repaint, so the box keeps focus
+  document.querySelectorAll('#planPool input[data-tbid]').forEach(function (inp) {
+    inp.oninput = function () {
+      const pl = cur(), n = inp.dataset.tbid;
+      pl.bid = pl.bid || {};
+      if (inp.value === '') delete pl.bid[n];
+      else pl.bid[n] = Math.max(0, Math.round(+inp.value) || 0);
+      savePlans();
+      if (pl.picks.indexOf(n) >= 0) { planBar(); planRoster(); planCompare(); }   // he is on the roster: his budget moved
+    };
+    inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
+  });
   document.querySelectorAll('#planPool [data-add]').forEach(function (b) {
     b.onclick = function () {
       const p = cur(), n = b.dataset.add;
       if (p.picks.indexOf(n) >= 0) {
         p.picks = p.picks.filter(function (x) { return x !== n; });
-        if (p.bid) delete p.bid[n];
-        if (p.paid) delete p.paid[n];
+        if (p.paid) delete p.paid[n];               // his target value (bid) is kept
       } else if (p.picks.length < SPOTS) {
         p.picks.push(n);
-        if (isLive(p)) { p.paid = p.paid || {}; p.paid[n] = estOf(n); }
+        if (isLive(p)) { p.paid = p.paid || {}; p.paid[n] = bidOf(p, n); }   // your number if you set one, else the board's
       }
       savePlans(); drawPlan();
       if (isLive(cur()) && paidOf(cur(), n) != null) {
@@ -1669,7 +1733,8 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
   document.getElementById('planCopy').onclick = function () {
     // a copy is always a what-if: it takes the picks and budgets, never the won prices or the flag
     const p = cur();
-    plans.push({ name: p.name + ' copy', picks: p.picks.slice(), bid: Object.assign({}, p.bid || {}) });
+    plans.push({ name: p.name + ' copy', picks: p.picks.slice(), bid: Object.assign({}, p.bid || {}),
+                 slots: Object.assign({}, p.slots || {}) });
     active = plans.length - 1; savePlans(); drawPlan(); focusName();
   };
   // ⚑ DRAFTED: start the actual draft from this plan, or jump to it
@@ -1678,7 +1743,9 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
     if (li < 0) {
       const p = cur(), bid = {};
       p.picks.forEach(function (n) { bid[n] = bidOf(p, n); });
-      plans.push({ name: 'DRAFTED', live: true, picks: p.picks.slice(), bid: bid, paid: {} });
+      Object.keys(p.bid || {}).forEach(function (n) { if (bid[n] == null) bid[n] = p.bid[n]; });   // target values too
+      plans.push({ name: 'DRAFTED', live: true, picks: p.picks.slice(), bid: bid, paid: {},
+                   slots: Object.assign({}, p.slots || {}) });
       li = plans.length - 1;
     }
     active = li; savePlans(); drawPlan();
@@ -1692,7 +1759,8 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
     const won = wonSet(L);
     const keep = L.picks.filter(function (n) { return won.has(n); });
     const add = src.picks.filter(function (n) { return !won.has(n); }).slice(0, Math.max(0, SPOTS - keep.length));
-    const bid = {};
+    // target values for players on neither roster travel too: they are the plan's numbers
+    const bid = Object.assign({}, L.bid || {}, src.bid || {});
     keep.forEach(function (n) { if (L.bid && L.bid[n] != null) bid[n] = L.bid[n]; });
     add.forEach(function (n) { bid[n] = bidOf(src, n); });
     L.picks = keep.concat(add); L.bid = bid;
@@ -3360,18 +3428,21 @@ function xPlanRoster() {
     for (let i = 0; i < XNEED[pos]; i++) {
       const idx = pool.findIndex(x => x[0] === pos);
       const r = idx >= 0 ? pool.splice(idx, 1)[0][1] : null;
-      // the slot label wears its position colour where it has one; FLEX and SUPERFLEX stay neutral
+      // one colour tag per row, on the left: the slot label wears the position colour and the
+      // player's rank stays plain. FLEX and SUPERFLEX have no colour, so there the player's chip carries it.
       html += `<div class="slot start${r ? '' : ' empty'}">
         <span class="lab" style="width:74px">${POSC[pos] ? `<span class="pos" style="background:var(${POSC[pos]})">${pos}</span>` : pos}</span>
-        <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+        <span class="nm">${r ? pLink(r.n, r.key, 0) + (POSC[pos]
+          ? ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>`
+          : ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>`) : '&mdash;'}</span>
         <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
     }
   });
   html += `<div class="slot" style="border:0;padding-top:8px"><span class="lab">BENCH</span><span class="nm"></span></div>`;
   for (let i = 0; i < XBENCH; i++) {
     const r = s.bench[i];
-    html += `<div class="slot bench${r ? '' : ' empty'}"><span class="lab" style="width:74px"></span>
-      <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+    html += `<div class="slot bench${r ? '' : ' empty'}"><span class="lab" style="width:74px">${r ? `<span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}</span>` : ''}</span>
+      <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
   }
   document.getElementById('xplanRoster').innerHTML = html;
