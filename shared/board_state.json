@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-09-07 17:54",
+  "saved_at": "2026-09-07 18:00",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
@@ -35,6 +35,7 @@
     "joeburrow": "ppr",
     "jonahcoleman": "both",
     "jordanmason": "both",
+    "jordyntyson": "both",
     "joshallen": "ppr",
     "joshdowns": "ppr",
     "justinherbert": "both",
@@ -91,7 +92,8 @@
         "Denzel Boston",
         "Ja'Kobi Lane",
         "Chase Brown"
-      ]
+      ],
+      "rank": 3
     },
     {
       "name": "Amon",
@@ -136,7 +138,8 @@
       ],
       "paid": {
         "Kenneth Walker III": 45
-      }
+      },
+      "rank": 4
     },
     {
       "name": "Deep",
@@ -156,7 +159,8 @@
         "KC Concepcion",
         "Christian Watson",
         "Ja'Kobi Lane"
-      ]
+      ],
+      "rank": 5
     },
     {
       "name": "Studs and Duds",
@@ -192,7 +196,8 @@
         "Ja'Kobi Lane",
         "Ja'Marr Chase",
         "Bo Nix"
-      ]
+      ],
+      "rank": 2
     },
     {
       "name": "LA Stack",
@@ -260,7 +265,8 @@
         "Brock Bowers",
         "Jordan Mason"
       ],
-      "bid": {}
+      "bid": {},
+      "rank": 1
     }
   ],
   "xplans": [

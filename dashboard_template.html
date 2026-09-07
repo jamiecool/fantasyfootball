@@ -208,6 +208,13 @@
        width:150px;display:inline-block;vertical-align:-1px;margin:0 7px}
   .bar i{display:block;height:100%;background:var(--s1)}
   .bar i.over{background:var(--bad)}
+  .nameRow{display:flex;align-items:center;gap:6px}
+  .nameRow .nameEdit{flex:1;min-width:0}
+  .rankEdit{width:52px;flex:none;text-align:center;font:inherit;font-size:17px;font-weight:700;
+       font-variant-numeric:tabular-nums;background:var(--plane);color:var(--ink);
+       border:1px solid var(--border);border-radius:7px;padding:4px 4px}
+  .rankEdit::placeholder{color:var(--muted);font-weight:400}
+  .rankEdit:focus{outline:none;border-color:var(--s1)}
   .nameEdit{background:transparent;border:1px solid transparent;border-radius:7px;
        color:var(--ink);font:inherit;font-size:17.5px;font-weight:650;padding:2px 6px;
        margin:0 0 6px -6px;width:100%;max-width:320px}
@@ -516,7 +523,11 @@
     </div>
     <div class="plangrid">
       <div class="card">
-        <input id="planName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        <div class="nameRow">
+          <input id="planRank" class="rankEdit" type="number" min="1" max="99" inputmode="numeric" placeholder="#"
+            aria-label="plan preference order" title="Your order of preference — 1 is the favourite. Sets the dropdown and Compare order.">
+          <input id="planName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        </div>
         <div id="planRoster"></div>
       </div>
       <div class="card">
@@ -650,7 +661,11 @@
     </div>
     <div class="plangrid">
       <div class="card">
-        <input id="xplanName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        <div class="nameRow">
+          <input id="xplanRank" class="rankEdit" type="number" min="1" max="99" inputmode="numeric" placeholder="#"
+            aria-label="plan preference order" title="Your order of preference — 1 is the favourite. Sets the dropdown and Compare order.">
+          <input id="xplanName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
+        </div>
         <div id="xplanPicks"></div>
         <div id="xplanRoster" style="margin-top:14px"></div>
       </div>
@@ -1407,6 +1422,17 @@ const bidOf = (p, n) => (p.bid && p.bid[n] != null && p.bid[n] !== '') ? +p.bid[
 const paidOf = (p, n) => (p.paid && p.paid[n] != null && p.paid[n] !== '') ? +p.paid[n] : null;
 const wonSet = p => new Set(p.picks.filter(function (n) { return paidOf(p, n) != null; }));
 const money = v => (v < 0 ? '−$' : '$') + Math.round(Math.abs(v));
+/* PLAN ORDER. ⚑ DRAFTED first, then by the preference number typed next to the
+   name (1 = favourite), unranked plans after those in creation order. Used by the
+   dropdown and the Compare table alike so they always agree. Option values and
+   `active` stay REAL indexes into plans[]; only the presentation is sorted. */
+const rankOf = p => (p.rank != null && p.rank !== '' && +p.rank > 0) ? +p.rank : Infinity;
+function planOrder() {
+  return plans.map(function (p, i) { return i; }).sort(function (a, b) {
+    return (isLive(plans[b]) - isLive(plans[a])) || (rankOf(plans[a]) - rankOf(plans[b])) || a - b;
+  });
+}
+const planLabel = p => (isLive(p) ? '⚑ ' : rankOf(p) < Infinity ? p.rank + '. ' : '') + esc(p.name);
 
 /* Every derived number for a roster, in one place, used by the panel and the
    comparison alike so the two can never disagree. */
@@ -1458,12 +1484,12 @@ function planStats(p) {
 function planBar() {
   const sel = document.getElementById('planSel');
   // DRAFTED first, then the plans in creation order; option values are real indexes
-  const order = plans.map(function (p, i) { return i; })
-    .sort(function (a, b) { return (isLive(plans[b]) - isLive(plans[a])) || a - b; });
+  const order = planOrder();
   sel.innerHTML = order.map(function (i) {
-    return '<option value="' + i + '"' + (i === active ? ' selected' : '') + '>' +
-      (isLive(plans[i]) ? '⚑ ' : '') + esc(plans[i].name) + '</option>';
+    return '<option value="' + i + '"' + (i === active ? ' selected' : '') + '>' + planLabel(plans[i]) + '</option>';
   }).join('');
+  const rk = document.getElementById('planRank');
+  if (rk && document.activeElement !== rk) rk.value = cur().rank || '';
   const p = cur(), s = planStats(p), li = liveIdx();
   const lb = document.getElementById('planLive');
   lb.setAttribute('aria-pressed', String(isLive(p)));
@@ -1662,7 +1688,8 @@ function planPool() {
 }
 
 function planCompare() {
-  const st = plans.map(planStats);
+  const order = planOrder(), ordered = order.map(function (i) { return plans[i]; });
+  const st = ordered.map(planStats);
   const POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
   const anyWon = st.some(function (s) { return s.bought; });
   function row(lab, fn, note) {
@@ -1672,8 +1699,8 @@ function planCompare() {
   }
   document.getElementById('planCmp').innerHTML =
     '<thead><tr><th class="l">metric</th>' +
-    plans.map(function (p, i) {
-      return '<th' + (i === active ? ' style="color:var(--ink)"' : '') + '>' + (isLive(p) ? '⚑ ' : '') + esc(p.name) + '</th>';
+    order.map(function (i) {
+      return '<th' + (i === active ? ' style="color:var(--ink)"' : '') + '>' + planLabel(plans[i]) + '</th>';
     }).join('') + '</tr></thead><tbody>' +
     row('projected total', function (s) { return money(s.spend); }, anyWon ? 'paid + planned' : 'budgets') +
     (anyWon
@@ -1731,6 +1758,14 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
   nameBox.onblur = function () {
     if (!cur().name.trim()) { cur().name = isLive(cur()) ? 'DRAFTED' : 'Plan ' + (active + 1); savePlans(); drawPlan(); }
   };
+  // preference number: reorders the dropdown and Compare as you type; the box keeps focus
+  const rankBox = document.getElementById('planRank');
+  rankBox.oninput = function () {
+    const v = Math.round(+rankBox.value);
+    if (rankBox.value === '' || !(v > 0)) delete cur().rank; else cur().rank = v;
+    savePlans(); planBar(); planCompare();
+  };
+  rankBox.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); rankBox.blur(); } };
   document.getElementById('planCopy').onclick = function () {
     // a copy is always a what-if: it takes the picks and budgets, never the won prices or the flag
     const p = cur();
@@ -3275,9 +3310,11 @@ function xPlanStats(pl) {
 function xPlanBar() {
   const sel = document.getElementById('xplanSel');
   // ⚑ DRAFTED (the actual draft, `live`) pinned first; option values stay real indexes
-  const xorder = xplans.map((p, i) => i).sort((a, b) => (!!xplans[b].live - !!xplans[a].live) || a - b);
+  const xorder = xPlanOrder();
   sel.innerHTML = xorder.map(i =>
-    `<option value="${i}"${i === xactive ? ' selected' : ''}>${xplans[i].live ? '⚑ ' : ''}${esc(xplans[i].name)}</option>`).join('');
+    `<option value="${i}"${i === xactive ? ' selected' : ''}>${xPlanLabel(xplans[i])}</option>`).join('');
+  const xrk = document.getElementById('xplanRank');
+  if (xrk && document.activeElement !== xrk) xrk.value = xCur().rank || '';
   const xl = document.getElementById('xplanLive');
   if (xl) xl.setAttribute('aria-pressed', String(!!xCur().live));
   const xs = document.getElementById('xplanSeed');
@@ -3529,14 +3566,21 @@ function xPlanPool() {
   });
 }
 
+// same ordering rule as the auction planner: ⚑ DRAFTED, then preference number, then creation order
+const xRankOf = p => (p.rank != null && p.rank !== '' && +p.rank > 0) ? +p.rank : Infinity;
+const xPlanOrder = () => xplans.map((p, i) => i).sort((a, b) =>
+  (!!xplans[b].live - !!xplans[a].live) || (xRankOf(xplans[a]) - xRankOf(xplans[b])) || a - b);
+const xPlanLabel = p => (p.live ? '⚑ ' : xRankOf(p) < Infinity ? p.rank + '. ' : '') + esc(p.name);
+
 function xPlanCompare() {
-  const cols = xplans.map(xPlanStats);
-  const posRow = pos => xplans.map((p, i) =>
+  const ordered = xPlanOrder().map(i => xplans[i]);
+  const cols = ordered.map(xPlanStats);
+  const posRow = pos => ordered.map((p, i) =>
     `<td>${cols[i].filled.filter(r => r.pos === pos).length || ''}</td>`).join('');
   document.getElementById('xplanCmp').innerHTML =
-    '<thead><tr><th class="l">&nbsp;</th>' + xplans.map(p => `<th class="l">${esc(p.name)}</th>`).join('') +
+    '<thead><tr><th class="l">&nbsp;</th>' + ordered.map(p => `<th class="l">${xPlanLabel(p)}</th>`).join('') +
     '</tr></thead><tbody>' +
-    '<tr><td class="l">draft slot</td>' + xplans.map(p => `<td>${p.slot}</td>`).join('') + '</tr>' +
+    '<tr><td class="l">draft slot</td>' + ordered.map(p => `<td>${p.slot}</td>`).join('') + '</tr>' +
     '<tr><td class="l">picks used</td>' + cols.map(c => `<td>${c.filled.length}/${XRDS}</td>`).join('') + '</tr>' +
     '<tr><td class="l">projected starting points</td>' + cols.map(c => `<td><b>${c.exp}</b></td>`).join('') + '</tr>' +
     '<tr><td class="l">lineup</td>' + cols.map(c => `<td>${c.legal
@@ -3553,6 +3597,11 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
   on('xplanSel', 'change', e => { xactive = +e.target.value; xDrawPlan(); });
   on('xslot', 'change', e => { xCur().slot = +e.target.value; xSavePlans(); xDrawPlan(); });
   on('xplanName', 'input', e => { xCur().name = e.target.value || 'untitled'; xSavePlans(); xPlanCompare(); });
+  on('xplanRank', 'input', e => {
+    const v = Math.round(+e.target.value);
+    if (e.target.value === '' || !(v > 0)) delete xCur().rank; else xCur().rank = v;
+    xSavePlans(); xPlanBar(); xPlanCompare();
+  });
   on('xplanNew', 'click', () => {
     xplans.push({name: 'Plan ' + String.fromCharCode(65 + xplans.length), slot: xCur().slot,
       ids: Array(XRDS).fill(null)});
