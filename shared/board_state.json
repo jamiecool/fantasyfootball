@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-09-07 18:00",
+  "saved_at": "2026-09-07 19:31",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
@@ -50,6 +50,7 @@
     "lamarjackson": "ppr",
     "lutherburden": "both",
     "maliknabers": "both",
+    "malikwashington": "ppr",
     "malikwillis": "both",
     "matthewstafford": "both",
     "michaelwilson": "both",
@@ -239,8 +240,8 @@
         "Christian Watson",
         "Ja'Kobi Lane",
         "Brock Bowers",
-        "Matthew Stafford",
-        "Malik Willis"
+        "Malik Willis",
+        "Tyler Shough"
       ],
       "bid": {},
       "slots": {}
@@ -267,6 +268,31 @@
       ],
       "bid": {},
       "rank": 1
+    },
+    {
+      "name": "Panic",
+      "picks": [
+        "Malik Nabers",
+        "De'Von Achane",
+        "Colston Loveland",
+        "Garrett Wilson",
+        "D.J. Moore",
+        "Parker Washington",
+        "Christian Watson",
+        "Jadarian Price",
+        "Travis Etienne Jr.",
+        "Quinshon Judkins",
+        "Kyler Murray",
+        "KC Concepcion",
+        "De'Zhaun Stribling",
+        "HOU DEF",
+        "Jake Bates",
+        "Malik Willis"
+      ],
+      "bid": {
+        "De'Von Achane": 34
+      },
+      "rank": 6
     }
   ],
   "xplans": [
