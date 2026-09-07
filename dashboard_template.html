@@ -141,8 +141,9 @@
   .planbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
   .planbar .spacer{flex:1}
   .planbar .meter{flex-basis:100%;line-height:1.7}      /* the draft-night meter is long: give it its own line */
-  .slot input.slotbid{border-style:dashed}
-  .slot.empty .slotbid{visibility:visible}
+  /* an empty slot's own budget box must show even though empty rows hide the price box:
+     the element selector outranks the `.slot.empty .paid{visibility:hidden}` rule below */
+  .slot.empty input.slotbid{visibility:visible;border-style:dashed}
   .btn{background:var(--surface);color:var(--ink);border:1px solid var(--border);
        border-radius:7px;padding:5px 11px;font:inherit;font-size:15.6px;cursor:pointer}
   .btn:hover{background:var(--plane)}
