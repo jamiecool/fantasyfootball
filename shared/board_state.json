@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-09-07 17:45",
+  "saved_at": "2026-09-07 17:54",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
@@ -35,7 +35,6 @@
     "joeburrow": "ppr",
     "jonahcoleman": "both",
     "jordanmason": "both",
-    "jordyntyson": "both",
     "joshallen": "ppr",
     "joshdowns": "ppr",
     "justinherbert": "both",
@@ -213,8 +212,55 @@
       "name": "DRAFTED",
       "live": true,
       "picks": [],
-      "bid": {},
+      "bid": {
+        "Jahmyr Gibbs": 61
+      },
       "paid": {}
+    },
+    {
+      "name": "Brock",
+      "picks": [
+        "De'Von Achane",
+        "Chase Brown",
+        "Garrett Wilson",
+        "LAC DEF",
+        "Jake Bates",
+        "Jadarian Price",
+        "Parker Washington",
+        "Travis Etienne Jr.",
+        "D.J. Moore",
+        "De'Zhaun Stribling",
+        "KC Concepcion",
+        "Christian Watson",
+        "Ja'Kobi Lane",
+        "Brock Bowers",
+        "Matthew Stafford",
+        "Malik Willis"
+      ],
+      "bid": {},
+      "slots": {}
+    },
+    {
+      "name": "Gibbs",
+      "picks": [
+        "Jahmyr Gibbs",
+        "Jadarian Price",
+        "Garrett Wilson",
+        "D.J. Moore",
+        "Parker Washington",
+        "Christian Watson",
+        "Quinshon Judkins",
+        "Malik Willis",
+        "Kyler Murray",
+        "De'Zhaun Stribling",
+        "KC Concepcion",
+        "Ja'Kobi Lane",
+        "Jake Bates",
+        "HOU DEF",
+        "Brock Bowers",
+        "Jordan Mason"
+      ],
+      "bid": {}
     }
   ],
   "xplans": [
