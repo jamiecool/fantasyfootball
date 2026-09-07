@@ -299,9 +299,15 @@ D["rules"] = RULES
 # Nested player-season -> games rather than a flat row list: the flat form
 # repeats a player index on all 55k rows for no gain. Points are rounded to 1dp
 # and stats are ints, which is what keeps this near 2.5MB instead of 8.
-WK_COLS = ["cmp", "att", "pass_yd", "pass_td", "int", "car", "rush_yd", "rush_td",
-           "tgt", "rec", "rec_yd", "rec_td", "st_td", "fum_lost", "two_pt",
-           "fg", "fg_att", "fg_long", "pat"]
+OFF_COLS = ["cmp", "att", "pass_yd", "pass_td", "int", "car", "rush_yd", "rush_td",
+            "tgt", "rec", "rec_yd", "rec_td", "st_td", "fum_lost", "two_pt",
+            "fg", "fg_att", "fg_long", "pat"]
+# D/ST stat columns ride at the END of a game row and only on DEF rows: sacks,
+# INTs, fumble recoveries, TDs, safeties, blocked kicks, 2-pt returns, points
+# allowed, yards allowed. Player rows stop short, so 55k of them do not each carry
+# nine zeros; the page reads a missing cell as 0 and tells a D/ST row by its length.
+DST_COLS = ["sk", "dint", "fr", "dtd", "saf", "blk", "xpr", "pa", "ya"]
+WK_COLS = OFF_COLS + DST_COLS
 pw = pd.read_sql("SELECT * FROM player_weeks", con)
 _price = pd.read_sql("""SELECT season, player_key, price, franchise
                         FROM draft_picks""", con)
@@ -361,7 +367,9 @@ for (season, key), g in pw.groupby(["season", "player_key"], sort=False):
     price, franchise = _price.get((season, key), (None, ""))
     pos_rank, ovr, pos_rank_ppr = _rank.get((season, key), (None, None, None))
     games = [[int(r.week), TIDX.get(r.opponent, -1), round(float(r.points), 1)]
-             + [int(getattr(r, c)) for c in WK_COLS] for r in g.itertuples()]
+             + [int(getattr(r, c)) for c in OFF_COLS]
+             + ([int(getattr(r, c)) for c in DST_COLS] if first.position == "DEF" else [])
+             for r in g.itertuples()]
     prank = PRICE_RANK.get((season, key))
     exp = expected_ppg(season, first.position, prank) if prank else None
     ps_rows.append([first.player_name, first.position, first.nfl_team, int(season),

@@ -156,7 +156,21 @@
   .slot{display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid var(--grid)}
   .slot .lab{width:38px;color:var(--muted);font-size:13.8px;font-weight:650}
   .slot .nm{flex:1;font-size:15.6px}
-  .slot .pr{font-size:15.6px;font-weight:650;font-variant-numeric:tabular-nums}
+  .slot .pr{font-size:15.6px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--ink2);min-width:38px;text-align:right}
+  .btn.live{font-weight:650}
+  .btn.live[aria-pressed=true]{background:var(--s4);border-color:var(--s4);color:#1a1a19}
+  .slot .est{color:var(--muted);font-size:13.8px;min-width:36px;text-align:right;font-variant-numeric:tabular-nums}
+  .slot.won .nm{font-weight:600}
+  .slot.won input.paid{border-color:var(--s4);box-shadow:inset 0 0 0 1px var(--s4)}
+  .slot .btn.won{min-width:52px}
+  .slot .btn.won.on{background:var(--s4);border-color:var(--s4);color:#1a1a19;font-weight:650}
+  .slot .paid{width:62px;padding:3px 6px;font:inherit;font-size:15px;font-weight:650;text-align:right;
+       font-variant-numeric:tabular-nums;background:var(--plane);color:var(--ink);
+       border:1px solid var(--border);border-radius:6px}
+  .slot input.paid::placeholder{color:var(--muted);font-weight:400;font-size:13px}
+  .slot input.paid:focus-visible{outline:2px solid var(--s1);outline-offset:-1px}
+  .slot span.paid{display:inline-block;border-color:transparent;background:none}
+  .slot.empty .paid{visibility:hidden}
   .slot.empty .nm{color:var(--muted);font-style:italic}
   .slot.bench{opacity:.85}
   /* Draggable picks. The planner auto-places a player at the earliest pick he
@@ -270,6 +284,11 @@
   .modalX{position:absolute;top:13px;right:15px}
   .modalCard h2{font-size:21.2px;margin:0 0 3px;font-weight:650}
   .modalCard h3{font-size:15.6px;margin:18px 0 7px;font-weight:650;color:var(--ink2)}
+  .stateCard textarea,.stateCard pre{width:100%;box-sizing:border-box;margin:0;
+       font:12.6px/1.45 ui-monospace,Consolas,monospace;background:var(--plane);color:var(--ink);
+       border:1px solid var(--border);border-radius:7px;padding:8px}
+  .stateCard textarea{min-height:120px;resize:vertical}
+  .stateCard pre{white-space:pre-wrap;word-break:break-word;max-height:38vh;overflow:auto;min-height:44px}
   .pHead{color:var(--ink2);font-size:15.6px;margin:0 0 4px}
   /* Weekly points bars. A season total hides the shape that a head-to-head
      league actually pays for, so the log gets a picture as well as a table. */
@@ -305,6 +324,8 @@
   <span class="sub" id="hSub">2026 board &amp; nine seasons of league history</span>
   <button class="tab toggle" id="saveBtn" aria-selected="false" disabled>saved</button>
   <button class="tab" id="themeBtn" aria-selected="false">◐ theme</button>
+  <button class="tab" id="stateBtn" aria-selected="false"
+    title="Export or import your stars, notes and plans — the way to move edits off a published copy">⇅ state</button>
   <span class="lgwrap">
     <label for="lgSel">League</label>
     <select id="lgSel" aria-label="Choose which league's rules and data to view">
@@ -383,7 +404,7 @@
         <select id="nPos" aria-label="Filter NFL stats by position">
           <option value="">all positions</option>
           <option>QB</option><option>RB</option><option>WR</option>
-          <option>TE</option><option>K</option>
+          <option>TE</option><option>K</option><option value="DEF">D/ST</option>
         </select>
         <select id="nTeam" aria-label="Filter NFL stats by NFL team"><option value="">all NFL teams</option></select>
         <span class="meter">weeks</span>
@@ -414,6 +435,40 @@
     </div>
   </section>
 
+  <!-- Export / import of the shared-state trio, plus Hub diagnostics. On a published
+       copy the page cannot POST to serve.py, so stars, notes and plans stay in that
+       one browser; this is the only door out. The diagnostics panel is the spike for
+       a Hub-side shared store: it reports what the P3Hub runtime actually exposes. -->
+  <div class="modal" id="sModal" hidden>
+    <div class="modalCard stateCard">
+      <button class="btn mini modalX" id="sClose">close ✕</button>
+      <h2>Stars, notes and plans</h2>
+      <p class="pHead" id="sWhere"></p>
+      <h3>Export this browser's copy</h3>
+      <p class="note" style="margin:0 0 8px">Everything this browser holds, as text. Copy it and paste it
+        into the dashboard running from <code>serve.py</code> to make it the shared baseline.</p>
+      <div class="noteBar">
+        <button class="btn" id="sCopy">copy</button>
+        <button class="btn" id="sRefresh">refresh</button>
+        <span id="sMsg" class="lgnote" style="flex-basis:auto;margin:0"></span>
+      </div>
+      <textarea id="sOut" readonly aria-label="Exported state" spellcheck="false"></textarea>
+      <h3>Import a copy</h3>
+      <textarea id="sIn" aria-label="State to import" spellcheck="false"
+        placeholder="paste an export here — it replaces this browser's stars, notes and plans"></textarea>
+      <div class="noteBar">
+        <button class="btn" id="sImport">import</button>
+        <span id="sInMsg" class="lgnote" style="flex-basis:auto;margin:0"></span>
+      </div>
+      <h3>Hub diagnostics</h3>
+      <div class="noteBar">
+        <button class="btn mini" id="sDiag">what does this host expose?</button>
+        <button class="btn mini" id="sMut">try a shared-state write</button>
+      </div>
+      <pre id="sDiagOut" aria-live="polite"></pre>
+    </div>
+  </div>
+
   <div class="modal" id="nModal" hidden>
     <div class="modalCard noteCard">
       <h2 id="nTitle">Note</h2>
@@ -437,9 +492,15 @@
 
     <section class="panel" id="p-plan" hidden>
     <div class="planbar">
+      <!-- DRAFT MODE. One plan is the actual draft (⚑ DRAFTED). Flip between it and
+           the what-if plans with the flag or the dropdown; push a re-thought plan into
+           it with → DRAFTED, which keeps every player already won. -->
+      <button class="btn live" id="planLive" aria-pressed="false">&#9873; DRAFTED</button>
       <select id="planSel" aria-label="Choose a draft plan"></select>
       <button class="btn" id="planNew">+ new</button>
       <button class="btn" id="planCopy">duplicate</button>
+      <button class="btn" id="planSeed" hidden
+        title="Push this plan's picks and budgets into DRAFTED. Players already won stay; only the still-planned ones are replaced.">&rarr; DRAFTED</button>
       <button class="btn" id="planDel">delete</button>
       <span class="spacer"></span>
       <span id="planMeter" class="meter"></span>
@@ -454,7 +515,7 @@
         <div class="filters">
           <input type="search" id="pq" aria-label="Search players to add to the plan" placeholder="search…">
           <select id="ppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
-          <label class="chk"><input type="checkbox" id="phide" checked> hide drafted</label>
+          <label class="chk"><input type="checkbox" id="phide" checked> hide picked</label>
           <label class="chk"><input type="checkbox" id="ptgt"> ★ targets only</label>
         </div>
         <div class="scroll" style="max-height:62vh"><table id="planPool" aria-label="Draft plan — players available to add"></table></div>
@@ -507,13 +568,25 @@
   <!-- ================= Perennial Push (snake, superflex) ================= -->
   <section class="panel" id="p-xboard" hidden>
     <div class="card">
-      <h2>The 2026 board — ranked for superflex</h2>
+      <h2 id="xboardH">The 2026 board — ranked for superflex</h2>
       <!-- No explainer and no tiles above this table on purpose: the board is the
            board, and on draft night the rows are the only thing wanted above the
            fold. How it is built is documented where it belongs -- ppp_board.py,
-           README.md and CLAUDE.md -- and each column carries a title= tooltip. -->
+           README.md and CLAUDE.md -- and each column carries a title= tooltip.
+           The pivot switches the cross-position weighting only: the pick curve
+           (where this room takes a slot) or value over draft demand (what the
+           slot has scored over the room's own baseline, build_ppp_vor_board.py).
+           Underdog orders within a position under both. -->
       <div class="legend" id="xbLeg"></div>
       <div class="filters">
+        <span class="segwrap" role="group" aria-label="Choose how the board is ranked" id="xpivot">
+          <button class="btn" id="xpvPick" aria-pressed="true"
+            title="Sort by where this league itself has taken that position and rank">pick curve</button>
+          <button class="btn" id="xpvValue" aria-pressed="false"
+            title="Sort by points over the slot this room drafts to in the first 100 picks">value over baseline</button>
+          <button class="btn" id="xpvYahoo" aria-pressed="false"
+            title="Same pick curve, but Yahoo's six analysts order each position instead of Underdog">yahoo order</button>
+        </span>
         <input type="search" id="xq" aria-label="Filter the board by player" placeholder="filter players…">
         <select id="xposf" aria-label="Filter the board by position"><option value="">all positions</option></select>
         <button class="btn" id="xtgtOnly" aria-pressed="false">☆ targets only</button>
@@ -553,9 +626,13 @@
 
   <section class="panel" id="p-xplan" hidden>
     <div class="planbar">
+      <button class="btn live" id="xplanLive" aria-pressed="false"
+        title="The actual draft: fill in who you took, round by round">&#9873; DRAFTED</button>
       <select id="xplanSel" aria-label="Choose a draft plan"></select>
       <button class="btn" id="xplanNew">+ new</button>
       <button class="btn" id="xplanCopy">duplicate</button>
+      <button class="btn" id="xplanSeed" hidden
+        title="Copy this plan's picks into DRAFTED for the rounds you have not drafted yet">&rarr; DRAFTED</button>
       <button class="btn" id="xplanDel">delete</button>
       <label class="chk" style="margin-left:6px">draft slot
         <select id="xslot" aria-label="Your position in the draft order"></select></label>
@@ -1302,53 +1379,118 @@ if (!plans.length) plans = [{ name: 'Plan A', picks: [] }];
 const savePlans = stashPending;
 const cur = () => plans[active];
 
+/* DRAFT MODE (2026-09-07). One plan can be flagged `live` -- it is shown as
+   ⚑ DRAFTED, pinned first in the dropdown, and it is the actual draft. Every plan
+   carries two maps keyed by player name:
+     bid   the $ you intend for that pick -- the board price until you change it,
+           adjustable on the fly, on any plan
+     paid  what he actually cost, set when you mark him won (DRAFTED only, in practice)
+   So on DRAFTED each player is either WON (paid, ✓) or still PLANNED (bid), and the
+   meter shows paid + planned = projected total against the $200, which is the
+   "how far off plan am I" number from the second-monitor spreadsheet. Flip between
+   the draft and the what-ifs with ⚑ or the dropdown; → DRAFTED pushes a re-thought
+   plan into the draft, keeping every player already won and replacing only the
+   planned ones. Entering only your own picks is the whole design. */
+const liveIdx = () => plans.findIndex(function (p) { return p.live; });
+const isLive = p => !!(p && p.live);
+const estOf = n => (byName[n] ? byName[n].est_price : 0);
+const bidOf = (p, n) => (p.bid && p.bid[n] != null && p.bid[n] !== '') ? +p.bid[n] : estOf(n);
+const paidOf = (p, n) => (p.paid && p.paid[n] != null && p.paid[n] !== '') ? +p.paid[n] : null;
+const wonSet = p => new Set(p.picks.filter(function (n) { return paidOf(p, n) != null; }));
+const money = v => (v < 0 ? '−$' : '$') + Math.round(Math.abs(v));
+
 /* Every derived number for a roster, in one place, used by the panel and the
    comparison alike so the two can never disagree. */
 function planStats(p) {
   const rows = p.picks.map(n => byName[n]).filter(Boolean);
-  const spend = rows.reduce((a, r) => a + r.est_price, 0);
+  const won = wonSet(p);
+  const price = r => (won.has(r.player_name) ? paidOf(p, r.player_name) : bidOf(p, r.player_name));
+  const spend = rows.reduce((a, r) => a + price(r), 0);         // projected total: paid + planned
+  const wonRows = rows.filter(r => won.has(r.player_name));
+  const paid = wonRows.reduce((a, r) => a + paidOf(p, r.player_name), 0);
+  const estOfWon = wonRows.reduce((a, r) => a + r.est_price, 0);
   const need = Object.assign({}, NEED), starters = [], bench = [];
   // fill required slots most-expensive-first, overflow to the bench
-  rows.slice().sort((a, b) => b.est_price - a.est_price).forEach(r => {
+  rows.slice().sort((a, b) => price(b) - price(a)).forEach(r => {
     if (need[r.position] > 0) { need[r.position]--; starters.push(r); } else bench.push(r);
   });
   const missing = Object.keys(need).filter(k => need[k] > 0).map(k => [k, need[k]]);
   const byPos = {};
-  rows.forEach(r => { byPos[r.position] = (byPos[r.position] || 0) + r.est_price; });
-  const top3 = rows.slice().sort((a, b) => b.est_price - a.est_price)
-    .slice(0, 3).reduce((a, r) => a + r.est_price, 0);
+  rows.forEach(r => { byPos[r.position] = (byPos[r.position] || 0) + price(r); });
+  const top3 = rows.slice().sort((a, b) => price(b) - price(a))
+    .slice(0, 3).reduce((a, r) => a + price(r), 0);
   return {
     rows: rows, starters: starters, bench: bench, spend: spend, missing: missing,
-    byPos: byPos, top3: top3, left: BUD - spend, slots: SPOTS - rows.length,
+    byPos: byPos, top3: top3, price: price, left: BUD - spend, slots: SPOTS - rows.length,
     projStart: Math.round(starters.reduce((a, r) => a + (r.proj_points || 0), 0)),
-    legal: missing.length === 0 && rows.length <= SPOTS && spend <= BUD
+    legal: missing.length === 0 && rows.length <= SPOTS && spend <= BUD,
+    won: won, bought: won.size, paid: paid, planned: spend - paid,
+    estOfWon: estOfWon, vsBoard: paid - estOfWon,             // + means paying over the board
+    cashLeft: BUD - paid, openSlots: SPOTS - won.size,
+    // the endgame rule from CLAUDE.md: keep >= $2 per remaining roster spot
+    perSlot: won.size < SPOTS ? (BUD - paid) / (SPOTS - won.size) : 0
   };
 }
 
 function planBar() {
   const sel = document.getElementById('planSel');
-  sel.innerHTML = plans.map(function (p, i) {
-    return '<option value="' + i + '"' + (i === active ? ' selected' : '') + '>' + p.name + '</option>';
+  // DRAFTED first, then the plans in creation order; option values are real indexes
+  const order = plans.map(function (p, i) { return i; })
+    .sort(function (a, b) { return (isLive(plans[b]) - isLive(plans[a])) || a - b; });
+  sel.innerHTML = order.map(function (i) {
+    return '<option value="' + i + '"' + (i === active ? ' selected' : '') + '>' +
+      (isLive(plans[i]) ? '⚑ ' : '') + esc(plans[i].name) + '</option>';
   }).join('');
-  const s = planStats(cur());
-  const pct = Math.min(100, 100 * s.spend / BUD);
-  document.getElementById('planMeter').innerHTML =
-    '<b>$' + s.spend + '</b> / $' + BUD +
-    '<span class="bar"><i class="' + (s.spend > BUD ? 'over' : '') + '" style="width:' + pct + '%"></i></span>' +
-    '$' + s.left + ' left &middot; ' + s.rows.length + '/' + SPOTS + ' picks &middot; ' +
-    (s.legal ? '<span class="up">lineup complete</span>'
-             : '<span class="dn">need ' + s.missing.map(function (m) { return m[1] + ' ' + m[0]; }).join(', ') + '</span>');
+  const p = cur(), s = planStats(p), li = liveIdx();
+  const lb = document.getElementById('planLive');
+  lb.setAttribute('aria-pressed', String(isLive(p)));
+  lb.title = li < 0 ? 'Start the actual draft: creates DRAFTED from this plan, with its picks as budgets'
+           : isLive(p) ? 'This is the actual draft' : 'Switch to the actual draft';
+  document.getElementById('planSeed').hidden = isLive(p) || li < 0;
+  const del = document.getElementById('planDel');
+  if (del.dataset.arm !== '1') del.textContent = 'delete';
+  const need = s.legal ? '<span class="up">lineup complete</span>'
+    : '<span class="dn">need ' + s.missing.map(function (m) { return m[1] + ' ' + m[0]; }).join(', ') + '</span>';
+  const bar = function (v) {
+    return '<span class="bar"><i class="' + (v > BUD ? 'over' : '') + '" style="width:' + Math.min(100, 100 * v / BUD) + '%"></i></span>';
+  };
+  document.getElementById('planMeter').innerHTML = isLive(p)
+    ? '<b>' + money(s.paid) + '</b> paid &middot; <b>' + money(s.cashLeft) + '</b> left for ' + s.openSlots +
+      ' spot' + (s.openSlots === 1 ? '' : 's') +
+      ' <span style="color:var(--muted)">($' + (Math.round(s.perSlot * 10) / 10) + ' each' +
+      (s.openSlots && s.perSlot < 2 ? ', <span class="dn">under the $2 floor</span>' : '') + ')</span>' +
+      ' &middot; planned ' + money(s.planned) + ' &rarr; <b class="' + (s.spend > BUD ? 'dn' : '') + '">' + money(s.spend) + '</b> ' +
+      (s.spend > BUD ? '<span class="dn">' + money(s.spend - BUD) + ' over</span>'
+                     : '<span class="up">' + money(BUD - s.spend) + ' under</span>') +
+      bar(s.spend) +
+      (s.bought ? 'vs board <span class="' + (s.vsBoard > 0 ? 'dn' : 'up') + '" title="what you paid for the ' + s.bought +
+        ' won, minus what the board priced them at">' + (s.vsBoard > 0 ? '+' : '') + money(s.vsBoard) + '</span> &middot; ' : '') +
+      s.bought + ' won, ' + (s.rows.length - s.bought) + ' planned &middot; ' + need
+    : '<b>' + money(s.spend) + '</b> / $' + BUD + bar(s.spend) +
+      money(s.left) + ' left &middot; ' + s.rows.length + '/' + SPOTS + ' picks &middot; ' + need;
   const nm = document.getElementById('planName');
   if (document.activeElement !== nm) nm.value = cur().name;
 }
 
 function slotRow(lab, r, cls) {
-  return '<div class="slot ' + cls + (r ? '' : ' empty') + '">' +
-    '<span class="lab">' + lab + '</span>' +
+  const p = cur(), live = isLive(p);
+  const n = r ? r.player_name : '';
+  const won = !!(r && paidOf(p, n) != null);
+  const val = r ? (won ? paidOf(p, n) : bidOf(p, n)) : '';
+  return '<div class="slot ' + cls + (r ? '' : ' empty') + (won ? ' won' : '') + '">' +
+    '<span class="lab">' + (POSC[lab] ? '<span class="pos" style="background:var(' + POSC[lab] + ')">' + lab + '</span>' : lab) + '</span>' +
     '<span class="nm">' + (r ? starHtml(r.player_key) + pLink(r.player_name, r.player_key, 0) + noteHtml(r.player_key) +
-      ' <span style="color:var(--muted)">' + r.position + r.blendrank + ' &middot; ' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
-    '<span class="pr">' + (r ? '$' + r.est_price : '') + '</span>' +
-    (r ? '<button class="btn mini" data-drop="' + r.player_name + '">&times;</button>' : '') +
+      ' <span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' + r.position + r.blendrank + '</span>' +
+      ' <span style="color:var(--muted)">' + r.nfl_team + '</span>' : '&mdash;') + '</span>' +
+    '<span class="est" title="board price">' + (r ? '$' + r.est_price : '') + '</span>' +
+    // one $ box per player: his budget while planned, his price once won
+    (r ? '<input class="paid" type="number" min="0" max="' + BUD + '" inputmode="numeric" data-bid="' + esc(n) + '"' +
+         ' value="' + val + '" aria-label="' + (won ? 'Price paid for ' : 'Budget for ') + esc(n) + '"' +
+         ' title="' + (won ? 'What you paid' : 'Your budget for him — the board price until you change it') + '">'
+       : '<span class="paid" aria-hidden="true"></span>') +
+    (r && live ? '<button class="btn mini won' + (won ? ' on' : '') + '" data-won="' + esc(n) + '" aria-pressed="' + won +
+         '" title="' + (won ? 'Won — click to undo' : 'Mark as won at this price') + '">' + (won ? '✓ won' : 'won') + '</button>' : '') +
+    (r ? '<button class="btn mini" data-drop="' + esc(n) + '" aria-label="remove">&times;</button>' : '') +
     '</div>';
 }
 
@@ -1371,8 +1513,34 @@ function planRoster() {
   bindNotes(host);
   host.querySelectorAll('[data-drop]').forEach(function (b) {
     b.onclick = function () {
-      cur().picks = cur().picks.filter(function (n) { return n !== b.dataset.drop; });
+      const p = cur(), n = b.dataset.drop;
+      p.picks = p.picks.filter(function (x) { return x !== n; });
+      if (p.bid) delete p.bid[n];
+      if (p.paid) delete p.paid[n];
       savePlans(); drawPlan();
+    };
+  });
+  // Typing a $ is the one piece of data entry draft night asks for. Repaint the
+  // meter and the compare table only, so the field keeps focus while he types.
+  host.querySelectorAll('input[data-bid]').forEach(function (inp) {
+    inp.oninput = function () {
+      const p = cur(), n = inp.dataset.bid;
+      const store = paidOf(p, n) != null ? (p.paid = p.paid || {}) : (p.bid = p.bid || {});
+      if (inp.value === '') delete store[n];
+      else store[n] = Math.max(0, Math.round(+inp.value) || 0);
+      savePlans(); planBar(); planCompare();
+    };
+    inp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
+  });
+  host.querySelectorAll('[data-won]').forEach(function (b) {
+    b.onclick = function () {
+      const p = cur(), n = b.dataset.won;
+      p.paid = p.paid || {};
+      if (paidOf(p, n) != null) { p.bid = p.bid || {}; p.bid[n] = p.paid[n]; delete p.paid[n]; }   // undo keeps the $ as his budget
+      else p.paid[n] = bidOf(p, n);
+      savePlans(); drawPlan();
+      const inp = host.querySelector('input[data-bid="' + n.replace(/"/g, '\\"') + '"]');
+      if (inp && paidOf(cur(), n) != null) { inp.focus(); inp.select(); }
     };
   });
 }
@@ -1382,8 +1550,9 @@ function planPool() {
   const pf = document.getElementById('ppos').value;
   const hide = document.getElementById('phide').checked;
   const tgt = document.getElementById('ptgt').checked;
+  const p = cur(), live = isLive(p);
   const taken = {};
-  cur().picks.forEach(function (n) { taken[n] = 1; });
+  p.picks.forEach(function (n) { taken[n] = 1; });
   const rows = D.board.filter(function (r) {
     return (!q || r.player_name.toLowerCase().indexOf(q) >= 0) &&
            (!pf || r.position === pf) && (!hide || !taken[r.player_name]) &&
@@ -1398,19 +1567,31 @@ function planPool() {
         '<td><b>$' + r.est_price + '</b></td>' +
         '<td class="l"><span class="pos" style="background:var(' + (POSC[r.position] || '--muted') + ')">' +
         r.position + r.blendrank + '</span></td>' +
-        '<td>' + r.nfl_team + '</td>' +
-        '<td><button class="btn mini" data-add="' + r.player_name + '">' +
-        (taken[r.player_name] ? '&check;' : '+') + '</button></td></tr>';
+        '<td style="color:var(--ink2)">' + r.nfl_team + '</td>' +
+        // on DRAFTED, adding a player means you just won him: one click, then type the price
+        '<td><button class="btn mini' + (taken[r.player_name] ? '' : live ? ' won' : '') + '" data-add="' + esc(r.player_name) + '"' +
+        (live && !taken[r.player_name] ? ' title="Won him — adds to the draft at the board price; edit the price in the roster"' : '') + '>' +
+        (taken[r.player_name] ? '&check;' : live ? 'won' : '+') + '</button></td></tr>';
     }).join('') + '</tbody>';
   bindLinks(document.getElementById('planPool'));
   bindStars(document.getElementById('planPool'));
   bindNotes(document.getElementById('planPool'));
   document.querySelectorAll('#planPool [data-add]').forEach(function (b) {
     b.onclick = function () {
-      const n = b.dataset.add;
-      if (cur().picks.indexOf(n) >= 0) cur().picks = cur().picks.filter(function (x) { return x !== n; });
-      else if (cur().picks.length < SPOTS) cur().picks.push(n);
+      const p = cur(), n = b.dataset.add;
+      if (p.picks.indexOf(n) >= 0) {
+        p.picks = p.picks.filter(function (x) { return x !== n; });
+        if (p.bid) delete p.bid[n];
+        if (p.paid) delete p.paid[n];
+      } else if (p.picks.length < SPOTS) {
+        p.picks.push(n);
+        if (isLive(p)) { p.paid = p.paid || {}; p.paid[n] = estOf(n); }
+      }
       savePlans(); drawPlan();
+      if (isLive(cur()) && paidOf(cur(), n) != null) {
+        const inp = document.querySelector('#planRoster input[data-bid="' + n.replace(/"/g, '\\"') + '"]');
+        if (inp) { inp.focus(); inp.select(); }
+      }
     };
   });
 }
@@ -1418,6 +1599,7 @@ function planPool() {
 function planCompare() {
   const st = plans.map(planStats);
   const POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
+  const anyWon = st.some(function (s) { return s.bought; });
   function row(lab, fn, note) {
     return '<tr><td class="l">' + lab +
       (note ? ' <span style="color:var(--muted)">' + note + '</span>' : '') + '</td>' +
@@ -1426,10 +1608,17 @@ function planCompare() {
   document.getElementById('planCmp').innerHTML =
     '<thead><tr><th class="l">metric</th>' +
     plans.map(function (p, i) {
-      return '<th' + (i === active ? ' style="color:var(--ink)"' : '') + '>' + p.name + '</th>';
+      return '<th' + (i === active ? ' style="color:var(--ink)"' : '') + '>' + (isLive(p) ? '⚑ ' : '') + esc(p.name) + '</th>';
     }).join('') + '</tr></thead><tbody>' +
-    row('spent', function (s) { return '$' + s.spend; }) +
-    row('left', function (s) { return '$' + s.left; }) +
+    row('projected total', function (s) { return money(s.spend); }, anyWon ? 'paid + planned' : 'budgets') +
+    (anyWon
+      ? row('paid so far', function (s) { return s.bought ? money(s.paid) + ' <span style="color:var(--muted)">' + s.bought + ' won</span>' : '&mdash;'; }) +
+        row('vs board', function (s) {
+          return s.bought ? '<span class="' + (s.vsBoard > 0 ? 'dn' : 'up') + '">' + (s.vsBoard > 0 ? '+' : '') + money(s.vsBoard) + '</span>' : '&mdash;';
+        }, 'paid minus board price') +
+        row('cash left per open spot', function (s) { return s.bought ? '$' + (Math.round(s.perSlot * 10) / 10) + ' <span style="color:var(--muted)">' + s.openSlots + ' open</span>' : '&mdash;'; })
+      : '') +
+    row('left if it holds', function (s) { return money(s.left); }) +
     row('picks', function (s) { return s.rows.length + '/' + SPOTS; }) +
     row('lineup', function (s) {
       return s.legal ? '<span class="up">complete</span>'
@@ -1438,9 +1627,9 @@ function planCompare() {
     row('projected starters', function (s) { return s.projStart || '&mdash;'; }, 'pts') +
     row('top-3 share of budget', function (s) { return Math.round(100 * s.top3 / BUD) + '%'; }) +
     POS.map(function (p) {
-      return row(p + ' spend', function (s) {
+      return row('<span class="pos" style="background:var(' + POSC[p] + ')">' + p + '</span> spend', function (s) {
         const v = s.byPos[p] || 0;
-        return '$' + v + ' <span style="color:var(--muted)">' +
+        return money(v) + ' <span style="color:var(--muted)">' +
           (s.spend ? Math.round(100 * v / s.spend) : 0) + '%</span>';
       }, 'league ' + (D.league_pos_share[p] === undefined ? 0 : D.league_pos_share[p]) + '%');
     }).join('') + '</tbody>';
@@ -1459,30 +1648,66 @@ function drawPlan() { planBar(); planRoster(); planPool(); planCompare(); }
   document.getElementById('phide').onchange = planPool;
   document.getElementById('ptgt').onchange = planPool;
   document.getElementById('planSel').onchange = function (e) { active = +e.target.value; drawPlan(); };
-  document.getElementById('planNew').onclick = function () {
-    const n = prompt('Name this plan', 'Plan ' + String.fromCharCode(65 + plans.length));
-    if (n === null) return;
-    plans.push({ name: n.trim() || 'Plan ' + String.fromCharCode(65 + plans.length), picks: [] });
-    active = plans.length - 1; savePlans(); drawPlan();
+  const focusName = function () {
+    const nb = document.getElementById('planName');
+    if (nb) { nb.focus(); nb.select(); }
   };
-  // editing the header renames the active plan as you type; only the dropdown
-  // and compare header need repainting, so the field never loses focus
+  // No prompt() anywhere here: the Hub renders this page in a sandboxed frame where
+  // dialogs are silently suppressed, so a prompt-based "+ new" did nothing there.
+  document.getElementById('planNew').onclick = function () {
+    plans.push({ name: 'Plan ' + String.fromCharCode(65 + plans.length), picks: [], bid: {} });
+    active = plans.length - 1; savePlans(); drawPlan(); focusName();
+  };
   const nameBox = document.getElementById('planName');
   nameBox.oninput = function () {
     cur().name = nameBox.value;
     savePlans(); planBar(); planCompare();
   };
   nameBox.onblur = function () {
-    if (!cur().name.trim()) { cur().name = 'Plan ' + (active + 1); savePlans(); drawPlan(); }
+    if (!cur().name.trim()) { cur().name = isLive(cur()) ? 'DRAFTED' : 'Plan ' + (active + 1); savePlans(); drawPlan(); }
   };
   document.getElementById('planCopy').onclick = function () {
-    const n = prompt('Name the copy', cur().name + ' copy');
-    if (n === null) return;
-    plans.push({ name: n.trim() || cur().name + ' copy', picks: cur().picks.slice() });
-    active = plans.length - 1; savePlans(); drawPlan();
+    // a copy is always a what-if: it takes the picks and budgets, never the won prices or the flag
+    const p = cur();
+    plans.push({ name: p.name + ' copy', picks: p.picks.slice(), bid: Object.assign({}, p.bid || {}) });
+    active = plans.length - 1; savePlans(); drawPlan(); focusName();
   };
-  document.getElementById('planDel').onclick = function () {
-    if (plans.length === 1) plans = [{ name: 'Plan A', picks: [] }];
+  // ⚑ DRAFTED: start the actual draft from this plan, or jump to it
+  document.getElementById('planLive').onclick = function () {
+    let li = liveIdx();
+    if (li < 0) {
+      const p = cur(), bid = {};
+      p.picks.forEach(function (n) { bid[n] = bidOf(p, n); });
+      plans.push({ name: 'DRAFTED', live: true, picks: p.picks.slice(), bid: bid, paid: {} });
+      li = plans.length - 1;
+    }
+    active = li; savePlans(); drawPlan();
+  };
+  // → DRAFTED: this plan's picks and budgets replace the PLANNED part of the draft;
+  // every player already won stays exactly as he is
+  document.getElementById('planSeed').onclick = function () {
+    const li = liveIdx();
+    if (li < 0 || isLive(cur())) return;
+    const src = cur(), L = plans[li];
+    const won = wonSet(L);
+    const keep = L.picks.filter(function (n) { return won.has(n); });
+    const add = src.picks.filter(function (n) { return !won.has(n); }).slice(0, Math.max(0, SPOTS - keep.length));
+    const bid = {};
+    keep.forEach(function (n) { if (L.bid && L.bid[n] != null) bid[n] = L.bid[n]; });
+    add.forEach(function (n) { bid[n] = bidOf(src, n); });
+    L.picks = keep.concat(add); L.bid = bid;
+    active = li; savePlans(); drawPlan();
+  };
+  // deleting the actual draft takes two clicks; deleting a what-if takes one
+  const del = document.getElementById('planDel');
+  del.onclick = function () {
+    if (isLive(cur()) && del.dataset.arm !== '1') {
+      del.dataset.arm = '1'; del.textContent = 'delete DRAFTED?';
+      setTimeout(function () { del.dataset.arm = ''; del.textContent = 'delete'; }, 3000);
+      return;
+    }
+    del.dataset.arm = ''; del.textContent = 'delete';
+    if (plans.length === 1) plans = [{ name: 'Plan A', picks: [], bid: {} }];
     else plans.splice(active, 1);
     active = Math.max(0, Math.min(active, plans.length - 1));
     savePlans(); drawPlan();
@@ -1553,7 +1778,23 @@ const REC_I = SI.rec;
 // and WR30 in the other. The auction price chart keeps using p[6] deliberately --
 // it compares a finish against what an AUCTION paid, which is PBAFFL's world.
 const wkPosRank = p => (LG === 'ppp' ? p[12] : p[6]);
-const wkPts = g => LG === 'ppp' ? Math.round((g[2] + 0.5 * g[REC_I]) * 10) / 10 : g[2];
+
+/* D/ST RE-SCORING FOR PERENNIAL PUSH. A defence's game row carries its own stat
+   columns after the offensive ones (only D/ST rows are that long -- that is how
+   one is recognised). The baked points are PBAFFL's; ESPN's D/ST rules differ in
+   the points-allowed ladder and add a yards-allowed ladder, so under PPP the row
+   is re-scored from the stats. Event values (sack 1, INT 2, FR 2, TD 6, safety 2,
+   block 2) are the same in both leagues; PPP has no 2-pt-return rule. */
+const isDst = g => g.length > SI.ya;
+const PPP_PA = [[0, 5], [6, 4], [13, 3], [17, 1], [27, 0], [34, -1], [45, -3], [1e9, -5]];
+const PPP_YA = [[99, 5], [199, 3], [299, 2], [349, 0], [399, -1], [449, -3], [499, -5], [549, -6], [1e9, -7]];
+const ladder = (L, v) => (L.find(([upto]) => v <= upto) || L[L.length - 1])[1];
+const dstPtsPpp = g =>
+  g[SI.sk] * 1 + g[SI.dint] * 2 + g[SI.fr] * 2 + g[SI.dtd] * 6 + g[SI.saf] * 2 + g[SI.blk] * 2 +
+  ladder(PPP_PA, g[SI.pa]) + ladder(PPP_YA, g[SI.ya]);
+const wkPts = g => LG !== 'ppp' ? g[2]
+  : isDst(g) ? dstPtsPpp(g)
+  : Math.round((g[2] + 0.5 * g[REC_I]) * 10) / 10;
 const wkThresh = pos =>
   (LG === 'ppp' ? (WK.threshPpr || WK.thresh) : WK.thresh)[pos] || [99, -99];
 
@@ -1587,6 +1828,7 @@ const NCOLS = {
   WR: ['tgt', 'rec', 'rec_yd', 'ypa', 'rec_td', 'car', 'rush_yd', 'rush_td', 'fum_lost'],
   TE: ['tgt', 'rec', 'rec_yd', 'ypa', 'rec_td', 'fum_lost'],
   K:  ['fg', 'fg_att', 'fg_long', 'pat'],
+  DEF: ['sk', 'dint', 'fr', 'dtd', 'saf', 'blk', 'pa', 'ya'],
   '': ['pass_yd', 'pass_td', 'int', 'car', 'rush_yd', 'rush_td', 'rec', 'rec_yd', 'ypa'],
 };
 
@@ -1627,7 +1869,8 @@ function statCell(agg, position, k, perGame, games) {
 const NLAB = {cmp:'Cmp', att:'Att', pass_yd:'PaYd', pass_td:'PaTD', int:'INT',
   car:'Car', rush_yd:'RuYd', rush_td:'RuTD', tgt:'Tgt', rec:'Rec', rec_yd:'ReYd',
   rec_td:'ReTD', fum_lost:'FL', fg:'FG', fg_att:'FGA', fg_long:'Lng', pat:'PAT',
-  st_td:'STTD', two_pt:'2PT', ypa:'Y/A'};
+  st_td:'STTD', two_pt:'2PT', ypa:'Y/A',
+  sk:'Sck', dint:'INT', fr:'FR', dtd:'TD', saf:'Saf', blk:'Blk', xpr:'2PtR', pa:'PtsA', ya:'YdsA'};
 // in a single-position view the header can name the actual denominator
 const ypaLab = pos => (YPA_OF[pos] || [,, 'Y/A'])[2];
 const ypaTip = pos => (YPA_OF[pos] || [,,, 'yards per attempt — per position: passes for a QB, carries for a back, targets for a receiver'])[3];
@@ -1641,7 +1884,8 @@ function nAgg(p, w1, w2) {
   for (const gm of p[8]) {
     if (gm[0] < w1 || gm[0] > w2) continue;
     o.g++; o.pts += wkPts(gm);
-    for (const k in SI) o[k] = NMAX[k] ? Math.max(o[k], gm[SI[k]]) : o[k] + gm[SI[k]];
+    // D/ST columns are absent from player rows (and vice versa): read a missing cell as 0
+    for (const k in SI) { const v = gm[SI[k]] || 0; o[k] = NMAX[k] ? Math.max(o[k], v) : o[k] + v; }
   }
   o.pts = Math.round(o.pts * 10) / 10;
   o.ppg = o.g ? Math.round(o.pts / o.g * 10) / 10 : 0;
@@ -2576,10 +2820,16 @@ const xPOS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'];
 const xSTREAM = p => p.pos === 'K' || p.pos === 'DEF';
 let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: null,
               pos2: '', view: 'picks',
+              // which cross-position weighting ranks the board: 'pick' (the settled
+              // pick curve) or 'value' (value over draft demand). A view preference,
+              // like theme, so it is browser-local and not part of the shared state.
+              pivot: 'pick',
               // overall pick the board is "cut" at, set from the pick list. Deliberately
               // NOT persisted: it describes where a live draft has got to, not a plan.
               goneAt: null};
 let lView = 'picks';
+try { const pv = localStorage.getItem('pbaffl_xpivot_v1');
+      if (pv === 'value' || pv === 'yahoo') xState.pivot = pv; } catch (e) {}
 /* TARGETS ARE SHARED ACROSS BOTH LEAGUES.
  *
  * This used to be 'x' + p.pid -- namespaced so the two leagues could not collide.
@@ -2600,41 +2850,102 @@ function xBoard() {
   const sel = document.getElementById('xposf');
   if (sel.options.length === 1)
     xPOS.forEach(p => sel.add(new Option(p, p)));
+  // THE PIVOT -- three ways to rank the same rows. The settled method has two halves:
+  // a market orders players WITHIN a position, and this league's own history weighs
+  // positions AGAINST each other. Each pivot changes exactly one half:
+  //   'pick'  : Underdog within, the pick curve across (ppp_board.py; the default)
+  //   'value' : Underdog within, value over draft demand across (build_ppp_vor_board.py)
+  //   'yahoo' : Yahoo's six analysts within, the pick curve across (fetch_yahoo_rankings.py)
+  // build_ppp_data.py joins the alternates onto the rows as vb* and yh* fields; a pivot
+  // whose data was not built hides its button and the board falls back to 'pick'.
+  const have = {pick: true, value: !!PPP.vb, yahoo: !!PPP.yh};
+  const mode = have[xState.pivot] ? xState.pivot : 'pick';
+  const VB = mode === 'value', YH = mode === 'yahoo';
+  const seg = document.getElementById('xpivot');
+  if (seg) {
+    seg.hidden = !(have.value || have.yahoo);
+    document.getElementById('xpvPick').setAttribute('aria-pressed', String(mode === 'pick'));
+    const bv = document.getElementById('xpvValue'); bv.hidden = !have.value; bv.setAttribute('aria-pressed', String(VB));
+    const by = document.getElementById('xpvYahoo'); by.hidden = !have.yahoo; by.setAttribute('aria-pressed', String(YH));
+  }
+  const h = document.getElementById('xboardH');
+  if (h) h.textContent = VB ? 'The 2026 board — value over draft demand'
+                       : YH ? 'The 2026 board — ranked for superflex, Yahoo order within position'
+                            : 'The 2026 board — ranked for superflex';
+  const rankOf = p => VB ? p.vbRank : YH ? p.yhRank : p.rank;
+  const gapOf = p => VB ? p.vbGap : YH ? p.yhGap : p.gap;
+  const rdOf = p => VB ? p.vbRd : YH ? p.yhRd : p.rd;
+  const pkOf = p => VB ? p.vbPk : YH ? p.yhPk : p.pk;
+  const rdPk = p => rdOf(p) == null ? '—' : rdOf(p) + '.' + String(pkOf(p)).padStart(2, '0');
   let rows = PPP.board.slice();
+  if (VB || YH) rows.sort((a, b) => (rankOf(a) == null) - (rankOf(b) == null) || (rankOf(a) || 0) - (rankOf(b) || 0));
   if (xState.hideStream) rows = rows.filter(p => !xSTREAM(p));
   if (xState.pos) rows = rows.filter(p => p.pos === xState.pos);
   if (xState.q) { const q = xState.q.toLowerCase(); rows = rows.filter(p => p.n.toLowerCase().includes(q)); }
   if (xState.tgt) rows = rows.filter(p => tgHit(xKey(p)));
-  if (xState.arb) rows = rows.filter(p => p.gap != null && p.gap >= 24);
-  const head = `<thead><tr>
-    <th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>
-    <th title="Where this league itself took the ${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]} equivalent at that position and rank. This is what sorts the board.">Est. pick</th>
-    <th title="Underdog's ordering within the position — the sharp market, and what sets each player's rank.">UD</th>
+  if (xState.arb) rows = rows.filter(p => gapOf(p) != null && gapOf(p) >= 24);
+  const yrs = `${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]}`;
+  const baseTxt = VB ? Object.entries(PPP.vb.baseline).map(([p, b]) => p + b.rank).join(' / ') : '';
+  const thPlayer = `<th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>`;
+  const thUD = `<th title="Underdog's ordering within the position — the sharp market${YH ? ', shown for comparison' : ', and what sets each player’s rank'}.">UD</th>`;
+  const thYH = `<th title="Yahoo's six analysts' consensus ordering within the position (Boone, Harmon, Norris, Pianowski, Smyth, Winks; via the FantasyPros widget in Yahoo's rankings article), updated ${PPP.yh ? PPP.yh.updated : ''}. Under this pivot it sets each player's rank. Their overall order is a one-QB list and is not used.">Yahoo</th>`;
+  const thEspn = `<th title="The round ESPN's one-QB board would have him going in.">ESPN rd</th>
+    <th title="How far this pivot has him ahead of, or behind, ESPN.">Move</th></tr></thead>`;
+  const head = VB ? `<thead><tr>${thPlayer}
+    <th title="What the Nth player TAKEN at this position scored in this league, ${yrs}, smoothed. Not a projection feed — the room's own history.">Slot pts</th>
+    <th title="Slot points minus the baseline slot, which is how deep this room drafts each position inside the first 100 picks: ${baseTxt}. This is what sorts the board.">Value</th>
+    ${thUD}${thEspn}`
+  : YH ? `<thead><tr>${thPlayer}
+    <th title="Where this league itself took the ${yrs} equivalent at that position and rank — the same pick curve as the default pivot. This is what sorts the board.">Est. pick</th>
+    ${thYH}${thUD}${thEspn}`
+  : `<thead><tr>${thPlayer}
+    <th title="Where this league itself took the ${yrs} equivalent at that position and rank. This is what sorts the board.">Est. pick</th>
+    ${thUD}
     <th title="ESPN's projection. Shown for information only; it does not affect the sort.">Proj</th>
-    <th title="The round ESPN's one-QB board would have him going in.">ESPN rd</th>
-    <th title="How far this board has him ahead of, or behind, ESPN.">Move</th></tr></thead>`;
+    ${thEspn}`;
   const body = rows.map(p => {
-    const gapRd = p.gap == null ? null : Math.round(p.gap / 12 * 10) / 10;
+    const gap = gapOf(p);
+    const gapRd = gap == null ? null : Math.round(gap / 12 * 10) / 10;
     const cls = xSTREAM(p) ? ' class="stream"' : '';
     const mv = gapRd == null ? '—'
       : gapRd >= 0.8 ? `<span class="up">${gapRd.toFixed(1)} rd earlier</span>`
       : gapRd <= -0.8 ? `<span class="dn">${Math.abs(gapRd).toFixed(1)} rd later</span>`
       : '<span style="color:var(--muted)">—</span>';
+    const pr = VB && p.vbPr != null ? p.vbPr : YH && p.yhPr != null ? p.yhPr : p.prank;
+    const ud = p.src === 'underdog'
+      ? `<span style="color:var(--ink2)">${p.pos}${p.prank}</span>`
+      : `<span style="color:var(--muted)" title="Underdog does not rank him${YH ? '' : '; ordered on ESPN ADP instead'}">${xSTREAM(p) ? '—' : 'espn'}</span>`;
+    const yh = p.yhSrc === 'yahoo'
+      ? `<span style="color:var(--ink2)">${p.pos}${p.yhPr}</span>`
+      : '<span style="color:var(--muted)" title="Yahoo does not rank him; ordered on ESPN ADP instead">espn</span>';
+    const mid = VB
+      ? `<td style="color:var(--ink2)">${p.vbProj == null ? '—' : xFmt(p.vbProj)}</td>
+         <td style="font-weight:650">${p.vbVal == null
+            ? (xSTREAM(p) ? '<span style="color:var(--muted)" title="Kickers and defences are listed as late fill, not valued">fill</span>'
+                          : '<span style="color:var(--muted)" title="Underdog ranks him deeper than this league has ever drafted the position — no slot to project">—</span>')
+            : `<span class="${p.vbVal >= 0 ? 'up' : 'dn'}">${(p.vbVal > 0 ? '+' : '') + xFmt(p.vbVal)}</span>`}</td>
+         <td>${ud}</td>`
+      : YH
+      ? `<td style="font-weight:650">${p.yhPick == null ? '—' : xFmt(p.yhPick)}</td>
+         <td>${yh}</td>
+         <td>${ud}</td>`
+      : `<td style="font-weight:650">${p.pick == null ? '—' : xFmt(p.pick)}</td>
+         <td>${ud}</td>
+         <td style="color:var(--muted)">${xFmt(p.prj)}</td>`;
     return `<tr${cls}>
-      <td class="l kpi" style="color:var(--muted)">${p.rank == null ? '—' : p.rank}</td>
-      <td class="l" style="font-weight:650">${xRdPk(p)}</td>
+      <td class="l kpi" style="color:var(--muted)">${rankOf(p) == null ? '—' : rankOf(p)}</td>
+      <td class="l" style="font-weight:650">${rdPk(p)}</td>
       <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}</td>
-      <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${p.prank}</span></td>
+      <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${pr}</span></td>
       <td class="l" style="color:var(--ink2)">${p.tm}</td>
-      <td style="font-weight:650">${p.pick == null ? '—' : xFmt(p.pick)}</td>
-      <td>${p.src === 'underdog'
-            ? `<span style="color:var(--ink2)">${p.pos}${p.prank}</span>`
-            : '<span style="color:var(--muted)" title="Underdog does not rank him; ordered on ESPN ADP instead">espn</span>'}</td>
-      <td style="color:var(--muted)">${xFmt(p.prj)}</td>
+      ${mid}
       <td>${p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1}</td>
       <td>${mv}</td></tr>`;
   }).join('');
   const t = document.getElementById('xboardT');
+  t.setAttribute('aria-label', VB ? '2026 board ranked by value over this league’s draft-demand baseline'
+                              : YH ? '2026 board ranked for superflex with Yahoo’s analysts ordering each position'
+                                   : '2026 board ranked by value over replacement for a superflex league');
   t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="10" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
   bindStars(t);
   bindNotes(t);                  // notes share a key with PBAFFL now, same as targets
@@ -2894,8 +3205,14 @@ function xPlanStats(pl) {
 
 function xPlanBar() {
   const sel = document.getElementById('xplanSel');
-  sel.innerHTML = xplans.map((p, i) =>
-    `<option value="${i}"${i === xactive ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+  // ⚑ DRAFTED (the actual draft, `live`) pinned first; option values stay real indexes
+  const xorder = xplans.map((p, i) => i).sort((a, b) => (!!xplans[b].live - !!xplans[a].live) || a - b);
+  sel.innerHTML = xorder.map(i =>
+    `<option value="${i}"${i === xactive ? ' selected' : ''}>${xplans[i].live ? '⚑ ' : ''}${esc(xplans[i].name)}</option>`).join('');
+  const xl = document.getElementById('xplanLive');
+  if (xl) xl.setAttribute('aria-pressed', String(!!xCur().live));
+  const xs = document.getElementById('xplanSeed');
+  if (xs) xs.hidden = !!xCur().live || !xplans.some(p => p.live);
   const sl = document.getElementById('xslot');
   if (!sl.options.length)
     for (let i = 1; i <= XTEAMS; i++) sl.add(new Option(i, i));
@@ -2930,7 +3247,7 @@ function xPlanPicks() {
       <span class="lab" title="${ord(no)} overall"
         >${rd}.${String((no - 1) % XTEAMS + 1).padStart(2, '0')}</span>
       <span class="nm">${r ? starHtml(xKey(r)) + pLink(r.n, r.key, 0) +
-        ` <span style="color:var(--muted)">${r.pos}${r.prank} &middot; ${r.tm}</span>` + badge
+        ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span> <span style="color:var(--muted)">${r.tm}</span>` + badge
         : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span>
       <button class="btn mini cut${cutHere ? ' on' : ''}" data-cut="${no}"
@@ -3043,9 +3360,10 @@ function xPlanRoster() {
     for (let i = 0; i < XNEED[pos]; i++) {
       const idx = pool.findIndex(x => x[0] === pos);
       const r = idx >= 0 ? pool.splice(idx, 1)[0][1] : null;
+      // the slot label wears its position colour where it has one; FLEX and SUPERFLEX stay neutral
       html += `<div class="slot start${r ? '' : ' empty'}">
-        <span class="lab" style="width:74px">${pos}</span>
-        <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+        <span class="lab" style="width:74px">${POSC[pos] ? `<span class="pos" style="background:var(${POSC[pos]})">${pos}</span>` : pos}</span>
+        <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
         <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
     }
   });
@@ -3053,7 +3371,7 @@ function xPlanRoster() {
   for (let i = 0; i < XBENCH; i++) {
     const r = s.bench[i];
     html += `<div class="slot bench${r ? '' : ' empty'}"><span class="lab" style="width:74px"></span>
-      <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
+      <span class="nm">${r ? pLink(r.n, r.key, 0) + ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>` : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span></div>`;
   }
   document.getElementById('xplanRoster').innerHTML = html;
@@ -3152,7 +3470,7 @@ function xPlanCompare() {
     '<tr><td class="l">lineup</td>' + cols.map(c => `<td>${c.legal
       ? '<span class="up">complete</span>'
       : '<span class="dn">' + c.missing.map(m => m[1] + ' ' + m[0]).join(', ') + '</span>'}</td>`).join('') + '</tr>' +
-    xPOS.map(pos => `<tr><td class="l">${pos}</td>${posRow(pos)}</tr>`).join('') +
+    xPOS.map(pos => `<tr><td class="l"><span class="pos" style="background:var(${POSC[pos]})">${pos}</span></td>${posRow(pos)}</tr>`).join('') +
     '</tbody>';
 }
 
@@ -3176,6 +3494,26 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
     if (xplans.length < 2) return;               // never leave the planner empty
     xplans.splice(xactive, 1); xactive = 0; xSavePlans(); xDrawPlan();
   });
+  // ⚑ DRAFTED: the actual snake draft. Start it from this plan, or jump to it.
+  on('xplanLive', 'click', () => {
+    let li = xplans.findIndex(p => p.live);
+    if (li < 0) {
+      const c = xCur();
+      xplans.push({name: 'DRAFTED', live: true, slot: c.slot, ids: c.ids.slice()});
+      li = xplans.length - 1;
+    }
+    xactive = li; xSavePlans(); xDrawPlan();
+  });
+  // → DRAFTED: this plan's picks fill the rounds of the draft you have not made yet;
+  // rounds already drafted keep the player you actually took
+  on('xplanSeed', 'click', () => {
+    const li = xplans.findIndex(p => p.live);
+    if (li < 0 || xCur().live) return;
+    const src = xCur(), L = xplans[li];
+    const have = new Set(L.ids.filter(Boolean));
+    L.ids = L.ids.map((id, i) => id || (src.ids[i] && !have.has(src.ids[i]) ? src.ids[i] : null));
+    xactive = li; xSavePlans(); xDrawPlan();
+  });
   ['xpq', 'xppos', 'xphide', 'xptgt'].forEach(id =>
     on(id, id === 'xpq' ? 'input' : 'change', xPlanPool));
 })();
@@ -3194,6 +3532,14 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
   });
   tog('xtgtOnly', 'tgt', () => xBoard());
   tog('xarbOnly', 'arb', () => xBoard());
+  const pivot = (id, val) => on(id, 'click', () => {
+    xState.pivot = val;
+    try { localStorage.setItem('pbaffl_xpivot_v1', val); } catch (err) {}
+    xBoard();
+  });
+  pivot('xpvPick', 'pick');
+  pivot('xpvValue', 'value');
+  pivot('xpvYahoo', 'yahoo');
   on('xstream', 'click', e => {
     xState.hideStream = !xState.hideStream;
     e.target.setAttribute('aria-pressed', String(xState.hideStream));
@@ -3338,6 +3684,112 @@ function draw() {
 applyLeague(false);
 draw();
 syncShared();
+
+/* ---------- state export / import, and Hub diagnostics ----------
+   A published copy has no serve.py to POST to, so every star, note and plan made
+   there lives in that one browser (see saveShared's noServer latch). This is the
+   door out: export the trio as text, paste it into the localhost dashboard, and it
+   becomes the shared baseline. Import goes the other way, or between two people.
+
+   The diagnostics half is a spike, not a feature: it reports what the Hub's P3Hub
+   runtime actually exposes -- storage, sharedState method shapes, what a write
+   returns -- because none of that is documented and a shared store on the Hub is
+   the only way two viewers ever see each other's edits without a republish. */
+(function stateTools() {
+  const $ = id => document.getElementById(id);
+  const btn = $('stateBtn'), modal = $('sModal');
+  if (!btn || !modal) return;
+  const xp = () => (typeof xplans !== 'undefined' && Array.isArray(xplans)) ? xplans : [];
+  const counts = o => `${Object.keys(o.targets || {}).length} targets · ${Object.keys(o.notes || {}).length} notes · `
+                    + `${(o.plans || []).length} auction plans · ${(o.xplans || []).length} snake plans`;
+  const snapshot = () => ({
+    format: 'pbaffl-state-v1', exportedAt: new Date().toISOString(),
+    basedOn: SHARED.saved_at || '', from: location.host || 'file',
+    targets: tgOut(), notes: notes, plans: plans, xplans: xp(),
+  });
+  function refresh() {
+    const s = snapshot();
+    $('sOut').value = JSON.stringify(s, null, 1);
+    $('sWhere').textContent = `This browser holds ${counts(s)}` +
+      (noServer ? ' — kept here only; there is no server on this copy to write them to.'
+                : dirty ? ' — unsaved edits are being written to shared/board_state.json.'
+                        : ' — same as shared/board_state.json.');
+    $('sMsg').textContent = '';
+  }
+  async function copyOut() {
+    const ta = $('sOut');
+    try { await navigator.clipboard.writeText(ta.value); $('sMsg').textContent = 'copied'; return; } catch (e) {}
+    try { ta.focus(); ta.select(); document.execCommand('copy'); $('sMsg').textContent = 'copied'; }
+    catch (e) { $('sMsg').textContent = 'select the text and copy it by hand'; }
+  }
+  function importState(txt) {
+    let o;
+    try { o = JSON.parse(txt); } catch (e) { return 'That is not JSON: ' + e.message; }
+    if (!o || typeof o !== 'object') return 'Expected an object with targets / notes / plans / xplans.';
+    if (o.targets != null) targets = toTargets(o.targets);
+    if (o.notes && typeof o.notes === 'object') notes = o.notes;
+    if (Array.isArray(o.plans) && o.plans.length) { plans = o.plans; active = 0; }
+    if (Array.isArray(o.xplans) && o.xplans.length && typeof xplans !== 'undefined') { xplans = o.xplans; xactive = 0; }
+    stashPending();
+    draw();
+    refresh();
+    return 'Imported ' + counts(o) + (noServer ? '. Kept in this browser.' : '. Saving to the shared file.');
+  }
+  async function diagnostics() {
+    const out = [];
+    const hub = (typeof window.P3Hub !== 'undefined') ? window.P3Hub : null;
+    out.push('page      ' + location.href.slice(0, 140));
+    out.push('P3Hub     ' + (hub ? 'present, version ' + hub.version : 'absent — this is not a Hub copy'));
+    let ls;
+    try { localStorage.setItem('__pbaffl_probe', '1'); localStorage.removeItem('__pbaffl_probe'); ls = 'works'; }
+    catch (e) { ls = 'throws ' + (e && e.name); }
+    out.push('localStorage  ' + ls);
+    const p = loadPending();
+    out.push('pending copy  ' + (p ? counts(p) + ', basedOn ' + p.basedOn : 'none'));
+    out.push('baked baseline ' + counts(SHARED) + ', saved ' + SHARED.saved_at);
+    if (hub) {
+      out.push('P3Hub keys    ' + Object.keys(hub).join(', '));
+      out.push('P3Hub.storage ' + (hub.storage ? 'present; getItem is ' + typeof hub.storage.getItem : 'null'));
+      if (hub.storage && typeof hub.storage.getItem === 'function') {
+        try { const v = hub.storage.getItem(PENDING_KEY); out.push('P3Hub.storage[' + PENDING_KEY + '] ' + (v ? v.length + ' chars' : 'empty')); }
+        catch (e) { out.push('P3Hub.storage.getItem threw ' + (e && e.message)); }
+      }
+      out.push('sharedState   ' + (hub.sharedState ? 'methods: ' + Object.keys(hub.sharedState).join(', ') : 'absent'));
+      if (hub.sharedState && typeof hub.sharedState.list === 'function') {
+        try { const r = await hub.sharedState.list(); out.push('sharedState.list() → ' + JSON.stringify(r).slice(0, 2000)); }
+        catch (e) { out.push('sharedState.list() threw: ' + (e && (e.message || e.code) || e)); }
+      }
+    }
+    return out.join('\n');
+  }
+  async function tryMutate() {
+    const hub = (typeof window.P3Hub !== 'undefined') ? window.P3Hub : null;
+    if (!hub || !hub.sharedState || typeof hub.sharedState.mutate !== 'function') return 'no sharedState.mutate on this host';
+    // Shapes guessed from the runtime's own vocabulary (collectionKey / entryId). The
+    // point is the error text: an undocumented API usually says what it wanted.
+    const attempts = [
+      {collectionKey: 'board_state', entryId: 'probe', op: 'upsert', value: {probe: true}},
+      {collectionKey: 'board_state', entryId: 'probe', action: 'set', entry: {probe: true}},
+      {type: 'upsert', collectionKey: 'board_state', entryId: 'probe', payload: {probe: true}},
+    ];
+    const out = [];
+    for (const a of attempts) {
+      try { const r = await hub.sharedState.mutate(a); out.push('OK  mutate(' + JSON.stringify(a) + ')\n    → ' + JSON.stringify(r).slice(0, 1200)); break; }
+      catch (e) { out.push('ERR mutate(' + JSON.stringify(a) + ')\n    → ' + (e && (e.message || e.code) || e)); }
+    }
+    try { const r = await hub.sharedState.list(); out.push('list() after → ' + JSON.stringify(r).slice(0, 1200)); } catch (e) {}
+    return out.join('\n');
+  }
+  btn.onclick = () => { refresh(); $('sDiagOut').textContent = ''; $('sInMsg').textContent = ''; modal.hidden = false; };
+  $('sClose').onclick = () => modal.hidden = true;
+  modal.onclick = e => { if (e.target === modal) modal.hidden = true; };
+  addEventListener('keydown', e => { if (e.key === 'Escape') modal.hidden = true; });
+  $('sRefresh').onclick = refresh;
+  $('sCopy').onclick = copyOut;
+  $('sImport').onclick = () => { $('sInMsg').textContent = importState($('sIn').value); };
+  $('sDiag').onclick = async () => { $('sDiagOut').textContent = 'probing…'; $('sDiagOut').textContent = await diagnostics(); };
+  $('sMut').onclick = async () => { $('sDiagOut').textContent = 'writing…'; $('sDiagOut').textContent = await tryMutate(); };
+})();
 </script>
 </body>
 </html>

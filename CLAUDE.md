@@ -112,10 +112,34 @@ corroborated by supply and by returns). Script: `analyze_ppp_shape.py`.
 Its board is priced by the settled method (see below), so it depends on Underdog ADP
 being fresh in exactly the way the PBAFFL board does.
 
-One known gap, written up in `rawdata/ppp/README.md`: **`board2026.psv` is a frozen
-snapshot** — pulled 2026-09-01, and nothing re-pulls it, so ESPN's projections and
-ownership on that board do not age forward. The player pool it defines is what makes a
-player draftable, so a stale pool is a real limitation, not a cosmetic one.
+**The board has a second pivot (added 2026-09-04): value over draft demand**, from
+`build_ppp_vor_board.py` → `cleandata/analysis/ppp_vor_board.csv`, joined onto the same
+rows by `build_ppp_data.py` as `vb*` fields. A slot's projection is what the Nth player
+*taken* at that position scored here, 2023–25, smoothed; its baseline is how deep the
+room drafts the position inside the first 100 picks (QB23 / RB28 / WR40 / TE8). Both
+pivots order within a position on Underdog, so they differ only on cross-position
+weighting. **The pick curve stays the default sort and the planner's ordering; the value
+pivot is a view.** A **third pivot, "yahoo order"** (same day), swaps the *other* half: the
+pick curve stays, but Yahoo's six analysts' consensus (`fetch_yahoo_rankings.py`, live feed,
+`rawdata/yahoo/yahoo_consensus_ppr_2026.csv`) orders each position instead of Underdog. It
+exists because half 1 of the method rests on Jamie's judgement and cannot be verified; this
+is the cheapest way to see where the two markets disagree about *who* is the better player.
+Yahoo's article carries no list in its markup — the table is a FantasyPros partner widget
+filtered to Yahoo's six expert IDs, and the fetcher calls the widget's JSON. It is a 1-QB
+ranking; only the within-position order is used, and it also orders K/D-ST on that pivot. Two things measured on 2026-09-04 (`notes/log/2026-09-04-jamie.md`):
+the value pivot's WR-heavy first three rounds are *not* robust — its baseline is read off
+the fitted curve at one rank, where it sits ~20 points off the data in opposite directions
+for WR and RB, and any shape-free baseline flips the mix toward RB; and do **not** "fix"
+its QB weighting with a common flex-level baseline the way published superflex rankings
+do — every team here has started two QBs every year (0 teams under 2, 2023–25), so a
+QB's replacement is a later QB, not a WR, and the position-specific baseline is correct.
+
+**`board2026.psv` is a dated snapshot, refreshable since 2026-09-05** with
+`python fetch_espn_league.py --board-only` (see `rawdata/ppp/README.md`). It defines the
+player pool — what makes a player draftable on the page — so its depth matters: the pool is
+ESPN's top 300 plus the first 45 QBs in ESPN's one-QB order, because the quarterbacks a
+superflex room drafts (Penix, Cousins, Shedeur Sanders) sit past #427 on that order. Nothing
+re-pulls it automatically; run the fetcher before drafting.
 
 The name join between the two leagues is **not** a gap — the Cowork notes claimed ~18
 mismatches, but measured against the repo's own `player_key` there are 0 collisions and
@@ -147,6 +171,7 @@ not individual manager patterns. Don't build per-manager analysis.
 
 ```bash
 python fetch_nflverse.py      # season stat lines 2017-2025 -> rawdata/nflverse/  (network)
+python fetch_nflverse_team.py # team-week stats + games.csv -> D/ST game logs      (network)
 python fetch_adp.py           # historical ADP 2017-2025    -> rawdata/adp/       (network)
 python fetch_underdog_adp.py  # CURRENT-season Underdog ADP -> rawdata/underdog/  (network)
 python build_clean_data.py    # everything -> cleandata/fantasy.db + csv/ + parquet/
@@ -469,8 +494,9 @@ Sanity check that this is right: the board now totals **$2,425 against the $2,40
 | PBAFFL history | `build_clean_data.py` | **cross-position weighting** — our own price curves supply what Underdog can't |
 | FFC | `fetch_adp.py` | K/DEF only. Jamie's read: materially staler than Underdog, injury news lags |
 | **Yahoo** | `fetch_yahoo_adp.py` | the room's anchor (we draft in the app) + the only **auction dollar** figure |
+| Yahoo analysts | `fetch_yahoo_rankings.py` | six-analyst consensus, via the FantasyPros widget in Yahoo's article. **Within-position order only**, as the PPP board's third pivot |
 | Sleeper | `fetch_projections.py` | projections. **Not in the board any more** — dropped 2026-08-11 |
-| nflverse | `fetch_nflverse*.py` | stat lines, season and weekly |
+| nflverse | `fetch_nflverse*.py` | stat lines, season and weekly. `fetch_nflverse_team.py` adds team-week stats + games.csv, from which `build_clean_data.py` scores **D/ST game logs** (position `DEF`, key `def_<code>`) into `player_weeks` — PBAFFL points baked, PPP re-scored on the page from the stat columns. Not in `final_ranks`. |
 | **Vegas** | `fetch_vegas.py` | implied team totals. **Display only** — never touches pricing or sort |
 
 The board's price is: Underdog says who is WR9, our own 2023-25 price curve says what

@@ -1,0 +1,11 @@
+{
+  "source": "Yahoo Sports consensus PPR rankings (FantasyPros partner widget, filtered to Yahoo's six analysts)",
+  "url": "https://partners.fantasypros.com/api/v1/consensus-rankings.php?sport=NFL&year=2026&week=0&position=ALL&scoring=PPR&type=ST&filters=9:317:747:1408:7604:7666&expert=7261",
+  "season": 2026,
+  "experts": 6,
+  "filters": "9,317,747,1408,7604,7666",
+  "players": 379,
+  "last_updated": "9/04",
+  "last_updated_ts": 1788536231,
+  "fetched_on": "2026-09-04"
+}

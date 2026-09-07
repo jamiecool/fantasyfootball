@@ -42,12 +42,13 @@ modelling the format from an assumption, and off a projection feed the repo had
 already rejected for exactly that purpose. The draft history states the same fact
 without the assumption. See CLAUDE.md trap 13.
 """
+import csv
 import json
 import os
 import statistics as st
 from collections import defaultdict
 
-from ppp_board import build_board, player_key
+from ppp_board import build_board, extend, player_key
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "rawdata", "ppp")
@@ -209,6 +210,129 @@ for p in board:
 skill = [p for p in board if p["pos"] in SKILL]
 stream = [p for p in board if p["pos"] not in SKILL]
 
+# ---- 4b. the value pivot: value over draft demand --------------------------
+# A SECOND VIEW OF THE SAME BOARD, not a replacement for the pick curve. The pick
+# curve says where this room takes a slot; build_ppp_vor_board.py says what that
+# slot has been worth in points over the slot the room drafts to inside the first
+# 100 picks (QB23 / RB28 / WR40 / TE8). Both order within a position on Underdog,
+# so the two pivots disagree only on cross-position weighting -- which is the
+# whole question, and why it is a toggle rather than a new column.
+#
+# Read from the CSV rather than imported: build_ppp_vor_board.py is a script and
+# importing it re-runs it as a side effect (the same reason ppp_board.py copies
+# player_key instead of importing build_clean_data). build_all.py runs it one
+# stage earlier; if the file is missing the pivot is simply absent from the page.
+VB_PATH = os.path.join(ROOT, "cleandata", "analysis", "ppp_vor_board.csv")
+VB_FIELDS = ("vbPr", "vbProj", "vbVal", "vbRank", "vbRd", "vbPk", "vbGap")
+for p in board:
+    for k in VB_FIELDS:
+        p[k] = None
+vb_meta = None
+if os.path.exists(VB_PATH):
+    with open(VB_PATH, encoding="utf-8") as f:
+        vb_rows = [r for r in csv.DictReader(f) if r["pos"] in SKILL and r["value"] != ""]
+    vb = {}
+    for r in vb_rows:
+        k = player_key(r["player"])
+        if k in vb:                                # trap 1
+            raise SystemExit(f"name collision in ppp_vor_board.csv, refusing to join: {r['player']}")
+        vb[k] = r
+    by_key = {p["key"]: p for p in board}
+    vb_unmatched = []
+    for k, r in vb.items():
+        p = by_key.get(k)
+        if p is None:                              # Underdog ranks him, ESPN's pool does not have him
+            vb_unmatched.append(r["player"])       # -- so he cannot be drafted here anyway
+            continue
+        p["vbPr"] = int(r["pos_rank"])
+        p["vbProj"] = float(r["proj"])
+        p["vbVal"] = float(r["value"])
+    # Ranked densely inside the ESPN pool, exactly as `rank` and `espnRank` are, so
+    # the value pivot's Move column is the same like-for-like comparison: valued
+    # skill players by value, then the skill players Underdog ranks past this
+    # league's draft history (no slot to project), then K/DEF as fill in pick order.
+    _tp = TEAMS[max(SEASONS)]
+    for i, p in enumerate(sorted(board, key=lambda p: (p["vbVal"] is None, p["pos"] not in SKILL,
+                                                       -(p["vbVal"] or 0), p["rank"])), 1):
+        p["vbRank"] = i
+        p["vbRd"] = (i - 1) // _tp + 1
+        p["vbPk"] = (i - 1) % _tp + 1
+        p["vbGap"] = p["espnRank"] - i
+    vb_meta = dict(
+        baseline={r["pos"]: dict(rank=int(r["baseline_rank"]), pts=float(r["baseline_pts"]))
+                  for r in vb_rows},
+        matched=len(vb) - len(vb_unmatched), unmatched=vb_unmatched,
+        # the VOR script's window is its own SEASONS constant; it matches CURVE_SEASONS
+        # today, and the page labels the pivot with this value
+        seasons=CURVE_SEASONS)
+
+# ---- 4c. the Yahoo pivot: same pick curve, Yahoo's analysts ordering within position
+# The settled method's half 1 is "Underdog orders within a position" -- Jamie's call,
+# and unverifiable here (no historical Underdog ADP). This pivot swaps ONLY that half
+# for Yahoo's six-analyst consensus (fetch_yahoo_rankings.py) and keeps half 2, the
+# league's own pick curve, exactly as it is. So pick and Yahoo pivots differ only where
+# the two markets disagree about who is the better player at a position -- which is the
+# question the toggle exists to show. Yahoo also ranks K and D/ST, which Underdog does
+# not, so those follow Yahoo here where ESPN's ADP orders them on the other pivots.
+# Yahoo's list is a 1-QB ranking: its overall order is never used for anything.
+YH_PATH = os.path.join(ROOT, "rawdata", "yahoo", "yahoo_consensus_ppr_2026.csv")
+YH_META = os.path.join(ROOT, "rawdata", "yahoo", "yahoo_consensus_ppr_2026.meta.json")
+YH_FIELDS = ("yhEcr", "yhPr", "yhSrc", "yhPick", "yhRank", "yhRd", "yhPk", "yhGap")
+for p in board:
+    for k in YH_FIELDS:
+        p[k] = None
+yh_meta = None
+if os.path.exists(YH_PATH):
+    # ESPN and FantasyPros spell three team codes differently; D/ST keys are def_<espn code>
+    TEAM_ALIAS = {"JAC": "JAX", "WAS": "WSH", "LA": "LAR"}
+    yh = {}
+    with open(YH_PATH, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            if r["position"] == "DST":
+                k = "def_" + TEAM_ALIAS.get(r["team"], r["team"]).lower()
+            else:
+                k = player_key(r["player_name"])
+            if k in yh:                            # trap 1
+                raise SystemExit(f"name collision in {os.path.basename(YH_PATH)}, refusing to join: "
+                                 f"{r['player_name']} / {yh[k]['player_name']}")
+            yh[k] = r
+    by_key = {p["key"]: p for p in board}
+    for k, r in yh.items():
+        if k in by_key:
+            by_key[k]["yhEcr"] = int(r["rank"])
+    yh_unmatched = [r["player_name"] for k, r in yh.items()
+                    if k not in by_key and int(r["rank"]) <= 200]
+    # Dense rank inside the ESPN pool, Yahoo-ranked first in ECR order, then anyone
+    # Yahoo does not carry in ESPN ADP order behind them -- the same rule build_board()
+    # applies to Underdog, so the two pivots are built identically apart from the source.
+    yh_by_pos = defaultdict(list)
+    for p in board:
+        yh_by_pos[p["pos"]].append(p)
+    for pos, lst in yh_by_pos.items():
+        ranked = sorted((p for p in lst if p["yhEcr"] is not None), key=lambda x: x["yhEcr"])
+        rest = sorted((p for p in lst if p["yhEcr"] is None),
+                      key=lambda x: (x["adp"] if x["adp"] is not None else 9e9, x["espn"]))
+        for i, p in enumerate(ranked + rest, 1):
+            p["yhPr"] = i
+            p["yhSrc"] = "yahoo" if p["yhEcr"] is not None else "espn"
+        c = DIAG["curves"].get(pos)                # CURVE is only assembled further down
+        for p in lst:
+            p["yhPick"] = extend(c, p["yhPr"]) if c else None
+    _tp = TEAMS[max(SEASONS)]
+    for i, p in enumerate(sorted(board, key=lambda p: (p["yhPick"] is None, p["yhPick"], p["espn"])), 1):
+        p["yhRank"] = i
+        p["yhRd"] = (i - 1) // _tp + 1
+        p["yhPk"] = (i - 1) % _tp + 1
+        p["yhGap"] = p["espnRank"] - i
+    meta = json.load(open(YH_META, encoding="utf-8")) if os.path.exists(YH_META) else {}
+    yh_meta = dict(
+        experts=meta.get("experts"), updated=meta.get("last_updated"),
+        fetched=meta.get("fetched_on"), listed=len(yh),
+        matched=sum(1 for p in board if p["yhEcr"] is not None),
+        unranked_skill=[p["n"] for p in board if p["yhEcr"] is None and p["pos"] in SKILL
+                        and p["rank"] <= 150],
+        unmatched=yh_unmatched)
+
 # ---- 5. teams and their drafts ---------------------------------------------
 teams = {}
 for f in rows(src("teams.psv")):
@@ -234,7 +358,7 @@ D = dict(
     seasons=SEASONS, curveSeasons=CURVE_SEASONS, rounds=ROUNDS,
     replacement=REPL_ACT, ratio=RATIO, need=NEED, curves=DIAG["curves"],
     nUnderdog=DIAG["n_underdog"], nEspn=DIAG["n_espn"],
-    qbTop3=qb_top3, qbcum=qbcum, board=board, rdstat=rdstat, posband=posband,
+    qbTop3=qb_top3, qbcum=qbcum, board=board, vb=vb_meta, yh=yh_meta, rdstat=rdstat, posband=posband,
     qbedge=qbedge, poscount=poscount, bands=[f"{a}-{b}" for a, b in BANDS],
     # `key` is the folded player_key, carried so a name in the past-drafts and
     # roster views opens the same profile card the board does. Defences get the
@@ -350,6 +474,36 @@ for r in (1, 2, 3, 5, 8, 12):
     print(f"  {('#' + str(r)):>4} " + "".join(
         f"{(round(CURVE[p][r]) if r in CURVE.get(p, {}) else '-'):>8}"
         for p in ["QB", "RB", "WR", "TE", "K", "DEF"]))
+
+if vb_meta:
+    print(f"\nvalue pivot: {vb_meta['matched']} valued players joined from ppp_vor_board.csv, "
+          f"baselines " + " ".join(f"{p}{v['rank']}" for p, v in vb_meta["baseline"].items()))
+    if vb_meta["unmatched"]:
+        print("  ranked by Underdog but not in ESPN's pool (undraftable here): "
+              + ", ".join(vb_meta["unmatched"]))
+    vtop = sorted((p for p in skill if p["vbVal"] is not None), key=lambda p: p["vbRank"])[:36]
+    print("  first three rounds by value: "
+          + ", ".join(f"{sum(1 for p in vtop if p['pos'] == q)} {q}" for q in ["QB", "RB", "WR", "TE"])
+          + f"   (pick curve: {qb_top3} QB)")
+else:
+    print("\n  (no ppp_vor_board.csv -- run: python build_ppp_vor_board.py; the value pivot is hidden)")
+
+if yh_meta:
+    print(f"\nyahoo pivot: {yh_meta['matched']} of {len(board)} board players carry a Yahoo rank "
+          f"({yh_meta['experts']} analysts, rankings updated {yh_meta['updated']}, fetched {yh_meta['fetched']})")
+    if yh_meta["unranked_skill"]:
+        print("  board skill players inside the top 150 that Yahoo does not rank (ordered on ESPN ADP): "
+              + ", ".join(yh_meta["unranked_skill"]))
+    if yh_meta["unmatched"]:
+        print("  Yahoo top-200 names not in ESPN's pool (check spelling if a starter is here): "
+              + ", ".join(yh_meta["unmatched"]))
+    moved = sorted((p for p in board if p["yhRank"] is not None and p["pos"] in SKILL and p["rank"] <= 60),
+                   key=lambda p: -abs(p["yhRank"] - p["rank"]))[:8]
+    print("  biggest Underdog-vs-Yahoo moves inside the top 60: "
+          + ", ".join(f"{p['n']} {p['pos']}{p['prank']}->{p['pos']}{p['yhPr']} (#{p['rank']}->#{p['yhRank']})"
+                      for p in moved))                # ASCII arrows: the Windows console is cp1252
+else:
+    print("\n  (no yahoo_consensus_ppr_2026.csv -- run: python fetch_yahoo_rankings.py; the Yahoo pivot is hidden)")
 
 print(f"\n{len(skill)} skill players, {len(stream)} K/DEF, {len(board)} on the board")
 print(f"QBs inside rounds 1-3 on this board: {qb_top3}   "

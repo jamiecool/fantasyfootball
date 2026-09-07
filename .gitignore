@@ -14,6 +14,10 @@ cleandata/dashboard.html
 # they are 10x smaller and underpin final_ranks. Note the tradeoff: if nflverse
 # revises a release, a future re-fetch may not reproduce today's numbers exactly.
 rawdata/nflverse/stats_player_week_*.csv
+# nflverse team-week stats (~230KB/season) and its games.csv mirror: the D/ST game
+# logs. Same deal -- fetch_nflverse_team.py re-pulls anything missing.
+rawdata/nflverse/stats_team_week_*.csv
+rawdata/nflverse/games.csv
 
 # nflverse games.csv: a 2.1MB full mirror re-downloaded on every fetch_vegas run,
 # so it churns the whole file each time. Same call as the weekly stat lines --

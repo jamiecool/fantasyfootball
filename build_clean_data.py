@@ -508,6 +508,97 @@ WEEK_STATS = [
 ]
 
 
+# ---- D/ST game logs ----------------------------------------------------------
+# A defence is not a player, so nflverse's player file has no row for it and this
+# league's NFL stats tab simply had no D/ST at all (Jamie, 2026-09-06). Its line is
+# a team-week fact: the team's own row in stats_team_week gives sacks, takeaways,
+# defensive and return TDs, safeties and blocked kicks; the OPPONENT's row gives
+# yards allowed (its net offence); games.csv gives points allowed. Scored here
+# under PBAFFL's rulebook exactly as the players are -- the values below are the
+# Defense/Special Teams rows of scoring_rules, verified 2026-09-06 -- and the page
+# re-scores for Perennial Push from the same stat columns, because the two
+# leagues' points-allowed ladders differ and PPP adds a yards-allowed ladder.
+#
+# Two judgement calls, both on the conservative side:
+#   * TD = def_tds + special_teams_tds. nflverse's fumble_recovery_tds overlaps
+#     def_tds for defensive fumble returns and would double count; left out.
+#   * yards allowed = opponent passing_yards - |sack_yards_lost| + rushing_yards,
+#     i.e. net yards, which is what the ESPN ladder is written against.
+DST_STATS = ["sk", "dint", "fr", "dtd", "saf", "blk", "xpr", "pa", "ya"]
+DST_PTS = {"sk": 1, "dint": 2, "fr": 2, "dtd": 6, "saf": 2, "blk": 2, "xpr": 2}
+DST_PA_LADDER = [(0, 10), (6, 7), (13, 4), (20, 1), (27, 0), (34, -1), (10 ** 6, -4)]
+# team codes differ between nflverse (LA, JAX, WAS) and the boards' def_<code> keys,
+# which follow ESPN / PBAFFL franchise codes (LAR, JAX, WAS): only the Rams differ
+DST_CODE = {"LA": "LAR"}
+
+
+def dst_pa_points(pa):
+    for upto, pts in DST_PA_LADDER:
+        if pa <= upto:
+            return pts
+    return DST_PA_LADDER[-1][1]
+
+
+def dst_weeks(year):
+    """One D/ST game log per team-week, in player_weeks' shape (position DEF)."""
+    path = os.path.join(NFLV, f"stats_team_week_{year}.csv")
+    games_path = next((p for p in (os.path.join(NFLV, "games.csv"),
+                                   os.path.join(ROOT, "rawdata", "vegas", "games.csv"))
+                       if os.path.exists(p)), None)
+    if not os.path.exists(path) or games_path is None:
+        return None
+    t = pd.read_csv(path, low_memory=False)
+    if "season_type" in t.columns:
+        t = t[t["season_type"] == "REG"].copy()
+    num = lambda c: pd.to_numeric(t.get(c), errors="coerce").fillna(0)
+    t["team"] = t["team"].astype(str).str.upper()
+    t["opponent_team"] = t["opponent_team"].astype(str).str.upper()
+    t["week"] = num("week").astype(int)
+    t["net_yds"] = (num("passing_yards") - num("sack_yards_lost").abs() + num("rushing_yards")).astype(int)
+    # points allowed: the other side's score in games.csv, REG only, either venue
+    g = pd.read_csv(games_path, low_memory=False)
+    g = g[(g["season"] == year) & (g["game_type"] == "REG")]
+    scored = {}
+    # games.csv keeps the code a team played under (OAK through 2019); the nflverse
+    # team file uses today's (LV) for every season -- NFL_MOVES reconciles them
+    code = lambda t: NFL_MOVES.get(str(t).upper(), str(t).upper())
+    for r in g.itertuples():
+        if pd.isna(r.home_score) or pd.isna(r.away_score):
+            continue
+        scored[(int(r.week), code(r.home_team))] = int(r.away_score)   # home defence allowed away's score
+        scored[(int(r.week), code(r.away_team))] = int(r.home_score)
+    opp_yds = {(int(r.week), r.team): int(r.net_yds) for r in t.itertuples()}
+
+    out = pd.DataFrame({
+        "season": year, "week": t["week"],
+        "player_name": t["team"].map(lambda c: DST_CODE.get(c, c) + " D/ST"),
+        "player_key": t["team"].map(lambda c: "def_" + DST_CODE.get(c, c).lower()),
+        "position": "DEF",
+        "nfl_team": t["team"], "opponent": t["opponent_team"],
+        "sk": num("def_sacks").round().astype(int),
+        "dint": num("def_interceptions").astype(int),
+        "fr": num("fumble_recovery_opp").astype(int),
+        "dtd": (num("def_tds") + num("special_teams_tds")).astype(int),
+        "saf": num("def_safeties").astype(int),
+        "blk": (num("def_punt_blocks") + num("def_pat_blocks") + num("def_fg_blocks")).astype(int),
+        "xpr": num("def_2pt_made").astype(int),
+    })
+    out["pa"] = [scored.get((w, tm)) for w, tm in zip(out["week"], out["nfl_team"])]
+    out["ya"] = [opp_yds.get((w, op)) for w, op in zip(out["week"], out["opponent"])]
+    # a team-week with no score in games.csv is a game that has not been played
+    out = out[out["pa"].notna() & out["ya"].notna()].copy()
+    out["pa"] = out["pa"].astype(int)
+    out["ya"] = out["ya"].astype(int)
+    out["points"] = (sum(out[k] * v for k, v in DST_PTS.items())
+                     + out["pa"].map(dst_pa_points)).astype(float).round(2)
+    for _, dest in WEEK_STATS:
+        out[dest] = 0
+    out["fum_lost"] = 0
+    out["two_pt"] = 0
+    out["player_id"] = "dst_" + out["nfl_team"].str.lower()
+    return out.sort_values(["week", "points"], ascending=[True, False])
+
+
 def week_results(year, drafted_keys=frozenset()):
     path = os.path.join(NFLV, f"stats_player_week_{year}.csv")
     if not os.path.exists(path):
@@ -539,6 +630,8 @@ def week_results(year, drafted_keys=frozenset()):
                        + num("receiving_fumbles_lost")).astype(int)
     out["two_pt"] = (num("passing_2pt_conversions") + num("rushing_2pt_conversions")
                      + num("receiving_2pt_conversions")).astype(int)
+    for c in DST_STATS:                     # D/ST columns exist on every row; zero for players
+        out[c] = 0
     # Same name-collision problem as final_ranks (WR and DB Michael Thomas),
     # but it has to be resolved ONCE PER SEASON, not per week. 2017 had both an
     # RB Chris Thompson (WAS) and a WR Chris Thompson (HOU); picking the higher
@@ -554,9 +647,20 @@ def week_results(year, drafted_keys=frozenset()):
 
 
 wk = [week_results(y, drafted_by_season.get(y, frozenset())) for y in range(2017, 2026)]
-player_weeks = pd.concat([w for w in wk if w is not None], ignore_index=True) \
+dst = [dst_weeks(y) for y in range(2017, 2026)]
+if not any(d is not None for d in dst):
+    print("\n  (no stats_team_week_*.csv / games.csv -- run: python fetch_nflverse_team.py; "
+          "D/ST game logs skipped)")
+player_weeks = pd.concat([w for w in wk + dst if w is not None], ignore_index=True) \
     if any(w is not None for w in wk) else pd.DataFrame()
 if len(player_weeks):
+    _d = player_weeks[player_weeks["position"] == "DEF"]
+    if len(_d):
+        _top = (_d.groupby(["season", "player_key"])["points"].sum()
+                .sort_values(ascending=False).head(3))
+        print(f"\nD/ST game logs: {len(_d):,} team-weeks, {_d['player_key'].nunique()} defences, "
+              f"{_d['season'].nunique()} seasons; best seasons under PBAFFL scoring: "
+              + ", ".join(f"{k[1]} {k[0]} {v:.0f}" for k, v in _top.items()))
     # A game log that does not sum to the season total is a broken game log.
     # Check it rather than assume it: both sides run league_points(), but they
     # run it over different files, and the dedupe rules differ.
