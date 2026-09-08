@@ -67,3 +67,8 @@ CLAUDE.local.md
 
 # ESPN cookies (espn_s2 + SWID) -- secrets, never commit
 espn_credentials.json
+
+# The ESPN draft watcher's last snapshot (live_draft.py). Transient; ESPN has the record.
+shared/live_draft.json
+shared/live_draft.json.tmp
+shared/init_undecoded_*.b64

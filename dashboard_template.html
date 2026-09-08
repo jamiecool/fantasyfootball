@@ -109,6 +109,20 @@
         border:1px solid var(--border);color:var(--ink2)}
   .kpi{font-variant-numeric:tabular-nums}
   .stream td{color:var(--ink2)}
+  /* players the live ESPN draft says are gone: kept in place, dimmed and struck, so the
+     board does not reshuffle under you while you are reading it */
+  tr.gone td{opacity:.42} tr.gone td a,tr.gone td .nm{text-decoration:line-through}
+  /* the pool's filter row stays on one line: the search box gives, the checkboxes do not */
+  #p-xplan .plangrid .filters{flex-wrap:nowrap} #p-xplan .plangrid .filters input[type=search]{flex:1;min-width:70px;width:auto}
+  #p-xplan .plangrid .filters .chk{white-space:nowrap} #xpgoneN:empty{display:none}
+  .upnext{font-size:14px;font-weight:800;color:var(--good);white-space:nowrap;margin-left:auto}
+  .upnext.now{color:var(--accent,#f4b400);animation:upnow 1s ease-in-out infinite alternate}
+  .upnext.done{color:var(--muted);font-weight:650}
+  @keyframes upnow{from{opacity:1}to{opacity:.45}}
+  #xlivebar{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-right:10px}
+  #xlivebar input#xliveId{width:120px;font-size:12.5px;padding:2px 6px} #xlivebar select{font-size:12.5px;padding:2px 4px;max-width:110px}
+  #xlivebar .btn.mini{padding:2px 8px;font-size:12.5px} #xlivebar .lgnote,#xlivebar .chk{font-size:12.5px}
+  #xliveStat b{font-weight:650} #xliveStat .clock{color:var(--good)}
   /* snake pick labels read "13.148" -- wider than the auction planner's slot tags */
   #xplanPicks .slot .lab,#xplanRoster .slot .lab{width:76px;white-space:nowrap}
   #xplanPicks .slot .lab{font-variant-numeric:tabular-nums}
@@ -152,6 +166,43 @@
   .meter b{color:var(--ink);font-size:17.5px}
   .plangrid{display:grid;grid-template-columns:minmax(340px,1fr) minmax(340px,1fr);
             gap:16px;align-items:start}
+  /* on DRAFTED (and the mock rehearsal) the snake planner grows a third column: the draft feed */
+  /* DRAFTED: three equal columns -- plan, pool, feed. Nothing is clipped or truncated; the
+     cards are wide enough for their widest row on any screen the planner is used on. */
+  #p-xplan .plangrid.live{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #p-xplan .plangrid.live .card{min-width:0}
+  #xplanPool td.l:nth-child(2){white-space:nowrap}
+  /* On DRAFTED all three cards share the feed's type: 13.5px, 3px rows, small chips. One
+     row height everywhere, so the columns read as one surface. Player links still open the card. */
+  #p-xplan .plangrid.live .slot{font-size:13.5px;padding:3px 4px;gap:7px;min-height:0}
+  #p-xplan .plangrid.live .slot .lab,#p-xplan .plangrid.live .slot .nm,#p-xplan .plangrid.live .slot .pr,
+  #p-xplan .plangrid.live .slot .nm a{font-size:13.5px}
+  #p-xplan .plangrid.live #xplanPicks .slot .lab{width:46px}      /* round.pick sits closer to the name */
+  /* the plan's header row is built like the pool's filter row: same box height, same gap below,
+     so the two lists start on the same line. The # box is a search-box-sized input. */
+  #p-xplan .nameRow{gap:8px;margin-bottom:11px}
+  #p-xplan .nameRow .rankEdit{width:52px;font-size:15.6px;font-weight:700;padding:5px 4px;border-radius:7px}
+  #p-xplan .nameRow .nameEdit{margin:0;padding:5px 9px;font-size:15.6px;font-weight:650;max-width:none;
+       border-color:var(--border);background:var(--plane)}
+  #p-xplan .plangrid.live #xplanPicks .slot .grip{margin-right:-3px}
+  #xplanPicks .slot .nm .pos{margin-left:5px}                     /* a little air between the name and its tag... */
+  #xplanPicks .slot .nm .pos + span{margin-left:5px}              /* ...and between the tag and the NFL team */
+  #p-xplan .plangrid.live #xplanPool td,#p-xplan .plangrid.live #xplanPool th{font-size:13.5px;padding:3px 6px;line-height:1.4}
+  #p-xplan .plangrid.live .pos,#xfeed .pos,#xclockRow .pos{font-size:12px;padding:0 5px;min-width:26px;line-height:18px}
+  #p-xplan .plangrid.live .btn.mini{font-size:12px;padding:1px 6px}
+  #p-xplan .plangrid.live h2{font-size:15px;margin:0 0 6px}
+  #xfeed .fp,#xclockRow .fp{line-height:1.4}
+  @media (max-width:1500px){#p-xplan .plangrid.live{grid-template-columns:minmax(340px,1fr) minmax(340px,1fr)}}
+  @media (max-width:1200px){#p-xplan .plangrid.live{grid-template-columns:1fr}}
+  #xfeed .fp{display:flex;gap:7px;align-items:center;padding:3px 4px;border-bottom:1px solid var(--grid);font-size:13.5px;white-space:nowrap}
+  #xfeed .fp .no{width:44px;font-weight:650;font-variant-numeric:tabular-nums} #xfeed .fp .tm{min-width:48px;color:var(--ink2)}
+  #xfeed .fp .nm{flex:1} #xfeed .fp.me{background:color-mix(in srgb,var(--good) 14%,transparent)}
+  #xfeed .fp.me .tm{color:var(--good);font-weight:650} #xfeed .fp.clock{color:var(--muted);font-style:italic;border-bottom:0;white-space:normal}
+  #xclockRow .fp{display:flex;gap:7px;align-items:center;padding:5px 6px;margin-bottom:6px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;white-space:nowrap;background:color-mix(in srgb,var(--ink2) 8%,transparent)}
+  #xclockRow .fp .no{width:44px;font-weight:650;font-variant-numeric:tabular-nums} #xclockRow .fp .tm{width:48px;color:var(--ink2)} #xclockRow .fp .nm{flex:1;color:var(--muted)}
+  #xclockRow .fp.me{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)} #xclockRow .fp.me .tm{color:var(--good);font-weight:800}
+  .spin{width:12px;height:12px;flex:0 0 12px;border:2px solid var(--border);border-top-color:var(--good);border-radius:50%;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   /* The pool needs ~530px for seven columns without a horizontal scrollbar.
      Two of those plus the gap and the page gutters is about 1200, so stack
      below that rather than let the pool scroll sideways -- a table you have to
@@ -606,6 +657,8 @@
             title="Sort by points over the slot this room drafts to in the first 100 picks">value over baseline</button>
           <button class="btn" id="xpvYahoo" aria-pressed="false"
             title="Same pick curve, but Yahoo's six analysts order each position instead of Underdog">yahoo order</button>
+          <button class="btn" id="xpvEspn" aria-pressed="false"
+            title="ESPN's SUPERFLEX list, in its own order — exactly what the draft room shows the other coaches">espn order</button>
         </span>
         <input type="search" id="xq" aria-label="Filter the board by player" placeholder="filter players…">
         <select id="xposf" aria-label="Filter the board by position"><option value="">all positions</option></select>
@@ -657,6 +710,14 @@
       <label class="chk" style="margin-left:6px">draft slot
         <select id="xslot" aria-label="Your position in the draft order"></select></label>
       <span class="spacer"></span>
+      <!-- The live ESPN draft (serve.py + live_draft.py), on this same line so it costs no
+           height. Hidden on a static copy. Paste the draft-room URL, a league id, or 'sim'. -->
+      <span id="xlivebar" hidden>
+        <input id="xliveId" value="623238770" aria-label="ESPN draft-room URL or league id" spellcheck="false"
+          placeholder="ESPN draft URL" title="Paste the draft-room URL (league and team are read off it), or a league id, or sim to rehearse.">
+        <select id="xliveTeam" aria-label="Which team is yours"><option value="">team…</option></select>
+        <button class="btn live mini" id="xliveBtn" aria-pressed="false">watch</button>
+      </span>
       <span id="xplanMeter" class="meter"></span>
     </div>
     <div class="plangrid">
@@ -666,24 +727,29 @@
             aria-label="plan preference order" title="Your order of preference — 1 is the favourite. Sets the dropdown and Compare order.">
           <input id="xplanName" class="nameEdit" spellcheck="false" aria-label="plan name" placeholder="name this plan">
         </div>
-        <div id="xplanPicks"></div>
-        <div id="xplanRoster" style="margin-top:14px"></div>
+        <div id="xplanScroll"><div id="xplanPicks"></div>
+        <div id="xplanRoster" style="margin-top:14px"></div></div>
       </div>
       <div class="card">
-        <h2>Add players</h2>
         <div class="filters">
           <input type="search" id="xpq" aria-label="Search players to add to the plan" placeholder="search…">
           <select id="xppos" aria-label="Filter the player pool by position"><option value="">all pos</option></select>
           <label class="chk"><input type="checkbox" id="xphide" checked> hide picked</label>
-          <label class="chk"><input type="checkbox" id="xptgt"> ★ targets only</label>
-          <span id="xpgoneN" class="lgnote" style="flex-basis:100%;margin:0"></span>
+          <label class="chk" title="targets only"><input type="checkbox" id="xptgt"> ★ only</label>
+          <span id="xpgoneN" class="lgnote" style="margin:0"></span>
         </div>
         <div class="scroll" style="max-height:62vh"><table id="xplanPool" aria-label="Players available to add to the plan"></table></div>
       </div>
-    </div>
-    <div class="card">
-      <h2>Compare</h2>
-      <div class="scroll" style="max-height:none"><table id="xplanCmp" aria-label="Draft plan comparison"></table></div>
+      <!-- The draft as it happens, newest pick on top. Only while a draft is being followed. -->
+      <div class="card" id="xfeedCard">
+        <span id="xliveStat" hidden></span>
+        <div class="filters" style="margin-bottom:8px">
+          <select id="xfeedTm" aria-label="Show one team's picks"><option value="">all teams</option></select>
+          <select id="xfeedPos" aria-label="Show one position"><option value="">all pos</option></select>
+        </div>
+        <div id="xclockRow"></div>
+        <div class="scroll" id="xfeedScroll" style="max-height:62vh"><div id="xfeed"></div></div>
+      </div>
     </div>
   </section>
 
@@ -2942,7 +3008,7 @@ let xState = {q: '', pos: '', tgt: false, arb: false, hideStream: true, season: 
               goneAt: null};
 let lView = 'picks';
 try { const pv = localStorage.getItem('pbaffl_xpivot_v1');
-      if (pv === 'value' || pv === 'yahoo') xState.pivot = pv; } catch (e) {}
+      if (pv === 'value' || pv === 'yahoo' || pv === 'espn') xState.pivot = pv; } catch (e) {}
 /* TARGETS ARE SHARED ACROSS BOTH LEAGUES.
  *
  * This used to be 'x' + p.pid -- namespaced so the two leagues could not collide.
@@ -2971,39 +3037,48 @@ function xBoard() {
   //   'yahoo' : Yahoo's six analysts within, the pick curve across (fetch_yahoo_rankings.py)
   // build_ppp_data.py joins the alternates onto the rows as vb* and yh* fields; a pivot
   // whose data was not built hides its button and the board falls back to 'pick'.
-  const have = {pick: true, value: !!PPP.vb, yahoo: !!PPP.yh};
+  //   'espn'  : ESPN's SUPERFLEX list in its own order -- the draft room's screen, no
+  //             re-weighting at all; the Move column then reads as "vs this board"
+  const have = {pick: true, value: !!PPP.vb, yahoo: !!PPP.yh, espn: true};
   const mode = have[xState.pivot] ? xState.pivot : 'pick';
-  const VB = mode === 'value', YH = mode === 'yahoo';
+  const VB = mode === 'value', YH = mode === 'yahoo', ES = mode === 'espn';
   const seg = document.getElementById('xpivot');
   if (seg) {
-    seg.hidden = !(have.value || have.yahoo);
+    seg.hidden = false;
     document.getElementById('xpvPick').setAttribute('aria-pressed', String(mode === 'pick'));
     const bv = document.getElementById('xpvValue'); bv.hidden = !have.value; bv.setAttribute('aria-pressed', String(VB));
     const by = document.getElementById('xpvYahoo'); by.hidden = !have.yahoo; by.setAttribute('aria-pressed', String(YH));
+    const be = document.getElementById('xpvEspn'); if (be) be.setAttribute('aria-pressed', String(ES));
   }
   const h = document.getElementById('xboardH');
   if (h) h.textContent = VB ? 'The 2026 board — value over draft demand'
                        : YH ? 'The 2026 board — ranked for superflex, Yahoo order within position'
+                       : ES ? 'ESPN’s superflex list — the order the draft room shows'
                             : 'The 2026 board — ranked for superflex';
-  const rankOf = p => VB ? p.vbRank : YH ? p.yhRank : p.rank;
+  const rankOf = p => VB ? p.vbRank : YH ? p.yhRank : ES ? p.espnRank : p.rank;
   const gapOf = p => VB ? p.vbGap : YH ? p.yhGap : p.gap;
-  const rdOf = p => VB ? p.vbRd : YH ? p.yhRd : p.rd;
-  const pkOf = p => VB ? p.vbPk : YH ? p.yhPk : p.pk;
+  const rdOf = p => VB ? p.vbRd : YH ? p.yhRd : ES ? (p.espnRank == null ? null : Math.floor((p.espnRank - 1) / 12) + 1) : p.rd;
+  const pkOf = p => VB ? p.vbPk : YH ? p.yhPk : ES ? (p.espnRank == null ? null : (p.espnRank - 1) % 12 + 1) : p.pk;
   const rdPk = p => rdOf(p) == null ? '—' : rdOf(p) + '.' + String(pkOf(p)).padStart(2, '0');
   let rows = PPP.board.slice();
-  if (VB || YH) rows.sort((a, b) => (rankOf(a) == null) - (rankOf(b) == null) || (rankOf(a) || 0) - (rankOf(b) || 0));
+  if (VB || YH || ES) rows.sort((a, b) => (rankOf(a) == null) - (rankOf(b) == null) || (rankOf(a) || 0) - (rankOf(b) || 0));
   if (xState.hideStream) rows = rows.filter(p => !xSTREAM(p));
   if (xState.pos) rows = rows.filter(p => p.pos === xState.pos);
   if (xState.q) { const q = xState.q.toLowerCase(); rows = rows.filter(p => p.n.toLowerCase().includes(q)); }
   if (xState.tgt) rows = rows.filter(p => tgHit(xKey(p)));
   if (xState.arb) rows = rows.filter(p => gapOf(p) != null && gapOf(p) >= 24);
+  const gone = xLiveTaken();
+  if (gone.size && xLiveHide()) rows = rows.filter(p => !gone.has(String(p.pid)));
   const yrs = `${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]}`;
   const baseTxt = VB ? Object.entries(PPP.vb.baseline).map(([p, b]) => p + b.rank).join(' / ') : '';
   const thPlayer = `<th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>`;
   const thUD = `<th title="Underdog's ordering within the position — the sharp market${YH ? ', shown for comparison' : ', and what sets each player’s rank'}.">UD</th>`;
   const thYH = `<th title="Yahoo's six analysts' consensus ordering within the position (Boone, Harmon, Norris, Pianowski, Smyth, Winks; via the FantasyPros widget in Yahoo's rankings article), updated ${PPP.yh ? PPP.yh.updated : ''}. Under this pivot it sets each player's rank. Their overall order is a one-QB list and is not used.">Yahoo</th>`;
-  const thEspn = `<th title="The round ESPN's superflex list has him going in — the order the draft room shows everyone in this league.">ESPN rd</th>
-    <th title="How far this pivot has him ahead of, or behind, ESPN.">Move</th></tr></thead>`;
+  const thEspn = ES
+    ? `<th title="Where THIS board (the pick curve) has him, round.pick.">Board</th>
+    <th title="Picks between this board and ESPN's list. Positive (green): this board has him earlier, so the room's screen will let him fall to you. Negative (red): ESPN has him earlier, so the room takes him before you would. Shading steps at half a round, a round, two rounds.">vs board</th></tr></thead>`
+    : `<th title="The round ESPN's superflex list has him going in — the order the draft room shows everyone in this league.">ESPN rd</th>
+    <th title="Picks between this pivot and ESPN's list. Positive (green): this pivot has him earlier than the room's screen does, so he should fall to you. Negative (red): the room takes him before you would. Shading steps at half a round, a round, two rounds.">Move</th></tr></thead>`;
   const head = VB ? `<thead><tr>${thPlayer}
     <th title="What the Nth player TAKEN at this position scored in this league, ${yrs}, smoothed. Not a projection feed — the room's own history.">Slot pts</th>
     <th title="Slot points minus the baseline slot, which is how deep this room drafts each position inside the first 100 picks: ${baseTxt}. This is what sorts the board.">Value</th>
@@ -3019,11 +3094,24 @@ function xBoard() {
   const body = rows.map(p => {
     const gap = gapOf(p);
     const gapRd = gap == null ? null : Math.round(gap / 12 * 10) / 10;
-    const cls = xSTREAM(p) ? ' class="stream"' : '';
-    const mv = gapRd == null ? '—'
-      : gapRd >= 0.8 ? `<span class="up">${gapRd.toFixed(1)} rd earlier</span>`
-      : gapRd <= -0.8 ? `<span class="dn">${Math.abs(gapRd).toFixed(1)} rd later</span>`
-      : '<span style="color:var(--muted)">—</span>';
+    const isGone = gone.has(String(p.pid));
+    const cls = isGone ? ' class="gone"' : xSTREAM(p) ? ' class="stream"' : '';
+    // Signed picks, always shown, shaded by size so the outliers jump out: half a round
+    // is the first tint, a round the second, two rounds the darkest. Positive = this board
+    // has him EARLIER than ESPN's list (the room will let him fall); negative = ESPN has him
+    // earlier (the room takes him before you would).
+    const gshade = v => v == null ? 'd0'
+      : v >= 24 ? 'd3' : v >= 12 ? 'd2' : v >= 6 ? 'd1'
+      : v <= -24 ? 'dm3' : v <= -12 ? 'dm2' : v <= -6 ? 'dm1' : 'd0';
+    const mvCls = gshade(gap);
+    const mvTip = gap == null ? 'not on ESPN’s list'
+      : `board ${xRdPk(p)} vs ESPN ${p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1 + '.' + String((p.espnRank - 1) % 12 + 1).padStart(2, '0')} — `
+        + (gap === 0 ? 'same spot'
+           : gap > 0 ? `this board has him ${gap} picks (${Math.abs(gapRd).toFixed(1)} rd) earlier than the room’s screen does: he should fall to you`
+                     : `the room’s screen has him ${-gap} picks (${Math.abs(gapRd).toFixed(1)} rd) earlier than this board: he’ll be gone before you’d take him`);
+    const mv = gap == null ? '<span style="color:var(--muted)">—</span>'
+      : `<span class="${gap >= 6 ? 'up' : gap <= -6 ? 'dn' : ''}" style="${Math.abs(gap) < 6 ? 'color:var(--muted)' : ''}">${gap > 0 ? '+' : gap < 0 ? '−' : '±'}${Math.abs(gap)}</span>`
+        + (Math.abs(gap) >= 12 ? `<span style="color:var(--ink2);font-size:12.5px;margin-left:5px">${Math.abs(gapRd).toFixed(1)} rd</span>` : '');
     const pr = VB && p.vbPr != null ? p.vbPr : YH && p.yhPr != null ? p.yhPr : p.prank;
     const ud = p.src === 'underdog'
       ? `<span style="color:var(--ink2)">${p.pos}${p.prank}</span>`
@@ -3048,16 +3136,17 @@ function xBoard() {
     return `<tr${cls}>
       <td class="l kpi" style="color:var(--muted)">${rankOf(p) == null ? '—' : rankOf(p)}</td>
       <td class="l" style="font-weight:650">${rdPk(p)}</td>
-      <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}</td>
+      <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}${isGone ? xLiveTag(p.pid) : ''}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${pr}</span></td>
       <td class="l" style="color:var(--ink2)">${p.tm}</td>
       ${mid}
-      <td>${p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1}</td>
-      <td>${mv}</td></tr>`;
+      <td>${ES ? xRdPk(p) : (p.espnRank == null ? '—' : Math.floor((p.espnRank - 1) / 12) + 1)}</td>
+      <td class="${mvCls}" title="${mvTip}" style="font-weight:650;white-space:nowrap">${mv}</td></tr>`;
   }).join('');
   const t = document.getElementById('xboardT');
   t.setAttribute('aria-label', VB ? '2026 board ranked by value over this league’s draft-demand baseline'
                               : YH ? '2026 board ranked for superflex with Yahoo’s analysts ordering each position'
+                              : ES ? 'ESPN’s superflex ranking list in its own order, with this board’s round and pick beside each player'
                                    : '2026 board ranked by value over replacement for a superflex league');
   t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="10" class="l" style="color:var(--muted)">no players match these filters</td></tr>') + '</tbody>';
   bindStars(t);
@@ -3112,13 +3201,26 @@ function xLast() {
   const shade = v => v == null ? 'd0'
     : v >= 90 ? 'd3' : v >= 45 ? 'd2' : v >= 15 ? 'd1'
     : v <= -90 ? 'dm3' : v <= -45 ? 'dm2' : v <= -15 ? 'dm1' : 'd0';
+  // vs ESPN: picks are the unit. Half a round is noise, a round is a real disagreement,
+  // two rounds is a story -- green when he fell past the list, red when the room reached.
+  const lshade = v => v == null ? 'd0'
+    : v >= 24 ? 'd3' : v >= 12 ? 'd2' : v >= 6 ? 'd1'
+    : v <= -24 ? 'dm3' : v <= -12 ? 'dm2' : v <= -6 ? 'dm1' : 'd0';
+  const lists = (PPP.lists || {})[yr] || {};
+  const useEspn = !!lists.espn;
   document.getElementById('xlastT').innerHTML =
     `<thead><tr><th class="l" style="cursor:default"
         title="Counts within whatever is filtered — filter to QB and this is which quarterback he was">#</th>
       <th class="l">Pick</th><th class="l">Player</th><th class="l">Pos</th>
       <th class="l">Drafted by</th><th>Points</th><th>Proj</th><th class="l">Finished</th>
-      <th>vs round</th></tr></thead><tbody>` +
-    rows.map((p, i) => `<tr>
+      <th>vs round</th>
+      <th title="${useEspn
+        ? 'Overall pick minus his rank on ESPN’s preseason superflex list (' + (lists.espn || '') + ') — the list the draft room showed. Positive: he FELL past where ESPN had him. Negative: the room reached.'
+        : 'No ESPN list recovered for ' + yr + ' yet, so this is against the FantasyPros superflex consensus of that preseason. Positive: he fell past his rank. Negative: the room reached.'}">${useEspn ? 'vs ESPN' : 'vs consensus'}</th></tr></thead><tbody>` +
+    rows.map((p, i) => {
+      const lr = useEspn ? p.esp : p.fpc;
+      const gap = lr == null ? null : p.o - lr;
+      return `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td class="l" style="font-weight:650">${p.rd}.${String(p.pk).padStart(2, '0')}</td>
       <td class="l">${pLink(p.n, p.key, +yr)}</td>
@@ -3127,14 +3229,22 @@ function xLast() {
       <td>${p.act == null ? '—' : xFmt(p.act)}</td>
       <td>${p.prj ? xFmt(p.prj) : '<span style="color:var(--muted)">—</span>'}</td>
       <td class="l fin">${p.fin || ''}${p.st ? '' : p.fin ? ' <span style="color:var(--muted)">(bench)</span>' : ''}</td>
-      <td class="${shade(p.vor)}">${p.vor == null ? '—' : (p.vor > 0 ? '+' : '') + xFmt(p.vor)}</td></tr>`).join('') +
+      <td class="${shade(p.vor)}">${p.vor == null ? '—' : (p.vor > 0 ? '+' : '') + xFmt(p.vor)}</td>
+      <td class="${lshade(gap)}" title="${lr == null ? 'not on the list' : (useEspn ? 'ESPN' : 'consensus') + ' #' + lr + ', taken ' + ord(p.o)}"
+          style="font-weight:650">${gap == null ? '<span style="color:var(--muted)">—</span>' : (gap > 0 ? '+' : gap < 0 ? '−' : '±') + Math.abs(gap)}</td></tr>`;
+    }).join('') +
     '</tbody>';
   bindLinks(document.getElementById('xlastT'));
   if (xState.view === 'rosters') xRosters();
   document.getElementById('xdvLeg').innerHTML =
     '<span><i style="background:var(--div-pos)"></i>beat the average return of its round</span>' +
     '<span><i style="background:var(--div-neg)"></i>fell short of it</span>' +
-    '<span style="color:var(--muted)">shading repeats the number beside it; 2023 projections were not retained by ESPN</span>';
+    '<span style="color:var(--axis)">|</span>' +
+    `<span><b>${useEspn ? 'vs ESPN' : 'vs consensus'}</b> — picks past his preseason list rank:</span>` +
+    '<span><i style="background:var(--div-pos)"></i>+ fell to the room (value)</span>' +
+    '<span><i style="background:var(--div-neg)"></i>− reached ahead of the list</span>' +
+    '<span style="color:var(--muted)">shading repeats the number beside it; 2023 projections were not retained by ESPN' +
+    (useEspn ? '' : '; no ESPN list recovered for ' + yr + ' — consensus stands in') + '</span>';
 }
 
 function xStr() {
@@ -3283,12 +3393,13 @@ const xMyPicks = slot => Array.from({length: XRDS}, (_, i) => xPickNo(slot, i + 
 let xplans = [], xactive = 0;
 function xLoadPlans() {
   const p = loadPending();
-  if (p && Array.isArray(p.xplans) && p.xplans.length) { xplans = p.xplans; return; }
+  const noSim = arr => arr.filter(x => !x.sim);           // the old "MOCK rehearsal" plan is retired
+  if (p && Array.isArray(p.xplans) && p.xplans.length) { xplans = noSim(p.xplans); if (xplans.length) return; }
   // Same precedence as PBAFFL's plans: unsaved local edits win, then the shared
   // file baked in at build time, then a starter plan for a fresh clone.
   if (Array.isArray(SHARED.xplans) && SHARED.xplans.length) {
-    xplans = JSON.parse(JSON.stringify(SHARED.xplans));
-    return;
+    xplans = noSim(JSON.parse(JSON.stringify(SHARED.xplans)));
+    if (xplans.length) return;
   }
   xplans = [{name: 'Plan A', slot: 6, ids: Array(XRDS).fill(null)}];
 }
@@ -3336,13 +3447,28 @@ function xPlanBar() {
   document.getElementById('xplanMeter').innerHTML =
     `<b>${s.filled.length}</b> / ${XRDS} picks &middot; <b>${s.exp}</b> projected starting points &middot; ` +
     (s.legal ? '<span class="up">lineup complete</span>'
-             : `<span class="dn">need ${s.missing.map(m => m[1] + ' ' + m[0]).join(', ')}</span>`);
+             : `<span class="dn">need ${s.missing.map(m => m[1] + ' ' + (m[0] === 'SUPERFLEX' ? 'SFLEX' : m[0])).join(', ')}</span>`);
   const nm = document.getElementById('xplanName');
   if (document.activeElement !== nm) nm.value = xCur().name;
 }
 
+function xUpNext() {
+  const j = xLive;
+  if (!j || !j.active || j.teamId == null || !j.pickOrder.length || j.pickOrder.indexOf(j.teamId) < 0) return '';
+  const T = j.nTeams || XTEAMS, n = j.picks.length, nextO = n + 1;
+  if (j.drafted || n >= T * (j.rounds || XRDS)) return '<span class="upnext done">draft complete</span>';
+  const mySlot = j.pickOrder.indexOf(j.teamId) + 1;
+  const myNext = xMyPicks(mySlot).find(o => o > n);
+  if (!myNext) return '<span class="upnext done">no picks left</span>';
+  const away = myNext - nextO;
+  if (away === 0) return '<span class="upnext now">YOU ARE UP</span>';
+  return `<span class="upnext">you in ${away}</span>`;
+}
+
 function xPlanPicks() {
   const pl = xCur(), mine = xMyPicks(pl.slot);
+  // While the draft itself is feeding DRAFTED, its rows are the record: no cut, no remove.
+  const feeding = !!(pl.live && xLive && xLive.active);
   let html = '';
   mine.forEach((no, i) => {
     const rd = i + 1, r = pl.ids[i] ? xById[pl.ids[i]] : null;
@@ -3350,7 +3476,7 @@ function xPlanPicks() {
     // sitting there; one ranked well behind it means you are taking him early.
     const gone  = r && r.rank != null && (no - r.rank) >= 12;
     const reach = r && r.rank != null && (no - r.rank) <= -12;
-    const badge = !r ? '' : gone
+    const badge = !r || pl.live || pl.sim ? '' : gone
       ? ` <span class="dn" title="board rank ${r.rank}, pick ${no}">unlikely to last</span>`
       : reach ? ` <span class="up" title="board rank ${r.rank}, pick ${no}">reach — could wait</span>` : '';
     const cutHere = xState.goneAt === no;
@@ -3365,12 +3491,12 @@ function xPlanPicks() {
         ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span> <span style="color:var(--muted)">${r.tm}</span>` + badge
         : '&mdash;'}</span>
       <span class="pr">${r ? xFmt(r.exp) : ''}</span>
-      <button class="btn mini cut${cutHere ? ' on' : ''}" data-cut="${no}"
+      ${feeding ? '' : `<button class="btn mini cut${cutHere ? ' on' : ''}" data-cut="${no}"
         title="${cutHere ? 'Show the whole board again'
                          : 'Hide players the board has going before pick ' + no}"
         aria-pressed="${cutHere}">${cutHere ? 'all' : 'cut'}</button>
       ${r ? `<button class="btn mini" data-xdrop="${i}" aria-label="remove">&times;</button>`
-          : '<span style="width:22px"></span>'}
+          : '<span style="width:22px"></span>'}`}
     </div>`;
   });
   const host = document.getElementById('xplanPicks');
@@ -3478,7 +3604,7 @@ function xPlanRoster() {
       // one colour tag per row, on the left: the slot label wears the position colour and the
       // player's rank stays plain. FLEX and SUPERFLEX have no colour, so there the player's chip carries it.
       html += `<div class="slot start${r ? '' : ' empty'}">
-        <span class="lab" style="width:74px">${POSC[pos] ? `<span class="pos" style="background:var(${POSC[pos]})">${pos}</span>` : pos}</span>
+        <span class="lab" style="width:74px">${POSC[pos] ? `<span class="pos" style="background:var(${POSC[pos]})">${pos}</span>` : (pos === 'SUPERFLEX' ? '<span title="superflex — QB, RB, WR or TE">SFLEX</span>' : pos)}</span>
         <span class="nm">${r ? pLink(r.n, r.key, 0) + (POSC[pos]
           ? ` <span style="color:var(--muted)">${r.pos}${r.prank}</span>`
           : ` <span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span>`) : '&mdash;'}</span>
@@ -3505,6 +3631,9 @@ function xPlanPool() {
   const sel = document.getElementById('xppos');
   if (sel.options.length === 1) xPOS.forEach(p => sel.add(new Option(p, p)));
   const taken = new Set(xCur().ids.filter(Boolean));
+  const lgone = xLiveTaken();               // the live ESPN draft, if one is being watched
+  const feeding = !!(xCur().live && xLive && xLive.active);   // the draft fills DRAFTED: nothing to add by hand
+  lgone.forEach(pid => taken.add(pid));
   // Strictly before, not at: the player the board has going exactly at the pick
   // you are on may still be sitting there. K and DEF carry no rank and are never
   // hidden by this -- nothing about them is gone early.
@@ -3515,21 +3644,15 @@ function xPlanPool() {
     (!hide || !taken.has(r.pid)) && (!tgt || tgHit(xKey(r))) &&
     !isGone(r)).slice(0, 300);
   const t = document.getElementById('xplanPool');
-  t.innerHTML = '<thead><tr><th class="l" style="cursor:default"'
-    + ' title="Where this league has historically taken that slot">Est.</th>' +
-    '<th class="l">Rd.Pk</th><th class="l">player</th>' +
-    '<th class="l">pos</th><th>Proj</th><th></th></tr></thead><tbody>' +
-    rows.map(r => `<tr draggable="true" data-xpid="${r.pid}"
+  t.innerHTML = '<thead><tr>' +
+    '<th class="l" title="Where this board has him going, round.pick">Rd.Pk</th><th class="l">player</th>' +
+    '<th class="l">pos</th>' + (feeding ? '' : '<th></th>') + '</tr></thead><tbody>' +
+    rows.map(r => `<tr draggable="true" data-xpid="${r.pid}"${lgone.has(String(r.pid)) ? ' class="gone"' : ''}
         title="Drag him onto the round you want to simulate taking him">
-      <td class="l" style="font-weight:650">${r.pick == null ? '—' : xFmt(r.pick)}</td>
-      <td class="l" style="color:var(--ink2)" title="${r.rank == null ? 'streamed — no board rank' : 'board rank ' + r.rank}">${xRdPk(r)}</td>
-      <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}<span style="color:var(--muted);margin-left:6px">${r.tm}</span></td>
+      <td class="l" style="font-weight:650" title="${r.rank == null ? 'streamed — no board rank' : 'board rank ' + r.rank + (r.pick == null ? '' : ' · this league has taken the slot at pick ' + xFmt(r.pick))}">${xRdPk(r)}</td>
+      <td class="l">${starHtml(xKey(r))}${pLink(r.n, r.key, 0)}${noteHtml(xKey(r))}<span style="color:var(--muted);margin-left:6px">${r.tm}</span>${lgone.has(String(r.pid)) ? xLiveTag(r.pid) : ''}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[r.pos] || '--muted'})">${r.pos}${r.prank}</span></td>
-      <td style="color:var(--muted)">${xFmt(r.prj)}</td>
-      <td class="acts">${r.rank == null ? '' :
-        `<button class="btn mini cut" data-pcut="${r.rank}"
-           title="Everyone above him is gone — hide them">cut</button>`
-        }<button class="btn mini" data-xadd="${r.pid}">add</button></td></tr>`).join('') +
+      ${feeding ? '' : `<td class="acts">${lgone.has(String(r.pid)) ? '' : `<button class="btn mini" data-xadd="${r.pid}">add</button>`}</td>`}</tr>`).join('') +
     '</tbody>';
   // Say what the filter removed. A pool that silently drops 40 players looks
   // like a short board, and on draft night that is the wrong thing to wonder about.
@@ -3575,41 +3698,268 @@ function xPlanPool() {
   });
 }
 
+/* ---- the live ESPN draft ----------------------------------------------------
+   serve.py polls ESPN (live_draft.py) and serves what it saw at /api/live. This page
+   polls THAT every few seconds while the second league is showing. Taken players are
+   dimmed on the board and dropped from the pool; Jamie's own picks land in the DRAFTED
+   plan by round. Absent on Faucet, where there is no server: the bar stays hidden. */
+let xLive = null, xLiveSig = '', xLiveTimer = null;
+const xLiveTaken = () => xLive && xLive.picks ? new Set(xLive.picks.map(p => String(p.pid))) : new Set();
+const xLiveHide = () => { const c = document.getElementById('xphide'); return !!(c && c.checked); };   // the pool's "hide picked" rules the board too
+const xLiveTeamAb = id => { if (id == null) return '—'; const t = xLive && (xLive.teams || []).find(t => t.id === id); return t ? t.ab : 'team ' + id; };
+const xLiveName = pid => (xById[pid] && xById[pid].n) || (xLive && xLive.players && xLive.players[pid] && xLive.players[pid].n) || ('ESPN #' + pid);
+function xLiveTag(pid) {
+  const pk = xLive && xLive.picks.find(p => String(p.pid) === String(pid));
+  if (!pk) return '';
+  const mine = xLive.teamId != null && pk.tm === xLive.teamId;
+  return ` <span class="lgnote" style="margin:0 0 0 6px${mine ? ';color:var(--good);font-weight:650' : ''}"
+    title="${mine ? 'your pick' : 'taken by ' + esc(xLiveTeamAb(pk.tm))}${pk.auto ? ' (autopick)' : ''}">${pk.rd}.${String(pk.pk).padStart(2, '0')} ${mine ? 'you' : esc(xLiveTeamAb(pk.tm))}${pk.auto ? ' ⚙' : ''}</span>`;
+}
+function xLiveStatus() {
+  const el = document.getElementById('xliveStat'), j = xLive;
+  if (!el) return;
+  if (!j || !j.active) {
+    el.innerHTML = j && j.error ? `<span class="dn">${esc(j.error)}</span>`
+      : j && j.drafted ? 'draft complete' : 'not watching';
+    return;
+  }
+  const T = j.nTeams || XTEAMS, n = j.picks.length, total = T * (j.rounds || XRDS);
+  const nextO = n + 1;
+  const rd = Math.floor((nextO - 1) / T) + 1, pk = (nextO - 1) % T + 1;
+  // the relay hears SELECTING <team> straight from the room; otherwise derive it from the snake
+  const onClock = j.onClock != null ? j.onClock : j.pickOrder.length ? (rd % 2 ? j.pickOrder[pk - 1] : j.pickOrder[T - pk]) : null;
+  const clock = j.clockMs != null && j.mode === 'relay' ? ` <span style="color:var(--muted)">${Math.round(j.clockMs / 1000)}s</span>` : '';
+  const mySlot = j.teamId != null ? j.pickOrder.indexOf(j.teamId) + 1 : 0;
+  const myNext = mySlot ? xMyPicks(mySlot).find(o => o > n) : null;
+  const last = n ? j.picks[n - 1] : null;
+  el.title = (last ? `last: ${xLiveName(last.pid)} to ${xLiveTeamAb(last.tm)} · ` : '') +
+    (j.mode === 'relay' ? `relayed from your draft room, last event ${j.lastEvent || ''}` : `ESPN ${j.http === 304 ? 'unchanged' : (j.http || '')} at ${j.polled || ''}`) +
+    (j.mode === 'sim' ? ' · SIMULATED' : '') + (j.error ? ' · ' + j.error : '');
+  el.innerHTML =
+    `<b>${n}</b>/${total}` +
+    (myNext ? ` · you <b>${xRdPk({rd: Math.floor((myNext - 1) / T) + 1, pk: (myNext - 1) % T + 1})}</b>${myNext === nextO ? ' <span class="clock">now</span>' : ' (' + (myNext - nextO) + ' away)'}` : j.drafted ? ' · done' : '') +
+    (j.mode === 'sim' ? ' · <span class="dn">SIM</span>' : j.mode === 'relay' ? '' : ' · <span style="color:var(--muted)">poll</span>') +
+    (j.error ? ' <span class="dn" title="' + esc(j.error) + '">!</span>' : '');
+}
+function xLiveFeed(j) {
+  const card = document.getElementById('xfeedCard');
+  if (!card) return;
+  const el0 = document.getElementById('xfeed');
+  if (!(j && (j.active || (j.picks && j.picks.length)))) {
+    el0.innerHTML = '<div class="fp clock"><span class="nm">' + (noServer
+      ? 'no server here — the feed runs on localhost'
+      : 'not following a draft. Paste the ESPN draft URL above and press watch, or open the draft room with the relay installed.') + '</span></div>';
+    return;
+  }
+  const T = j.nTeams || XTEAMS, n = j.picks.length;
+  // filters: team (filled from the league once) and position
+  const tmSel = document.getElementById('xfeedTm'), posSel = document.getElementById('xfeedPos');
+  if (tmSel && j.teams && j.teams.length && tmSel.options.length <= 1)
+    j.teams.forEach(t => tmSel.add(new Option(t.id === j.teamId ? 'you (' + t.ab + ')' : t.ab, t.id)));
+  if (posSel && posSel.options.length <= 1) xPOS.forEach(ps => posSel.add(new Option(ps, ps)));
+  const fTm = tmSel && tmSel.value ? +tmSel.value : null, fPos = posSel ? posSel.value : '';
+  const posOf = p => (xById[p.pid] || (j.players || {})[p.pid] || {}).pos || '?';
+  const rows = j.picks.slice().reverse()
+    .filter(p => (fTm == null || p.tm === fTm) && (!fPos || posOf(p) === fPos))
+    .map(p => `<div class="fp${p.tm === j.teamId ? ' me' : ''}" title="${p.auto ? 'autopick' : ''}">
+      <span class="no">${p.rd}.${String(p.pk).padStart(2, '0')}</span>
+      <span class="tm">${p.tm === j.teamId ? 'you' : esc(xLiveTeamAb(p.tm))}</span>
+      <span class="nm">${esc(xLiveName(p.pid))}</span>
+      <span class="pos" style="background:var(${POSC[(xById[p.pid] || (j.players || {})[p.pid] || {}).pos] || '--muted'})">${(xById[p.pid] || (j.players || {})[p.pid] || {}).pos || '?'}</span></div>`);
+  // the on-the-clock row is pinned above the scroll, so it is always the top row
+  const clockRow = document.getElementById('xclockRow');
+  if (clockRow) {
+    if (j.active && !j.drafted && n < T * (j.rounds || XRDS)) {
+      const nextO = n + 1, rd = Math.floor((nextO - 1) / T) + 1, pk = (nextO - 1) % T + 1;
+      const onClock = j.onClock != null ? j.onClock : j.pickOrder.length ? (rd % 2 ? j.pickOrder[pk - 1] : j.pickOrder[T - pk]) : null;
+      const me = onClock === j.teamId;
+      clockRow.innerHTML = `<div class="fp onclock${me ? ' me' : ''}"><span class="spin" aria-hidden="true"></span>
+        <span class="no">${rd}.${String(pk).padStart(2, '0')}</span>
+        <span class="tm">${me ? '<b class="clock">YOU</b>' : esc(xLiveTeamAb(onClock))}</span>
+        <span class="nm">on the clock${j.clockMs != null && j.mode === 'relay' ? ' · ' + Math.round(j.clockMs / 1000) + 's' : ''}</span>
+        ${xUpNext()}</div>`;
+    } else clockRow.innerHTML = '';
+  }
+  const head = '';
+  const el = document.getElementById('xfeed');
+  el.innerHTML = head + rows.join('') + (n ? (rows.length ? '' : '<div class="fp clock"><span class="nm">no picks match</span></div>') : '<div class="fp clock"><span class="nm">no picks yet</span></div>');
+  xFeedFit();
+}
+// The feed card is exactly as tall as the pool card beside it: its scroll region takes
+// whatever the pool's card height leaves after the feed's own header.
+function xFeedFit() {
+  const card = document.getElementById('xfeedCard'), sc = document.getElementById('xfeedScroll');
+  const pool = document.getElementById('xplanPool'), ps = document.getElementById('xplanScroll');
+  if (!card || !sc || !pool) return;
+  const pc = pool.closest('.card'), plc = ps && ps.closest('.card');
+  if (!pc) return;
+  if (card.hidden) {                       // planning, not drafting: the plan card is as tall as it needs
+    if (ps) { ps.style.maxHeight = ''; ps.style.height = ''; ps.classList.remove('scroll'); }
+    return;
+  }
+  const target = pc.getBoundingClientRect().height;
+  // feed: its scroll takes what the pool's height leaves after the feed's own header rows
+  sc.style.maxHeight = sc.style.height = '';
+  const fChrome = card.getBoundingClientRect().height - sc.getBoundingClientRect().height;
+  const fh = Math.max(120, Math.round(target - fChrome));
+  sc.style.maxHeight = fh + 'px'; sc.style.height = fh + 'px';
+  // plan: same treatment, picks and roster scroll together inside the card
+  if (ps && plc) {
+    ps.classList.add('scroll'); ps.style.maxHeight = ps.style.height = '';
+    const pChrome = plc.getBoundingClientRect().height - ps.getBoundingClientRect().height;
+    const ph = Math.max(120, Math.round(target - pChrome));
+    ps.style.maxHeight = ph + 'px'; ps.style.height = ph + 'px';
+  }
+}
+if (typeof ResizeObserver !== 'undefined') {
+  const _pool = document.getElementById('xplanPool');
+  if (_pool && _pool.closest('.card')) new ResizeObserver(() => xFeedFit()).observe(_pool.closest('.card'));
+}
+function xLiveApply(j) {
+  xLive = j;
+  // anyone ESPN named that the board does not carry gets a stub, so DRAFTED can show him
+  Object.entries(j.players || {}).forEach(([pid, p]) => {
+    if (!xById[pid]) xById[pid] = {pid, n: p.n, pos: p.pos, tm: p.tm, prank: '', rank: null, exp: 0, prj: 0,
+                                   key: (p.n || '').toLowerCase().replace(/[^a-z]/g, '')};
+  });
+  // team picker, filled once the watcher knows the league's teams
+  const sel = document.getElementById('xliveTeam');
+  if (sel && j.teams && j.teams.length && sel.options.length <= 1) {
+    j.teams.forEach(t => sel.add(new Option(`${t.ab} — ${t.name}`, t.id)));
+    sel.value = j.teamId != null ? j.teamId : (typeof xLiveWantTeam === 'string' && xLiveWantTeam) || (String(j.leagueId) === '623238770' ? 11 : '');
+  }
+  const btn = document.getElementById('xliveBtn');
+  if (btn) { btn.setAttribute('aria-pressed', String(!!j.active)); btn.textContent = j.active ? 'stop' : 'watch'; }
+  // a watch started from the command line: show the league it is actually on
+  const idBox = document.getElementById('xliveId');
+  if (idBox && j.active && j.leagueId && document.activeElement !== idBox && idBox.value !== String(j.leagueId)) idBox.value = j.leagueId;
+  // my picks -> the DRAFTED plan, by round; the plan is created on the first one
+  let changed = false;
+  if (j.active && j.teamId != null && j.pickOrder.length && j.pickOrder.indexOf(j.teamId) >= 0) {
+    const mine = j.picks.filter(p => p.tm === j.teamId);
+    {
+      // Every draft -- mock, simulated or the real one -- fills DRAFTED. The moment a
+      // session for a different league connects (before pick 1), the picks the previous
+      // draft put there are cleared; anything you seeded from a plan yourself stays.
+      // (L.dl remembers which rounds the draft filled.)
+      let li = xplans.findIndex(p => p.live);
+      const slot = j.pickOrder.indexOf(j.teamId) + 1;
+      if (li < 0) { xplans.push({name: 'DRAFTED', live: true, slot, ids: Array(XRDS).fill(null)}); li = xplans.length - 1; changed = true; }
+      const L = xplans[li];
+      if (!Array.isArray(L.dl)) L.dl = Array(XRDS).fill(null);
+      if (String(L.league || '') !== String(j.leagueId)) {
+        L.dl.forEach((pid, i) => { if (pid && L.ids[i] === pid) L.ids[i] = null; });
+        L.dl = Array(XRDS).fill(null); L.league = String(j.leagueId); changed = true;
+      }
+      if (xactive !== li && (changed || !xLiveSig)) xactive = li;   // land on DRAFTED when a draft connects, and after a reload
+      if (L.slot !== slot) { L.slot = slot; changed = true; }
+      mine.forEach(p => {
+        const pid = String(p.pid), i = p.rd - 1;
+        if (i >= 0 && i < XRDS && L.ids[i] !== pid) {
+          const dup = L.ids.indexOf(pid); if (dup >= 0) L.ids[dup] = null;   // he was pencilled in for another round
+          L.ids[i] = pid; changed = true;
+        }
+        if (i >= 0 && i < XRDS) L.dl[i] = pid;
+      });
+    }
+  }
+  const sig = [j.active, j.picks.length, j.updated, j.error || '', j.teamId, j.http].join(':');
+  if (changed) xSavePlans();
+  if (changed || sig !== xLiveSig) {
+    xLiveSig = sig;
+    if (!document.getElementById('p-xplan').hidden) xDrawPlan();
+    if (typeof xBoard === 'function') xBoard();
+  }
+  xLiveStatus();
+  xLiveFeed(j);
+}
+async function xLivePoll() {
+  if (noServer || document.visibilityState === 'hidden') return;
+  let j;
+  try {
+    const r = await fetch('/api/live', {cache: 'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    j = await r.json();
+  } catch (e) {
+    // a static copy (Faucet) has no /api/live: hide the bar and stop asking
+    const bar = document.getElementById('xlivebar'); if (bar) bar.hidden = true;
+    if (xLiveTimer) { clearInterval(xLiveTimer); xLiveTimer = null; }
+    return;
+  }
+  if (!j || typeof j !== 'object' || !('active' in j)) return;
+  const bar = document.getElementById('xlivebar'); if (bar) bar.hidden = false;
+  xLiveApply(j);
+}
+(function xLiveWire() {
+  if (!HAVE_PPP) return;
+  const on = (id, ev, fn) => { const n = document.getElementById(id); if (n) n.addEventListener(ev, fn); };
+  const post = async body => {
+    const r = await fetch('/api/live', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    const j = await r.json();
+    if (!r.ok) { document.getElementById('xliveStat').innerHTML = `<span class="dn">${esc(j.error || String(r.status))}</span>`; return null; }
+    return j;
+  };
+  // The box takes the draft-room URL as pasted: league and team are read off it.
+  let xLiveWantTeam = null;
+  const parseLive = () => {
+    const box = document.getElementById('xliveId'); let v = box.value.trim();
+    const l = v.match(/leagueId=(\d+)/i), t = v.match(/teamId=(\d+)/i), g = v.match(/league-(\d+)/);
+    if (l || g) { v = (l || g)[1]; box.value = v; }
+    if (t) { xLiveWantTeam = t[1]; const sel = document.getElementById('xliveTeam'); if ([...sel.options].some(o => o.value === t[1])) sel.value = t[1]; }
+    return v;
+  };
+  on('xliveId', 'change', parseLive);
+  on('xliveBtn', 'click', async () => {
+    const active = xLive && xLive.active;
+    const lid = parseLive();
+    const body = active ? {action: 'stop'}
+      : {action: 'start', leagueId: lid,
+         teamId: document.getElementById('xliveTeam').value || xLiveWantTeam || (lid === '623238770' ? 11 : null)};
+    if (!active && !body.leagueId) return;
+    try {
+      const j = await post(body);
+      if (!j) return;
+      if (!active) { const sel = document.getElementById('xliveTeam'); while (sel.options.length > 1) sel.remove(1); }
+      xLiveApply(j);
+    } catch (e) { document.getElementById('xliveStat').textContent = 'no server'; }
+  });
+  // switching teams mid-watch restarts the watcher for the new team; picks are re-read from ESPN
+  on('xliveTeam', 'change', async e => {
+    if (xLive && xLive.active && e.target.value) {
+      const j = await post({action: 'start', leagueId: xLive.leagueId, teamId: e.target.value});
+      if (j) xLiveApply(j);
+    }
+  });
+  xLiveFeed(null);
+  xLivePoll();
+  xLiveTimer = setInterval(xLivePoll, 4000);
+})();
+
 // same ordering rule as the auction planner: ⚑ DRAFTED, then preference number, then creation order
 const xRankOf = p => (p.rank != null && p.rank !== '' && +p.rank > 0) ? +p.rank : Infinity;
 const xPlanOrder = () => xplans.map((p, i) => i).sort((a, b) =>
   (!!xplans[b].live - !!xplans[a].live) || (xRankOf(xplans[a]) - xRankOf(xplans[b])) || a - b);
 const xPlanLabel = p => (p.live ? '⚑ ' : xRankOf(p) < Infinity ? p.rank + '. ' : '') + esc(p.name);
 
-function xPlanCompare() {
-  const ordered = xPlanOrder().map(i => xplans[i]);
-  const cols = ordered.map(xPlanStats);
-  const posRow = pos => ordered.map((p, i) =>
-    `<td>${cols[i].filled.filter(r => r.pos === pos).length || ''}</td>`).join('');
-  document.getElementById('xplanCmp').innerHTML =
-    '<thead><tr><th class="l">&nbsp;</th>' + ordered.map(p => `<th class="l">${xPlanLabel(p)}</th>`).join('') +
-    '</tr></thead><tbody>' +
-    '<tr><td class="l">draft slot</td>' + ordered.map(p => `<td>${p.slot}</td>`).join('') + '</tr>' +
-    '<tr><td class="l">picks used</td>' + cols.map(c => `<td>${c.filled.length}/${XRDS}</td>`).join('') + '</tr>' +
-    '<tr><td class="l">projected starting points</td>' + cols.map(c => `<td><b>${c.exp}</b></td>`).join('') + '</tr>' +
-    '<tr><td class="l">lineup</td>' + cols.map(c => `<td>${c.legal
-      ? '<span class="up">complete</span>'
-      : '<span class="dn">' + c.missing.map(m => m[1] + ' ' + m[0]).join(', ') + '</span>'}</td>`).join('') + '</tr>' +
-    xPOS.map(pos => `<tr><td class="l"><span class="pos" style="background:var(${POSC[pos]})">${pos}</span></td>${posRow(pos)}</tr>`).join('') +
-    '</tbody>';
+function xDrawPlan() {
+  xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool();
+  // the draft feed belongs to the draft, so it only shows on DRAFTED and the mock rehearsal
+  const onDraft = !!(xCur().live || xCur().sim);
+  const card = document.getElementById('xfeedCard'), grid = document.querySelector('#p-xplan .plangrid');
+  if (card) card.hidden = !onDraft;
+  if (grid) grid.classList.toggle('live', onDraft);
+  if (typeof xFeedFit === 'function') requestAnimationFrame(xFeedFit);
 }
-
-function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPlanCompare(); }
 
 (function xPlanWire() {
   const on = (id, ev, fn) => { const n = document.getElementById(id); if (n) n.addEventListener(ev, fn); };
   on('xplanSel', 'change', e => { xactive = +e.target.value; xDrawPlan(); });
   on('xslot', 'change', e => { xCur().slot = +e.target.value; xSavePlans(); xDrawPlan(); });
-  on('xplanName', 'input', e => { xCur().name = e.target.value || 'untitled'; xSavePlans(); xPlanCompare(); });
+  on('xplanName', 'input', e => { xCur().name = e.target.value || 'untitled'; xSavePlans(); xPlanBar(); });
   on('xplanRank', 'input', e => {
     const v = Math.round(+e.target.value);
     if (e.target.value === '' || !(v > 0)) delete xCur().rank; else xCur().rank = v;
-    xSavePlans(); xPlanBar(); xPlanCompare();
+    xSavePlans(); xPlanBar();
   });
   on('xplanNew', 'click', () => {
     xplans.push({name: 'Plan ' + String.fromCharCode(65 + xplans.length), slot: xCur().slot,
@@ -3646,6 +3996,9 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
   });
   ['xpq', 'xppos', 'xphide', 'xptgt'].forEach(id =>
     on(id, id === 'xpq' ? 'input' : 'change', xPlanPool));
+  on('xphide', 'change', () => { if (xLive && xLive.active && typeof xBoard === 'function') xBoard(); });
+  on('xfeedTm', 'change', () => xLiveFeed(xLive));
+  on('xfeedPos', 'change', () => xLiveFeed(xLive));
 })();
 
 /* ---- Perennial Push filter wiring ---- */
@@ -3670,6 +4023,7 @@ function xDrawPlan() { xPlanBar(); xPlanPicks(); xPlanRoster(); xPlanPool(); xPl
   pivot('xpvPick', 'pick');
   pivot('xpvValue', 'value');
   pivot('xpvYahoo', 'yahoo');
+  pivot('xpvEspn', 'espn');
   on('xstream', 'click', e => {
     xState.hideStream = !xState.hideStream;
     e.target.setAttribute('aria-pressed', String(xState.hideStream));

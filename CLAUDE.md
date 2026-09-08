@@ -10,7 +10,25 @@ turn out to be wrong rather than leaving both versions.
 ```bash
 python build_all.py          # ~85s. Only needed if cleandata/fantasy.db is missing.
 python serve.py              # http://localhost:8000/dashboard.html
+python serve.py --watch 623238770 --team 11   # draft night: follow the ESPN draft live
 ```
+
+**Draft night (Perennial Push).** `serve.py` hosts a draft watcher (`live_draft.py`) and the
+page polls `/api/live`: taken players dim on every board pivot and leave the planner pool
+with who took them; Jamie's picks (team 11, HITF) drop into the ⚑ DRAFTED plan by round.
+**How the picks get in: a Tampermonkey userscript, `tools/espn_draft_relay.user.js`, in the
+ESPN draft-room tab.** Tested against a mock 2026-09-08: ESPN's read API shows 0 picks while
+the room is at pick 131, and the room's own feed (Server-Sent Events on fantasydraft.espn.com)
+allows one connection per team -- connecting from Python kicked Jamie out of the room. So
+the userscript wraps EventSource and forwards every event to `POST /api/live/relay`; the room
+keeps its connection. Install once, open the room, and the planner's "live ESPN draft" bar
+grows a third column, the draft feed. Install: Tampermonkey (with Chrome's "Allow User
+Scripts" on) → open `http://localhost:8000/espn_draft_relay.user.js` → Install. **Keep only
+one draft-room tab open** — a tab left on a finished mock reconnects and its stale JOIN once
+hijacked the live session (now refused, but don't tempt it). `--watch <leagueId>` polling
+still exists but is only good for the record after the draft; `sim` as the league id
+rehearses the page against a simulated draft. Every draft, mock or real, fills DRAFTED;
+when a new league connects the previous draft's picks are cleared and plan-seeded ones kept.
 
 **Everything generated is gitignored** — the database, the analysis CSVs, the 4MB
 dashboard — so a fresh clone has none of it and nothing below will work until

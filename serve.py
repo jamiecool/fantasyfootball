@@ -16,6 +16,9 @@ the state here and this writes the file. Then it is a normal commit.
 Four keys are persisted: targets, notes, plans (PBAFFL's auction plans) and
 xplans (Perennial Push's snake plans).
 
+It also hosts the ESPN draft watcher (live_draft.py): GET /api/live is the draft as
+ESPN last reported it, POST /api/live starts or stops watching a league.
+
 Bound to localhost only, one fixed path, shape-validated, and written atomically
 with a .bak kept -- it accepts a file from a web page, so it is careful about it.
 
@@ -31,8 +34,19 @@ import subprocess
 import sys
 import time
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, ROOT)
+import live_draft                                        # noqa: E402  (the ESPN draft watcher)
+
+# python serve.py [port] [--watch LEAGUE_ID|sim] [--team TEAM_ID]
+_args = sys.argv[1:]
+WATCH_LEAGUE = _args[_args.index("--watch") + 1] if "--watch" in _args else None
+WATCH_TEAM = _args[_args.index("--team") + 1] if "--team" in _args else None
+# the port is the digits that are NOT a flag's value -- a league id is 9 digits and
+# was once taken for one, which bind() refused
+_flagvals = {WATCH_LEAGUE, WATCH_TEAM}
+PORT = next((int(a) for a in _args if a.isdigit() and a not in _flagvals), 8000)
+WATCH = live_draft.Watcher()
 WEB = os.path.join(ROOT, "cleandata")
 STATE = os.path.join(ROOT, "shared", "board_state.json")
 MAX_BODY = 4 * 1024 * 1024          # plans and notes; nothing legitimate is bigger
@@ -122,6 +136,9 @@ def write_state(payload):
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
+        if self.path.startswith("/api/live/relay"):        # for the userscript's fetch() fallback
+            self.send_header("Access-Control-Allow-Origin", "https://fantasy.espn.com")
+            self.send_header("Access-Control-Allow-Headers", "content-type, x-relay-league")
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
@@ -148,9 +165,55 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                         "notes": {}, "plans": [], "xplans": []})
             except Exception as e:                           # noqa: BLE001
                 return self._json(500, {"error": repr(e)})
+        # The live ESPN draft, as the watcher last saw it (see live_draft.py). The page
+        # polls this every few seconds while the snake planner is open.
+        if self.path.rstrip("/") == "/api/live":
+            return self._json(200, WATCH.snapshot())
+        # The draft-room relay userscript, served so Tampermonkey can install it from a URL
+        # (it intercepts any *.user.js fetched over http). Lives in tools/, not cleandata/.
+        if self.path.split("?")[0] == "/espn_draft_relay.user.js":
+            try:
+                body = open(os.path.join(ROOT, "tools", "espn_draft_relay.user.js"), "rb").read()
+            except OSError as e:
+                return self._json(404, {"error": repr(e)})
+            self.send_response(200)
+            self.send_header("Content-Type", "text/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         return super().do_GET()
 
     def do_POST(self):
+        # One draft-room event, forwarded by tools/espn_draft_relay.user.js. Plain text
+        # body, no JSON: the userscript sends exactly what ESPN sent it.
+        if self.path.rstrip("/") == "/api/live/relay":
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                if n > 65536:
+                    return self._json(413, {"error": "event too large"})
+                text = self.rfile.read(n).decode("utf-8", "replace") if n else ""
+                out = WATCH.relay(text, self.headers.get("X-Relay-League"))
+            except Exception as e:                           # noqa: BLE001
+                return self._json(500, {"error": repr(e)})
+            return self._json(200, {"ok": True, "status": out})
+        if self.path.rstrip("/") == "/api/live":
+            # {"action":"start","leagueId":"623238770","teamId":11} or {"action":"stop"}
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
+                if body.get("action") == "stop":
+                    WATCH.stop()
+                elif body.get("action") == "start":
+                    lid = str(body.get("leagueId") or "").strip()
+                    if not (lid == "sim" or lid.isdigit()):
+                        return self._json(400, {"error": "leagueId must be a number or 'sim'"})
+                    WATCH.start(lid, body.get("teamId") or None, body.get("season") or 2026)
+                else:
+                    return self._json(400, {"error": "action must be start or stop"})
+            except Exception as e:                           # noqa: BLE001
+                return self._json(500, {"error": repr(e)})
+            return self._json(200, WATCH.snapshot())
         if self.path.rstrip("/") != "/api/state":
             return self._json(404, {"error": "no such endpoint"})
         try:
@@ -169,7 +232,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self._json(200, {"ok": True, "saved_at": rec["saved_at"],
                                 "saved_by": rec["saved_by"]})
 
+    def do_OPTIONS(self):                     # CORS preflight for the relay's fetch fallback
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def log_message(self, fmt, *args):        # one line per request, not three
+        if args and "/api/live" in str(args[0]):
+            return                            # the page polls every 4 s and the relay posts every tick
         sys.stderr.write("  %s\n" % (fmt % args))
 
 
@@ -198,7 +269,11 @@ with Reusable(("127.0.0.1", PORT), handler) as httpd:
     print(f"serving {WEB} with caching disabled")
     print(f"  http://localhost:{PORT}/dashboard.html")
     print(f"  POST /api/state -> {os.path.relpath(STATE, ROOT)}  (the Save button)")
+    print("  GET  /api/live   -> the ESPN draft as it happens (start it from the snake planner,")
+    print("                      or: python serve.py --watch 623238770 --team 11 ; --watch sim rehearses)")
     print("  ctrl-c to stop")
+    if WATCH_LEAGUE:
+        WATCH.start(WATCH_LEAGUE, WATCH_TEAM)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

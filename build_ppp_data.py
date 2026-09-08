@@ -333,6 +333,28 @@ if os.path.exists(YH_PATH):
                         and p["rank"] <= 150],
         unmatched=yh_unmatched)
 
+# ---- 4d. preseason superflex lists, per season -------------------------------
+# What the room was looking at when it drafted: ESPN's published superflex list
+# (recovered from the Wayback Machine, 2021/2023/2025 so far -- the 2022 and 2024
+# pages are blocked/offline) and FantasyPros' superflex (OP) consensus for every
+# season. Past drafts shows each pick against them: pick minus list rank, so a
+# positive number is a player who FELL past where the list had him.
+ESP, ESP_SRC, FPC = {}, {}, {}
+for _y in SEASONS:
+    _f = os.path.join(ROOT, "rawdata", "espn", f"superflex_ranks_{_y}_espn.csv")
+    if os.path.exists(_f):
+        with open(_f, encoding="utf-8") as _fh:
+            _rows = list(csv.DictReader(_fh))
+        ESP[_y] = {player_key(r["player"]): int(r["rank"]) for r in _rows}
+        ESP_SRC[_y] = _rows[0]["source"] if _rows else None
+    _g = os.path.join(ROOT, "rawdata", "fantasypros", f"superflex_ecr_{_y}__preseason.json")
+    if os.path.exists(_g):
+        _j = json.load(open(_g, encoding="utf-8"))
+        FPC[_y] = {player_key(p.get("player_name") or p.get("player_short_name")): p["rank_ecr"]
+                   for p in _j["players"]
+                   if p.get("rank_ecr") and (p.get("player_name") or p.get("player_short_name"))}
+print(f"\npreseason superflex lists: ESPN for {sorted(ESP)}, FantasyPros consensus for {sorted(FPC)}")
+
 # ---- 5. teams and their drafts ---------------------------------------------
 teams = {}
 for f in rows(src("teams.psv")):
@@ -369,8 +391,12 @@ D = dict(
     # the page falls back to plain text for them, which is the right answer.
     draft={str(y): [dict(o=p["o"], rd=p["rd"], pk=p["sl"], tm=p["tm"], n=p["n"],
                          pos=p["pos"], act=p["act"], prj=p["prj"], fin=p["fin"],
-                         st=p["st"], vor=p["vor"], key=player_key(p["n"]))
+                         st=p["st"], vor=p["vor"], key=player_key(p["n"]),
+                         # preseason superflex list ranks, for the "vs ESPN" column
+                         esp=ESP.get(y, {}).get(player_key(p["n"])),
+                         fpc=FPC.get(y, {}).get(player_key(p["n"])))
                     for p in picks if p["s"] == y] for y in SEASONS},
+    lists={str(y): dict(espn=ESP_SRC.get(y), fp=y in FPC) for y in SEASONS},
     teams=teams)
 
 # ---- 6. the strategy rules -------------------------------------------------

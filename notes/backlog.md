@@ -102,6 +102,12 @@ Three things were agreed and not done:
 ~~10. `serve.py` drops `xplans`.~~ **Already fixed** (2026-09-02) and verified 2026-09-04:
 all four keys round-trip through `write_state()` and `GET /api/state`.
 
+13. **The live draft relay is proven on mocks, not yet on a real draft.** Run one more mock
+    on draft morning; if the console's `[relay]` line says "draft websocket opened" rather
+    than "draft stream opened", the WebSocket frame format is being exercised for the first
+    time — check picks still land. Fallback is manual entry (press stop). Also worth pulling
+    `autoDraftTypeId` for 2021–2025 to mark past autopicks.
+
 ## Known gaps
 
 - **No D/ST in `final_ranks`.** Rules are captured (`scoring_rules`), so it's buildable
