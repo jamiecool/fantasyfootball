@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-09-07 21:29",
+  "saved_at": "2026-09-07 23:33",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
@@ -56,6 +56,7 @@
     "malikwashington": "ppr",
     "malikwillis": "both",
     "matthewstafford": "both",
+    "michaelpenix": "both",
     "michaelwilson": "both",
     "mikewashington": "both",
     "omarionhampton": "both",
@@ -220,21 +221,52 @@
       "name": "DRAFTED",
       "live": true,
       "picks": [
-        "Jahmyr Gibbs"
+        "Jahmyr Gibbs",
+        "Travis Etienne Jr.",
+        "Colston Loveland",
+        "Garrett Wilson",
+        "Jadarian Price",
+        "D.J. Moore",
+        "Caleb Williams",
+        "Jason Myers",
+        "Parker Washington",
+        "Bhayshul Tuten",
+        "Jordan Mason",
+        "CLE DEF",
+        "Malik Willis",
+        "KC Concepcion",
+        "Ja'Kobi Lane",
+        "Jordyn Tyson"
       ],
       "bid": {
-        "Jahmyr Gibbs": 68
+        "Jahmyr Gibbs": 68,
+        "Jadarian Price": 10
       },
-      "paid": {},
+      "paid": {
+        "Travis Etienne Jr.": 25,
+        "Colston Loveland": 20,
+        "Garrett Wilson": 16,
+        "D.J. Moore": 19,
+        "Caleb Williams": 6,
+        "Jason Myers": 1,
+        "Parker Washington": 12,
+        "Bhayshul Tuten": 10,
+        "Jordan Mason": 3,
+        "CLE DEF": 1,
+        "Malik Willis": 1,
+        "KC Concepcion": 2,
+        "Ja'Kobi Lane": 1,
+        "Jordyn Tyson": 2
+      },
       "slots": {
         "QB1": 2,
         "RB1": 66,
         "RB2": 12,
         "WR1": 18,
         "WR2": 13,
-        "TE1": 33,
+        "TE1": 17,
         "K1": 1,
-        "DEF1": 2,
+        "DEF1": 1,
         "WR3": 13,
         "BENCH1": 12,
         "BENCH2": 12,
@@ -323,20 +355,31 @@
         "Garrett Wilson",
         "D.J. Moore",
         "Parker Washington",
-        "Christian Watson",
         "Malik Willis",
         "De'Zhaun Stribling",
         "KC Concepcion",
         "Ja'Kobi Lane",
         "Jake Bates",
         "HOU DEF",
-        "Jordan Mason",
         "Colston Loveland",
         "Caleb Williams",
         "Travis Etienne Jr.",
-        "Jadarian Price"
+        "Jadarian Price",
+        "Denzel Boston",
+        "Bhayshul Tuten"
       ],
-      "bid": {},
+      "bid": {
+        "Travis Etienne Jr.": 25,
+        "Colston Loveland": 20,
+        "Garrett Wilson": 16,
+        "D.J. Moore": 19,
+        "HOU DEF": 1,
+        "Jadarian Price": 10,
+        "Jahmyr Gibbs": 68,
+        "Caleb Williams": 6,
+        "Parker Washington": 12,
+        "Bhayshul Tuten": 12
+      },
       "slots": {}
     },
     {
@@ -351,14 +394,16 @@
         "De'Zhaun Stribling",
         "KC Concepcion",
         "Ja'Kobi Lane",
-        "Jake Bates",
         "HOU DEF",
         "Jordan Mason",
         "Colston Loveland",
         "De'Von Achane",
-        "Kyler Murray"
+        "Kyler Murray",
+        "Jason Myers"
       ],
-      "bid": {},
+      "bid": {
+        "Jason Myers": 1
+      },
       "slots": {}
     }
   ],
@@ -592,6 +637,30 @@
         "4432620",
         "4360689",
         "4242512",
+        null,
+        "15864",
+        "4870653",
+        "4710714",
+        "-16026",
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "Goff at the turn",
+      "slot": 1,
+      "ids": [
+        "4429795",
+        "4567048",
+        "4362238",
+        "3046779",
+        "4723086",
+        "4248528",
+        "4432620",
+        null,
+        "3917792",
         null,
         "15864",
         "4870653",

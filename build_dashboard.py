@@ -136,13 +136,21 @@ for c, d in [("peer_n", 1), ("peer_lo", 0), ("peer_hi", 0)]:
 b["peers"] = b["peers"].fillna("")
 
 b["move"] = b["adp_delta"].fillna(0).round(1) if "adp_delta" in b else 0.0
+# what the room ACTUALLY paid, once the season's auction has happened: the board's
+# est_price was the forecast, this is the answer, and the buyer is the tooltip
+_cur = optional("draft_current",
+                "SELECT player_key, price paid, franchise bought_by FROM draft_current",
+                ["player_key", "paid", "bought_by"])
+b = b.merge(_cur.drop_duplicates("player_key"), on="player_key", how="left")
+b["paid"] = b["paid"].fillna(0).astype(int)
+b["bought_by"] = b["bought_by"].fillna("")
 D["board"] = b.nsmallest(400, "adp_rank")[
     ["adp_rank", "player_name", "player_key", "position", "posrank", "projrank",
      "blendrank", "move", "nfl_team", "adp", "est_price", "proj_points",
      "yahoo_rank", "yahoo_cost", "pts_per_game", "playoff_pts", "playoff_avg",
      "yr_tier", "post_tier", "vegas_rank",
      "fair_price", "fair_gap", "exp_par",
-     "peer_n", "peer_lo", "peer_hi", "peers"]].fillna(0).to_dict("records")
+     "peer_n", "peer_lo", "peer_hi", "peers", "paid", "bought_by"]].fillna(0).to_dict("records")
 
 # ---- 3. positional share of spend, by season -------------------------------
 sp = pd.read_sql("""SELECT season, position, SUM(price) s FROM draft_picks
@@ -207,6 +215,11 @@ SLOT_ALL = {"QB": 1, "RB": 2, "WR": 3, "TE": 1, "K": 1, "DEF": 1}
 MED_SLOT = {"QB": 0.5, "RB": 1.0, "WR": 1.5, "TE": 0.5, "K": 0.5, "DEF": 0.5}
 SEASONS = [int(s) for s in pd.read_sql(
     "SELECT DISTINCT season FROM draft_picks ORDER BY season DESC", con).season]
+# the season in progress: drafted, no outcomes yet (build_clean_data.py keeps it in
+# its own table so the nine-year analyses never see 192 zero-point picks)
+CUR_SEASONS = [int(s) for s in optional(
+    "draft_current", "SELECT DISTINCT season FROM draft_current", ["season"]).season]
+SEASONS = sorted(set(SEASONS) | set(CUR_SEASONS), reverse=True)
 fr_all = pd.read_sql("SELECT season,position,pos_rank,points FROM final_ranks", con)
 stand = pd.read_sql("SELECT season,franchise,rank,wins,losses,points_for,finish "
                     "FROM standings", con)
@@ -214,11 +227,12 @@ D["draft"], D["draft_teams"] = {}, {}
 
 for season in SEASONS:
     teams_n = 10 if season == 2020 else 12
+    tbl = "draft_current" if season in CUR_SEASONS else "draft_picks"
     dr = pd.read_sql(f"""
         SELECT d.nomination_order nom, d.price, d.player_name, d.player_key,
                d.position, d.nfl_team,
                d.franchise, d.price_source, f.pos_rank, f.points, f.games
-        FROM draft_picks d
+        FROM {tbl} d
         LEFT JOIN final_ranks f ON f.season = d.season AND f.player_key = d.player_key
         WHERE d.season = {season}
         ORDER BY d.price DESC, d.nomination_order
@@ -285,7 +299,10 @@ D["league_pos_share"] = {r.position: round(100 * r.s / _ps.s.sum(), 1)
                          for r in _ps.itertuples()}
 
 D["seasons_list"] = SEASONS
-D["last_season"] = SEASONS[0]
+# the Past drafts tab opens on the last season WITH results; the one just drafted
+# is in the list but has nothing to judge yet
+D["last_season"] = max(s for s in SEASONS if s not in CUR_SEASONS)
+D["current_season"] = CUR_SEASONS[0] if CUR_SEASONS else None   # drafted, not yet played
 
 # ---- 9. strategy rules (content lives in strategy_rules.py) ---------------
 D["rules"] = RULES

@@ -186,6 +186,15 @@ reconstructed the 2025 prices and is not part of the pipeline.
 
 Read `cleandata/README.md` for the schema. Don't hand-edit anything in `cleandata/`.
 
+**The season in progress lives in `draft_current`, not `draft_picks`** (added 2026-09-07 with
+the 2026 auction, `rawdata/historicalresults/2026 Draft Results.tsv`, pasted from Yahoo).
+Every analysis joins `draft_picks` to `final_ranks` with `COALESCE(points, 0)`, so a drafted
+but unplayed season inside `draft_picks` would score all 192 picks as zero-point busts and bend
+the nine-year findings without a warning. `CURRENT_SEASON` in `build_clean_data.py` draws the
+line; the page shows the current draft on Past drafts (flagged "not yet played") and as a
+`paid` column on the 2026 board. When 2026 has results, raise `CURRENT_SEASON` and it joins
+history like the rest.
+
 
 ## League rules that actually matter
 

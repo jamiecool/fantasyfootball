@@ -140,6 +140,12 @@ READERS = {
     2025: lambda: read_generic("2025 results.xlsx", "draft2025", 0,
                                {"order": 0, "player_raw": 2, "price": 1, "team_raw": 4,
                                 "pos_given": 3, "price_source": 5}),
+    # 2026: the season in progress. Pasted from Yahoo's draft results page on
+    # 2026-09-07 (Pick = nomination order, "Name (Tm - Pos)", Salary, Team) and
+    # saved as a TSV. Kept OUT of draft_picks until it has results -- see
+    # CURRENT_SEASON below.
+    2026: lambda: pd.read_csv(os.path.join(SRC, "2026 Draft Results.tsv"), sep="\t")
+                    [["order", "player_raw", "price", "team_raw"]],
 }
 
 # Known source defects, fixed explicitly so they are auditable rather than silent.
@@ -272,19 +278,43 @@ if declared:
     seen["franchise"] = [declared.get((r.season, r.team_raw), r.franchise)
                          for r in seen.itertuples()]
 
+# --- the season in progress is kept apart -----------------------------------
+# 2026's auction is real data but has no outcomes yet, and every analysis below
+# joins draft_picks to final_ranks with COALESCE(points, 0). Folding 2026 into
+# draft_picks would score all 192 picks as zero-point busts and quietly bend nine
+# years of findings (startable rates, $ tiers, value per dollar). So it lives in
+# draft_current: same columns, same franchise identities, shown on the Past drafts
+# tab and beside the 2026 board, joined to nothing. When the season is over and
+# final_ranks has 2026, raise CURRENT_SEASON and it becomes history like the rest.
+CURRENT_SEASON = 2026
+current = picks[picks["season"] >= CURRENT_SEASON].copy()
+picks = picks[picks["season"] < CURRENT_SEASON].copy()
+
 # --- derived analysis columns ----------------------------------------------
-picks["price_rank"] = picks.groupby("season")["price"].rank(
-    method="first", ascending=False).astype(int)
-picks["pos_rank"] = picks.groupby(["season", "position"])["price"].rank(
-    method="first", ascending=False).astype(int)
-picks["price_share"] = (picks["price"] / BUDGET).round(4)
-picks = picks.sort_values(["season", "price_rank"]).reset_index(drop=True)
-picks.insert(0, "pick_id", range(1, len(picks) + 1))
+def derive(df, first_id=1):
+    df = df.copy()
+    df["price_rank"] = df.groupby("season")["price"].rank(
+        method="first", ascending=False).astype(int)
+    df["pos_rank"] = df.groupby(["season", "position"])["price"].rank(
+        method="first", ascending=False).astype(int)
+    df["price_share"] = (df["price"] / BUDGET).round(4)
+    df = df.sort_values(["season", "price_rank"]).reset_index(drop=True)
+    df.insert(0, "pick_id", range(first_id, first_id + len(df)))
+    return df
+
+
+picks = derive(picks)
+current = derive(current, first_id=len(picks) + 1)
 
 DRAFT_COLS = ["pick_id", "season", "price_rank", "price", "price_share", "player_name",
               "player_key", "position", "position_raw", "pos_rank", "nfl_team",
               "nfl_franchise", "franchise", "team_raw", "nomination_order", "price_source"]
 draft_picks = picks[DRAFT_COLS]
+draft_current = current[DRAFT_COLS]
+if len(draft_current):
+    print(f"\ndraft_current: {len(draft_current)} picks in {sorted(draft_current['season'].unique())}, "
+          f"${int(draft_current['price'].sum())} spent by {draft_current['franchise'].nunique()} teams "
+          f"-- no outcomes yet, kept out of every analysis")
 
 # --- franchise_seasons ------------------------------------------------------
 fs = (picks.groupby(["season", "franchise"])
@@ -478,7 +508,8 @@ fr = [season_results(y, drafted_by_season.get(y, frozenset())) for y in range(20
 final_ranks = pd.concat([f for f in fr if f is not None], ignore_index=True) \
     if any(f is not None for f in fr) else pd.DataFrame()
 
-tables = {"draft_picks": draft_picks, "franchise_seasons": fs, "seasons": seasons,
+tables = {"draft_picks": draft_picks, "draft_current": draft_current,
+          "franchise_seasons": fs, "seasons": seasons,
           "players": players, "franchises": franchises}
 if len(final_ranks):
     final_ranks = final_ranks[["season", "overall_rank", "player_name", "player_key",

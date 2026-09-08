@@ -1045,7 +1045,9 @@ function boardTable() {
   const cols = [[priceKey, fairMode ? 'worth' : '$'],['player_name','player'],
                 ['blendrank','pos'],['nfl_team','team'],
                 [cmpKey, fairMode ? 'vs board' : 'vs Yahoo'],
-                ['move','trend'],['adp','ADP']];
+                ['move','trend'],['adp','ADP'],
+                // once the season's auction has happened, what the room actually paid
+                ['paid', (D.current_season || '') + ' paid']];
   // Only the shaded column is pinned to its content width. A colour block as
   // wide as its share of the table reads as emphasis it has not earned; the
   // rest of the columns keep sharing the slack so the layout stays balanced.
@@ -1071,7 +1073,10 @@ function boardTable() {
       <td class="l ${vcls(r.yr_tier)}" title="${r.vegas_rank ? `Vegas has ${r.nfl_team} scoring ${r.pts_per_game} a game \u2014 ${r.vegas_rank} of 32, and ${r.playoff_avg} a game in weeks 15-17` : ''}">${r.nfl_team}</td>
       <td class="${fairMode ? fcls(r.fair_gap) : gcls(r)}" style="${(fairMode || r.yahoo_rank) ? '' : 'color:var(--muted)'}" title="${fairMode ? `market $${r.est_price}, worth $${r.fair_price}.` + (r.peer_n > 1 ? ` History cannot separate him from ${r.peer_n - 1} other${r.peer_n > 2 ? 's' : ''} priced $${r.peer_lo}-$${r.peer_hi}, all valued the same: ${r.peers}. So this is where he sits INSIDE that group, not a rating of him.` : ` Nothing else at his position shares his valuation.`) : (r.yahoo_rank ? `our board has him #${r.adp_rank} overall at $${r.est_price}; Yahoo's room has him #${r.yahoo_rank}${r.yahoo_cost ? ' and pays $' + r.yahoo_cost : ''}` : 'no Yahoo ADP — outside the ~222 players they publish')}">${fairMode ? ((r.fair_gap > 0 ? '+$' : r.fair_gap < 0 ? '-$' : '') + (r.fair_gap ? Math.abs(r.fair_gap) : '0')) : (r.yahoo_rank ? (r.gap > 0 ? '+' : '') + (r.gap || '0') : '—')}</td>
       <td class="${r.move > 1 ? 'up' : r.move < -1 ? 'dn' : ''}" style="${Math.abs(r.move)<=1?'color:var(--muted)':''}">${r.move > 0 ? '+' : ''}${r.move || '—'}</td>
-      <td>${r.adp}</td></tr>`).join('') + '</tbody>';
+      <td>${r.adp}</td>
+      <td title="${r.paid ? `${r.bought_by} paid $${r.paid}; the board said $${r.est_price}` : (D.current_season ? 'not drafted in ' + D.current_season : '')}"
+          class="${r.paid ? (r.paid - r.est_price >= 8 ? 'dn' : r.est_price - r.paid >= 8 ? 'up' : '') : ''}"
+          style="${r.paid ? '' : 'color:var(--muted)'}">${r.paid ? '$' + r.paid : '—'}</td></tr>`).join('') + '</tbody>';
   bindLinks(document.getElementById('boardT'));
   bindStars(document.getElementById('boardT'));
   bindNotes(document.getElementById('boardT'));
@@ -1315,8 +1320,10 @@ function fillSeasonFilters() {
   document.getElementById('lq').oninput = lastTable;
 })();
 
+const lIsCurrent = () => D.current_season && String(D.current_season) === String(lSeason);
 function drawLast() {
-  document.getElementById('lastH').textContent = lSeason + ' draft — every pick';
+  document.getElementById('lastH').textContent = lSeason + ' draft — every pick' +
+    (lIsCurrent() ? ' (drafted, not yet played — no results to judge)' : '');
   lastTiles(); lastTeamTable(); lastTable();
   if (lView === 'rosters') lRosters();
 }
@@ -1328,7 +1335,7 @@ function lastTiles() {
   document.getElementById('lastTiles').innerHTML = [
     [rows.length, 'picks'],
     ['$' + rows.reduce((a, r) => a + r.price, 0), 'total spend'],
-    [Math.round(100 * hit / rows.length) + '%', 'returned a startable season'],
+    [lIsCurrent() ? '—' : Math.round(100 * hit / rows.length) + '%', 'returned a startable season'],
     [est, 'prices reconstructed']
   ].map(([v, k]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('');
 }
