@@ -3067,8 +3067,6 @@ function xBoard() {
   if (xState.q) { const q = xState.q.toLowerCase(); rows = rows.filter(p => p.n.toLowerCase().includes(q)); }
   if (xState.tgt) rows = rows.filter(p => tgHit(xKey(p)));
   if (xState.arb) rows = rows.filter(p => gapOf(p) != null && gapOf(p) >= 24);
-  const gone = xLiveTaken();
-  if (gone.size && xLiveHide()) rows = rows.filter(p => !gone.has(String(p.pid)));
   const yrs = `${PPP.curveSeasons[0]}–${PPP.curveSeasons[PPP.curveSeasons.length - 1]}`;
   const baseTxt = VB ? Object.entries(PPP.vb.baseline).map(([p, b]) => p + b.rank).join(' / ') : '';
   const thPlayer = `<th class="l">#</th><th class="l">Rd.Pk</th><th class="l">Player</th><th class="l">Pos</th><th class="l">Team</th>`;
@@ -3094,8 +3092,7 @@ function xBoard() {
   const body = rows.map(p => {
     const gap = gapOf(p);
     const gapRd = gap == null ? null : Math.round(gap / 12 * 10) / 10;
-    const isGone = gone.has(String(p.pid));
-    const cls = isGone ? ' class="gone"' : xSTREAM(p) ? ' class="stream"' : '';
+    const cls = xSTREAM(p) ? ' class="stream"' : '';
     // Signed picks, always shown, shaded by size so the outliers jump out: half a round
     // is the first tint, a round the second, two rounds the darkest. Positive = this board
     // has him EARLIER than ESPN's list (the room will let him fall); negative = ESPN has him
@@ -3136,7 +3133,7 @@ function xBoard() {
     return `<tr${cls}>
       <td class="l kpi" style="color:var(--muted)">${rankOf(p) == null ? '—' : rankOf(p)}</td>
       <td class="l" style="font-weight:650">${rdPk(p)}</td>
-      <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}${isGone ? xLiveTag(p.pid) : ''}</td>
+      <td class="l">${starHtml(xKey(p))}${pLink(p.n, p.key, 0)}${noteHtml(xKey(p))}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}${pr}</span></td>
       <td class="l" style="color:var(--ink2)">${p.tm}</td>
       ${mid}
@@ -3705,7 +3702,6 @@ function xPlanPool() {
    plan by round. Absent on Faucet, where there is no server: the bar stays hidden. */
 let xLive = null, xLiveSig = '', xLiveTimer = null;
 const xLiveTaken = () => xLive && xLive.picks ? new Set(xLive.picks.map(p => String(p.pid))) : new Set();
-const xLiveHide = () => { const c = document.getElementById('xphide'); return !!(c && c.checked); };   // the pool's "hide picked" rules the board too
 const xLiveTeamAb = id => { if (id == null) return '—'; const t = xLive && (xLive.teams || []).find(t => t.id === id); return t ? t.ab : 'team ' + id; };
 const xLiveName = pid => (xById[pid] && xById[pid].n) || (xLive && xLive.players && xLive.players[pid] && xLive.players[pid].n) || ('ESPN #' + pid);
 function xLiveTag(pid) {
@@ -3868,7 +3864,6 @@ function xLiveApply(j) {
   if (changed || sig !== xLiveSig) {
     xLiveSig = sig;
     if (!document.getElementById('p-xplan').hidden) xDrawPlan();
-    if (typeof xBoard === 'function') xBoard();
   }
   xLiveStatus();
   xLiveFeed(j);
@@ -3996,7 +3991,6 @@ function xDrawPlan() {
   });
   ['xpq', 'xppos', 'xphide', 'xptgt'].forEach(id =>
     on(id, id === 'xpq' ? 'input' : 'change', xPlanPool));
-  on('xphide', 'change', () => { if (xLive && xLive.active && typeof xBoard === 'function') xBoard(); });
   on('xfeedTm', 'change', () => xLiveFeed(xLive));
   on('xfeedPos', 'change', () => xLiveFeed(xLive));
 })();
