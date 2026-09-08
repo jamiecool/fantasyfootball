@@ -242,14 +242,16 @@ def write_ppp_board(rows, season):
     path does not change. Backlog item 1 (retire rawdata/ppp/ for rawdata/espn/) is a
     separate job; this only makes the frozen snapshot refreshable.
     """
-    qbs = [r["player_id"] for r in rows if r["position"] == "QB"][:POOL_QB]
-    pool = [r for i, r in enumerate(rows) if i < POOL_TOP or r["player_id"] in qbs]
+    ranked = [r for r in rows if r["espn_rank"] is not None]
+    ranked.sort(key=lambda r: r["espn_rank"])
+    qbs = [r["player_id"] for r in ranked if r["position"] == "QB"][:POOL_QB]
+    pool = [r for i, r in enumerate(ranked) if i < POOL_TOP or r["player_id"] in qbs]
     fmt = lambda v: "" if v is None else v                          # noqa: E731
     # HEADERLESS, like the 2026-09-01 original: build_ppp_vor_board.py int()s column 5 of
     # every line, and build_ppp_data.py's rows() only tolerates a header, never needs one.
     lines = [
         "|".join(str(fmt(x)) for x in (r["player_id"], r["player_name"], r["position"],
-                                       r["nfl_team"], r["espn_ppr_rank"], r["adp"],
+                                       r["nfl_team"], r["espn_rank"], r["adp"],
                                        r["percent_owned"], r["projected"]))
         for r in pool]
     os.makedirs(PPP_SNAPS, exist_ok=True)
@@ -261,17 +263,28 @@ def write_ppp_board(rows, season):
           % (os.path.relpath(PPP_BOARD, ROOT), len(pool), POOL_TOP, POOL_QB, nqb))
 
 
-def fetch_board(season=CURRENT_SEASON, want=600):
-    """Current draft board: ESPN's PPR rank, ADP, ownership, projected points.
+# WHICH ESPN RANKING THE ROOM SEES. ESPN keeps four lists per player --
+# STANDARD, PPR, ELIMINATION, SUPERFLEX -- and the draft tool shows the one that
+# matches the league's format. This league is superflex, so the other eleven
+# coaches are looking at SUPERFLEX: Allen 1, Daniels 3, Lamar 5, Gibbs 7, fifteen
+# QBs in the first sixty. The PPR list (Gibbs 1, Allen 26) is what this file used
+# to pull, and it is not a list anyone in the room ever sees (Jamie, 2026-09-08).
+# Both are kept in the CSV; the PSV's espnRank -- and so the board's "ESPN rd" and
+# "Move" columns and the "cheaper than ESPN" filter -- use RANK_TYPE.
+RANK_TYPE = "SUPERFLEX"
 
-    Dated, because these move every day. NOTE the rank is ESPN's ONE-QB PPR order --
-    it is not a superflex board and should not be used as one. `want` runs well past
-    the pool so that write_ppp_board() can keep every quarterback ESPN lists.
+
+def fetch_board(season=CURRENT_SEASON, want=600):
+    """Current draft board: ESPN's draft-room rank, ADP, ownership, projected points.
+
+    Dated, because these move every day. Sorted by RANK_TYPE (see above); the PPR
+    rank rides along for comparison. `want` runs well past the pool so that
+    write_ppp_board() can keep every quarterback the room might draft.
     """
     rows, seen = [], set()
     for off in range(0, want, 60):
         f = {"players": {"limit": 60, "offset": off,
-                         "sortDraftRanks": {"sortPriority": 100, "sortAsc": True, "value": "PPR"}}}
+                         "sortDraftRanks": {"sortPriority": 100, "sortAsc": True, "value": RANK_TYPE}}}
         try:
             j = get(league_url(season, ["kona_player_info"]), f)
         except urllib.error.HTTPError as e:
@@ -289,12 +302,16 @@ def fetch_board(season=CURRENT_SEASON, want=600):
             prj = next((s for s in pl.get("stats") or []
                         if s.get("statSourceId") == 1 and s.get("statSplitTypeId") == 0
                         and s.get("seasonId") == season), None)
-            dr = (pl.get("draftRanksByRankType") or {}).get("PPR") or {}
+            ranks = pl.get("draftRanksByRankType") or {}
+            dr = ranks.get(RANK_TYPE) or {}
             rows.append({
                 "season": season, "player_id": p["id"], "player_name": pl.get("fullName", ""),
                 "position": POS.get(pl.get("defaultPositionId"), "?"),
                 "nfl_team": PRO.get(pl.get("proTeamId"), pl.get("proTeamId")),
-                "espn_ppr_rank": dr.get("rank"),
+                "espn_rank": dr.get("rank"),                       # the draft-room list (RANK_TYPE)
+                "espn_rank_type": RANK_TYPE,
+                "espn_ppr_rank": (ranks.get("PPR") or {}).get("rank"),
+                "espn_sf_auction": dr.get("auctionValue"),
                 "adp": round(own["averageDraftPosition"], 1) if own.get("averageDraftPosition") is not None else None,
                 "percent_owned": round(own["percentOwned"], 1) if own.get("percentOwned") is not None else None,
                 "projected": round(prj["appliedTotal"], 1) if prj and prj.get("appliedTotal") is not None else None,
@@ -304,7 +321,7 @@ def fetch_board(season=CURRENT_SEASON, want=600):
         raise SystemExit("board returned only %d players - filter or endpoint changed?" % len(rows))
     write(os.path.join(DEST, "board_%d__%s.csv" % (season, stamp())), rows, {
         "league_id": LEAGUE_ID, "season": season, "fetched_at": stamp(),
-        "rows": len(rows), "rank_basis": "ESPN PPR draft rank (ONE-QB, not superflex)",
+        "rows": len(rows), "rank_basis": f"ESPN {RANK_TYPE} draft rank -- the list the draft room shows this league; PPR rank alongside",
         "note": "ADP and projections move daily; snapshots are dated on purpose",
         "authenticated": bool(COOKIE),
     })

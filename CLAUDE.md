@@ -137,9 +137,12 @@ QB's replacement is a later QB, not a WR, and the position-specific baseline is 
 **`board2026.psv` is a dated snapshot, refreshable since 2026-09-05** with
 `python fetch_espn_league.py --board-only` (see `rawdata/ppp/README.md`). It defines the
 player pool — what makes a player draftable on the page — so its depth matters: the pool is
-ESPN's top 300 plus the first 45 QBs in ESPN's one-QB order, because the quarterbacks a
-superflex room drafts (Penix, Cousins, Shedeur Sanders) sit past #427 on that order. Nothing
-re-pulls it automatically; run the fetcher before drafting.
+ESPN's top 300 plus the first 45 QBs. **Its `espnRank` is ESPN's SUPERFLEX list** (since
+2026-09-08): ESPN keeps four ranking lists per player and the draft room shows the one that
+matches the league's format, so the board's "ESPN rd" / Move columns compare against the
+order the other coaches actually see (Allen 1, Daniels 3, Lamar 5, Gibbs 7 — fifteen QBs in
+the first sixty), not the one-QB PPR list the fetcher pulled before. Nothing re-pulls it
+automatically; run the fetcher before drafting.
 
 The name join between the two leagues is **not** a gap — the Cowork notes claimed ~18
 mismatches, but measured against the repo's own `player_key` there are 0 collisions and

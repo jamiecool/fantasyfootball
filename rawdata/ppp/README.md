@@ -24,10 +24,13 @@ The pulls were done once in an ephemeral container during a Cowork session
 What *does* go stale is `board2026.psv` — and since 2026-09-05 it is the one file here
 that **is** refreshable: `python fetch_espn_league.py --board-only` re-pulls ESPN's board
 600 deep, writes the dated CSV under `rawdata/espn/`, and rewrites `board2026.psv` in this
-schema plus a dated copy in `snapshots/`. The pool it keeps is **ESPN's top 300 plus the
-first 45 quarterbacks in ESPN's order** — that order is a one-QB board, and the QBs a
-superflex room drafts (Penix, Cousins, Shedeur Sanders) sat past #427 on it; 45 covers a
-room that has never taken more than 35 without dragging in third-stringers. The 2026-09-01 pull agreed
+schema plus a dated copy in `snapshots/`. **`espnRank` is ESPN's SUPERFLEX list** (since
+2026-09-08) — ESPN keeps STANDARD / PPR / ELIMINATION / SUPERFLEX ranks per player and the
+draft room shows the one matching the league's format, so this is the order the other
+coaches see (Allen 1, Daniels 3, Lamar 5, Gibbs 7). The PPR list, which the fetcher used
+to pull, is kept alongside in the `rawdata/espn/` CSV. The pool it keeps is **ESPN's top
+300 plus the first 45 quarterbacks in that order**; 45 covers a room that has never taken
+more than 35 without dragging in third-stringers. The 2026-09-01 pull agreed
 with the 2026-09-05 one on every shared player (246/248 ids, 0 name or position
 disagreements), which is the first half of backlog item 1.
 

@@ -352,6 +352,9 @@ for y in SEASONS:
         t["startables"] = starters[t["id"]]
 
 qb_top3 = len([p for p in skill if p["pos"] == "QB" and p["rank"] <= 36])
+# ESPN's own placement, on the list the draft room shows (espnRank is the SUPERFLEX
+# list since 2026-09-08 -- see fetch_espn_league.RANK_TYPE)
+espn_qb_top3 = len([p for p in skill if p["pos"] == "QB" and p["espnRank"] <= 36])
 
 D = dict(
     league=json.load(open(src("league.json"), encoding="utf-8")),
@@ -402,17 +405,19 @@ D["rules"] = [
              "conclusion without needing a projection to be right.",
          n="5 seasons of realized outcomes vs ESPN preseason projections"),
     dict(id="3", conf="high", area="Superflex",
-         rule="ESPN's own board is built for a one-QB league. Do not draft from it here.",
-         why="This league's own drafts say where a position goes: over 2023-25 the first "
-             f"quarterback off the board went at overall pick {CURVE['QB'][1]:.0f} and the "
-             f"fifth at {CURVE['QB'][5]:.0f}, where the fifth running back went at "
-             f"{CURVE['RB'][5]:.0f} and the first tight end at {CURVE['TE'][1]:.0f}. "
-             f"Ranked inside the same {len(board)}-player pool, ESPN has quarterbacks far "
-             f"later than that. This board puts {qb_top3} inside the first three rounds; "
-             f"the room itself has taken {qbcum[2]} by that point, so the market already "
-             "knows. ESPN does not.",
+         rule="The draft room shows ESPN's SUPERFLEX list. Read it as the room's anchor, "
+              "not as a valuation.",
+         why="ESPN keeps four ranking lists and the draft tool shows the one that matches the "
+             "league's format; for this league that is SUPERFLEX (Allen 1, Daniels 3, Lamar 5, "
+             f"Gibbs 7), not the one-QB PPR list. Inside this {len(board)}-player pool ESPN's "
+             f"superflex list has {espn_qb_top3} quarterbacks in the first three rounds; this "
+             f"board has {qb_top3}; the room itself has taken {qbcum[2]} by that point. "
+             "The list is what the other eleven coaches are looking at, so it is the best "
+             "read on when a quarterback will actually go -- but it is ESPN's projection "
+             "spread, and this league's own outcomes say QB5-24 do not separate. Use it to "
+             "time the pick, not to price it.",
          n=f"{sum(len(v) for v in CURVE.values())} position-rank observations, "
-           f"{len(CURVE_SEASONS)} seasons"),
+           f"{len(CURVE_SEASONS)} seasons; ESPN SUPERFLEX list from board2026.psv"),
     dict(id="4", conf="high", area="Roster shape",
          rule="Never spend a pick on a kicker or defense before round 13.",
          why="K and D/ST were startable 85-100% of the time in every round band from 10 "
