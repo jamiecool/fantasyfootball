@@ -1284,7 +1284,9 @@ function scatter() {
 }
 
 /* ---------- past drafts, any season ---------- */
-let lSortK = 'price', lSortA = false, lSeason = String(D.last_season);
+// Past drafts opens on the season just drafted while there is one (2026 until it has
+// results), otherwise on the last completed season
+let lSortK = 'price', lSortA = false, lSeason = String(D.current_season || D.last_season);
 const seasonRows = () => D.draft[lSeason] || [];
 
 function fillSeasonFilters() {
