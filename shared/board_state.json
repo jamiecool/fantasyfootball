@@ -1,9 +1,10 @@
 {
-  "saved_at": "2026-09-07 19:34",
+  "saved_at": "2026-09-07 21:29",
   "saved_by": "jamiecool",
   "targets": {
     "amonrastbrown": "both",
-    "brockbowers": "ppr",
+    "bhayshultuten": "both",
+    "brockbowers": "both",
     "calebwilliams": "both",
     "chasebrown": "both",
     "chrisolave": "ppr",
@@ -30,16 +31,18 @@
     "jamarrchase": "both",
     "jamescook": "both",
     "jaredgoff": "both",
+    "javontewilliams": "both",
     "jaylenwaddle": "both",
     "jeremiyahlove": "both",
     "joeburrow": "ppr",
     "jonahcoleman": "both",
     "jordanmason": "both",
-    "jordyntyson": "both",
+    "jordyntyson": "ppr",
     "joshallen": "ppr",
     "joshdowns": "ppr",
     "justinherbert": "both",
     "juwanjohnson": "both",
+    "kaimifairbairn": "both",
     "kcconcepcion": "both",
     "keatonmitchell": "both",
     "kennethwalker": "both",
@@ -62,7 +65,6 @@
     "quinshonjudkins": "both",
     "rachaadwhite": "both",
     "rhamondrestevenson": "both",
-    "saquonbarkley": "both",
     "tankbigsby": "both",
     "terranceferguson": "both",
     "travisetienne": "both",
@@ -217,11 +219,31 @@
     {
       "name": "DRAFTED",
       "live": true,
-      "picks": [],
+      "picks": [
+        "Jahmyr Gibbs"
+      ],
       "bid": {
-        "Jahmyr Gibbs": 61
+        "Jahmyr Gibbs": 68
       },
-      "paid": {}
+      "paid": {},
+      "slots": {
+        "QB1": 2,
+        "RB1": 66,
+        "RB2": 12,
+        "WR1": 18,
+        "WR2": 13,
+        "TE1": 33,
+        "K1": 1,
+        "DEF1": 2,
+        "WR3": 13,
+        "BENCH1": 12,
+        "BENCH2": 12,
+        "BENCH3": 4,
+        "BENCH4": 3,
+        "BENCH5": 2,
+        "BENCH6": 1,
+        "BENCH7": 1
+      }
     },
     {
       "name": "Brock",
@@ -256,7 +278,6 @@
         "D.J. Moore",
         "Parker Washington",
         "Christian Watson",
-        "Quinshon Judkins",
         "Malik Willis",
         "Kyler Murray",
         "De'Zhaun Stribling",
@@ -294,6 +315,51 @@
         "De'Von Achane": 34
       },
       "rank": 6
+    },
+    {
+      "name": "Gibbs + Loveland",
+      "picks": [
+        "Jahmyr Gibbs",
+        "Garrett Wilson",
+        "D.J. Moore",
+        "Parker Washington",
+        "Christian Watson",
+        "Malik Willis",
+        "De'Zhaun Stribling",
+        "KC Concepcion",
+        "Ja'Kobi Lane",
+        "Jake Bates",
+        "HOU DEF",
+        "Jordan Mason",
+        "Colston Loveland",
+        "Caleb Williams",
+        "Travis Etienne Jr.",
+        "Jadarian Price"
+      ],
+      "bid": {},
+      "slots": {}
+    },
+    {
+      "name": "Gibbs + Achane",
+      "picks": [
+        "Jahmyr Gibbs",
+        "Garrett Wilson",
+        "D.J. Moore",
+        "Parker Washington",
+        "Christian Watson",
+        "Malik Willis",
+        "De'Zhaun Stribling",
+        "KC Concepcion",
+        "Ja'Kobi Lane",
+        "Jake Bates",
+        "HOU DEF",
+        "Jordan Mason",
+        "Colston Loveland",
+        "De'Von Achane",
+        "Kyler Murray"
+      ],
+      "bid": {},
+      "slots": {}
     }
   ],
   "xplans": [
