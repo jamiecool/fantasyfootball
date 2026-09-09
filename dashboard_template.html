@@ -711,7 +711,7 @@
       <div class="filters" id="xfbar">
         <select id="xfseason" aria-label="Season"></select>
         <span class="segwrap" id="xfweeks" role="group" aria-label="Week"></span>
-        <label class="chk"><input type="checkbox" id="xffree"> show $0 free-agent adds</label>
+        <label class="chk"><input type="checkbox" id="xffree" checked> show $0 free-agent adds</label>
         <span class="spacer"></span>
         <span id="xfsum" class="lgnote" style="margin:0"></span>
       </div>
@@ -3430,7 +3430,8 @@ function xFaab() {
   if (!S) { document.getElementById('xfClaimT').innerHTML = '<tbody><tr><td class="l" style="color:var(--muted)">no FAAB data for this season</td></tr></tbody>'; return; }
   const teams = {}; (PPP.teams[yr] || []).forEach(t => teams[t.id] = t);
   const ab = id => teams[id] ? teams[id].ab : String(id);
-  const me = xLive && xLive.teamId != null ? xLive.teamId : 11;
+  const mine = (PPP.teams[yr] || []).find(t => /jamie cool/i.test(t.own || ''));
+  const me = mine ? mine.id : -1;
   const showFree = document.getElementById('xffree').checked;
   const rows = S.rows;
   const weeks = [...new Set(rows.map(r => r.sp))].sort((a, b) => a - b);
@@ -3504,7 +3505,7 @@ function xFaab() {
   const mySpent = won.filter(r => r.tm === me).reduce((a, r) => a + r.bid, 0);
   const big = won.slice().sort((a, b) => b.bid - a.bid)[0];
   document.getElementById('xfsum').innerHTML = won.length
-    ? `${yr}: <b>${won.length}</b> claims won for <b>$${won.reduce((a, r) => a + r.bid, 0)}</b> of $${B * Object.keys(teams).length} · biggest ${big ? '$' + big.bid + ' ' + esc(big.a.n) + ' (' + esc(ab(big.tm)) + ', wk ' + big.sp + ')' : ''} · you: $${mySpent} spent, $${B - mySpent} left`
+    ? `${yr}: <b>${won.length}</b> claims won for <b>$${won.reduce((a, r) => a + r.bid, 0)}</b> of $${B * Object.keys(teams).length} · biggest ${big ? '$' + big.bid + ' ' + esc(big.a.n) + ' (' + esc(ab(big.tm)) + ', wk ' + big.sp + ')' : ''}` + (me > 0 ? ` · you: $${mySpent} spent, $${B - mySpent} left` : '')
     : '';
 }
 (function xFaabWire() {
