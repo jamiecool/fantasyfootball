@@ -40,6 +40,7 @@ STAGES = [
     ("fetch_projections.py", "Sleeper projections (analytics only)", True, None),
     ("fetch_yahoo_adp.py", "Yahoo ADP + auction cost -- the room's anchor", True, None),
     ("fetch_yahoo_rankings.py", "Yahoo analysts' consensus -- 3rd ordering on the PPP board", True, None),
+    ("fetch_ppp_faab.py", "PPP waiver bids and free-agent adds -- the FAAB tab", True, None),
     ("fetch_vegas.py", "Vegas implied team totals", True, None),
     ("build_clean_data.py", "rawdata -> cleandata/fantasy.db", False, None),
     ("build_2026_board.py", "prices -> analysis/board_2026.csv", False, None),

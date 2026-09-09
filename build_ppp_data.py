@@ -375,6 +375,35 @@ for _y in ALL_SEASONS:
     if os.path.exists(_m):
         AUTO[_y] = json.load(open(_m, encoding="utf-8")).get("autopicks", {})
 
+# ---- 4e. FAAB: waiver bids and free-agent adds, by season -------------------------
+# fetch_ppp_faab.py writes faab<y>.psv. Each row is one transaction; the page groups a
+# week's claims by the player added, so the winner and the bids that lost to him sit
+# together, and reconstructs each team's remaining budget by subtracting winning bids.
+FAAB_BUDGET = 200                                  # acquisitionSettings.acquisitionBudget
+FAAB = {}
+for _y in ALL_SEASONS:
+    _f = os.path.join(ROOT, "rawdata", "ppp", f"faab{_y}.psv")
+    if not os.path.exists(_f):
+        continue
+    _rows = []
+    with open(_f, encoding="utf-8") as _fh:
+        for r in csv.DictReader(_fh, delimiter="|"):
+            _st = r["status"]
+            kind = ("free" if r["type"] == "FREEAGENT" else
+                    "won" if _st == "EXECUTED" else
+                    "outbid" if _st == "FAILED_INVALIDPLAYERSOURCE" else
+                    "cancelled" if _st == "CANCELED" else
+                    "failed:" + _st.replace("FAILED_", "").lower())
+            _rows.append(dict(sp=int(r["sp"]), k=kind, tm=int(r["teamId"]), bid=int(float(r["bid"] or 0)),
+                              ts=int(float(r["processDate"] or 0)), tx=r["txId"], rel=r["relatedId"],
+                              a=dict(pid=r["addPid"], n=r["addName"], pos=r["addPos"],
+                                     key=player_key(r["addName"]) if r["addName"] else ""),
+                              d=dict(n=r["dropName"], pos=r["dropPos"]) if r["dropName"] else None))
+    FAAB[str(_y)] = dict(budget=FAAB_BUDGET, rows=_rows)
+    print(f"FAAB {_y}: {len(_rows)} transactions, "
+          f"{sum(1 for x in _rows if x['k'] == 'won')} winning bids, "
+          f"{sum(1 for x in _rows if x['k'] == 'outbid')} outbid")
+
 # ---- 5. teams and their drafts ---------------------------------------------
 teams = {}
 for f in rows(src("teams.psv")):
@@ -419,6 +448,7 @@ D = dict(
                          fpc=FPC.get(y, {}).get(player_key(p["n"])))
                     for p in picks if p["s"] == y] for y in ALL_SEASONS},
     lists={str(y): dict(espn=ESP_SRC.get(y), fp=y in FPC) for y in ALL_SEASONS},
+    faab=FAAB,
     teams=teams)
 
 # ---- 6. the strategy rules -------------------------------------------------

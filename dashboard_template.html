@@ -119,6 +119,14 @@
   .upnext.now{color:var(--accent,#f4b400);animation:upnow 1s ease-in-out infinite alternate}
   .upnext.done{color:var(--muted);font-weight:650}
   @keyframes upnow{from{opacity:1}to{opacity:.45}}
+  .faabgrid{display:grid;grid-template-columns:minmax(360px,.8fr) minmax(480px,1.4fr);gap:18px;align-items:start}
+  @media (max-width:1100px){.faabgrid{grid-template-columns:1fr}}
+  #xfweeks .btn{padding:3px 8px;min-width:30px} #xfweeks .btn.dim{color:var(--muted)}
+  #xfClaimT tr.grp td{border-top:2px solid var(--border)} #xfClaimT tr.lost td{color:var(--ink2)}
+  #xfClaimT tr.lost td.l:first-child{padding-left:22px}
+  #xfClaimT tr.me td,#xfBudT tr.me td{background:color-mix(in srgb,var(--good) 10%,transparent)}
+  #xfClaimT .bid{font-weight:700;font-variant-numeric:tabular-nums} #xfBudT td{font-variant-numeric:tabular-nums}
+  .bar{display:inline-block;height:9px;border-radius:3px;background:var(--good);vertical-align:middle;margin-right:6px}
   #xlivebar{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;margin-right:10px}
   #xlivebar input#xliveId{width:120px;font-size:12.5px;padding:2px 6px} #xlivebar select{font-size:12.5px;padding:2px 4px;max-width:110px}
   #xlivebar .btn.mini{padding:2px 8px;font-size:12.5px} #xlivebar .lgnote,#xlivebar .chk{font-size:12.5px}
@@ -407,6 +415,7 @@
   <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="last" id="lastTab">Past drafts</button>
   <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xboard">2026 board</button>
   <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xlast">Past drafts</button>
+  <button class="tab" role="tab" aria-selected="false" data-lg="ppp" data-p="xfaab">FAAB</button>
   <button class="tab" role="tab" aria-selected="false" data-lg="both" data-p="nfl">NFL stats</button>
   <button class="tab" role="tab" aria-selected="false" data-lg="both" data-p="vegas">Vegas</button>
   <button class="tab" role="tab" aria-selected="false" data-lg="pbaffl" data-p="plan">Draft plan</button>
@@ -694,6 +703,28 @@
     <div class="card">
       <h2>By team</h2>
       <div class="scroll" style="max-height:none"><table id="xteamT" aria-label="Team draft summary"></table></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-xfaab" hidden>
+    <div class="card">
+      <div class="filters" id="xfbar">
+        <select id="xfseason" aria-label="Season"></select>
+        <span class="segwrap" id="xfweeks" role="group" aria-label="Week"></span>
+        <label class="chk"><input type="checkbox" id="xffree"> show $0 free-agent adds</label>
+        <span class="spacer"></span>
+        <span id="xfsum" class="lgnote" style="margin:0"></span>
+      </div>
+      <div class="faabgrid">
+        <div>
+          <h2 id="xfBudH">Budget</h2>
+          <div class="scroll" style="max-height:70vh"><table id="xfBudT" aria-label="FAAB budget by team"></table></div>
+        </div>
+        <div>
+          <h2 id="xfClaimH">Claims</h2>
+          <div class="scroll" style="max-height:70vh"><table id="xfClaimT" aria-label="Waiver claims this week"></table></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -3377,6 +3408,111 @@ function xAnl() { xQbChart(); xRdChart(); xPosChart(); xCountTable(); }
    The auction planner budgets dollars; a snake planner budgets picks. The
    constraint here is not what you can afford but who is still on the board when
    your turn comes round, so the unit of the plan is your own eighteen picks. */
+/* ---- FAAB: week by week, who bid what on whom, who won, and what each team has left ----
+   PPP.faab[season] = {budget, rows[{sp, k, tm, bid, ts, a:{pid,n,pos,key}, d:{n,pos}}]}
+   k: won | outbid | failed:<reason> | cancelled | free. A week's claims are grouped by the
+   player added; the winner leads the group and the bids that lost to him follow. Budget
+   remaining is the league budget minus every winning bid processed through that week. */
+let xfState = {season: null, week: null};
+function xFaab() {
+  const F = PPP.faab || {};
+  const seasons = Object.keys(F).sort();
+  const panel = document.getElementById('p-xfaab');
+  if (!panel || panel.hidden) return;
+  const sel = document.getElementById('xfseason');
+  if (!sel.options.length) {
+    seasons.slice().reverse().forEach(s => sel.add(new Option(s, s)));
+    xfState.season = seasons[seasons.length - 1];
+    sel.value = xfState.season;
+  }
+  const yr = xfState.season || sel.value;
+  const S = F[yr];
+  if (!S) { document.getElementById('xfClaimT').innerHTML = '<tbody><tr><td class="l" style="color:var(--muted)">no FAAB data for this season</td></tr></tbody>'; return; }
+  const teams = {}; (PPP.teams[yr] || []).forEach(t => teams[t.id] = t);
+  const ab = id => teams[id] ? teams[id].ab : String(id);
+  const me = xLive && xLive.teamId != null ? xLive.teamId : 11;
+  const showFree = document.getElementById('xffree').checked;
+  const rows = S.rows;
+  const weeks = [...new Set(rows.map(r => r.sp))].sort((a, b) => a - b);
+  if (xfState.week == null || !weeks.includes(xfState.week)) xfState.week = weeks[weeks.length - 1];
+  const wk = xfState.week;
+  // week strip: each button carries the number of winning bids that week
+  const strip = document.getElementById('xfweeks');
+  strip.innerHTML = weeks.map(w => {
+    const n = rows.filter(r => r.sp === w && r.k === 'won').length;
+    return `<button class="btn${n ? '' : ' dim'}" data-wk="${w}" aria-pressed="${w === wk}" title="${n} winning bid${n === 1 ? '' : 's'}">${w}</button>`;
+  }).join('');
+  strip.querySelectorAll('[data-wk]').forEach(b => b.onclick = () => { xfState.week = +b.dataset.wk; xFaab(); });
+
+  // ---- budget table: spent through this week, this week's spend, remaining ----
+  const spentBefore = {}, spentWeek = {}, wonWeek = {}, lostWeek = {};
+  Object.keys(teams).forEach(t => { spentBefore[t] = 0; spentWeek[t] = 0; wonWeek[t] = 0; lostWeek[t] = 0; });
+  rows.forEach(r => {
+    if (r.k === 'won') {
+      if (r.sp < wk) spentBefore[r.tm] = (spentBefore[r.tm] || 0) + r.bid;
+      if (r.sp === wk) { spentWeek[r.tm] = (spentWeek[r.tm] || 0) + r.bid; wonWeek[r.tm] = (wonWeek[r.tm] || 0) + 1; }
+    }
+    if (r.k === 'outbid' && r.sp === wk) lostWeek[r.tm] = (lostWeek[r.tm] || 0) + 1;
+  });
+  const B = S.budget;
+  const bud = Object.keys(teams).map(t => ({t: +t, before: B - (spentBefore[t] || 0), wk: spentWeek[t] || 0,
+    after: B - (spentBefore[t] || 0) - (spentWeek[t] || 0), won: wonWeek[t] || 0, lost: lostWeek[t] || 0}))
+    .sort((a, b) => b.after - a.after);
+  document.getElementById('xfBudH').textContent = `Budget after week ${wk}`;
+  document.getElementById('xfBudT').innerHTML =
+    `<thead><tr><th class="l">Team</th><th title="remaining going into this week's waivers">Entering</th><th title="winning bids this week">Spent wk ${wk}</th><th>Left</th><th title="claims won / outbid this week">W-L</th></tr></thead><tbody>` +
+    bud.map(b => `<tr${b.t === me ? ' class="me"' : ''}>
+      <td class="l" style="font-weight:650">${esc(ab(b.t))}</td>
+      <td>$${b.before}</td>
+      <td>${b.wk ? '<span class="dn">−$' + b.wk + '</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="bar" style="width:${Math.round(b.after / B * 80)}px"></span><b>$${b.after}</b></td>
+      <td style="color:var(--ink2)">${b.won || b.lost ? b.won + '-' + b.lost : ''}</td></tr>`).join('') + '</tbody>';
+
+  // ---- claims: grouped by player added ----
+  const wkRows = rows.filter(r => r.sp === wk && (showFree || r.k !== 'free'));
+  const groups = new Map();
+  wkRows.forEach(r => {
+    const k = (r.a && r.a.pid) || r.tx;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  });
+  const order = [...groups.values()].sort((g1, g2) => {
+    const w1 = g1.find(r => r.k === 'won'), w2 = g2.find(r => r.k === 'won');
+    const b1 = w1 ? w1.bid : Math.max(...g1.map(r => r.bid)), b2 = w2 ? w2.bid : Math.max(...g2.map(r => r.bid));
+    return (b2 - b1) || (g1[0].ts - g2[0].ts);
+  });
+  const nWon = wkRows.filter(r => r.k === 'won').length, nOut = wkRows.filter(r => r.k === 'outbid').length;
+  document.getElementById('xfClaimH').textContent = `Week ${wk}: ${nWon} claim${nWon === 1 ? '' : 's'} won, ${nOut} outbid${showFree ? ', plus free-agent adds' : ''}`;
+  const kindTxt = k => k === 'won' ? 'won' : k === 'outbid' ? 'outbid' : k === 'free' ? 'free agent' : k === 'cancelled' ? 'cancelled' : k.replace('failed:', 'failed: ').replace(/([a-z])([A-Z])/g, '$1 $2');
+  const body = order.map(g => {
+    g.sort((a, b) => (a.k === 'won' ? -1 : b.k === 'won' ? 1 : 0) || b.bid - a.bid);
+    const lead = g[0], p = lead.a || {};
+    return g.map((r, i) => `<tr class="${i === 0 ? 'grp' : 'lost'}${r.tm === me ? ' me' : ''}">
+      <td class="l">${i === 0 ? `${pLink(p.n || '?', p.key, +yr)} <span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos || '?'}</span>` : ''}</td>
+      <td class="l" style="font-weight:${r.k === 'won' ? 650 : 400}">${esc(ab(r.tm))}</td>
+      <td class="bid">${r.k === 'free' ? '<span style="color:var(--muted)">$0</span>' : '$' + r.bid}</td>
+      <td class="l">${r.k === 'won' ? '<span class="up">won</span>' : r.k === 'outbid' ? '<span class="dn">outbid</span>' : `<span style="color:var(--muted)">${kindTxt(r.k)}</span>`}</td>
+      <td class="l" style="color:var(--muted)">${r.d ? 'dropped ' + esc(r.d.n) : ''}</td></tr>`).join('');
+  }).join('');
+  document.getElementById('xfClaimT').innerHTML =
+    '<thead><tr><th class="l">Player</th><th class="l">Team</th><th>Bid</th><th class="l">Result</th><th class="l">Drop</th></tr></thead><tbody>' +
+    (body || `<tr><td class="l" colspan="5" style="color:var(--muted)">no ${showFree ? 'transactions' : 'waiver claims'} in week ${wk}</td></tr>`) + '</tbody>';
+  bindLinks(document.getElementById('xfClaimT'));
+
+  // ---- season line ----
+  const won = rows.filter(r => r.k === 'won');
+  const mySpent = won.filter(r => r.tm === me).reduce((a, r) => a + r.bid, 0);
+  const big = won.slice().sort((a, b) => b.bid - a.bid)[0];
+  document.getElementById('xfsum').innerHTML = won.length
+    ? `${yr}: <b>${won.length}</b> claims won for <b>$${won.reduce((a, r) => a + r.bid, 0)}</b> of $${B * Object.keys(teams).length} · biggest ${big ? '$' + big.bid + ' ' + esc(big.a.n) + ' (' + esc(ab(big.tm)) + ', wk ' + big.sp + ')' : ''} · you: $${mySpent} spent, $${B - mySpent} left`
+    : '';
+}
+(function xFaabWire() {
+  const on = (id, ev, fn) => { const n = document.getElementById(id); if (n) n.addEventListener(ev, fn); };
+  on('xfseason', 'change', e => { xfState.season = e.target.value; xfState.week = null; xFaab(); });
+  on('xffree', 'change', xFaab);
+})();
+
 const XTEAMS = 12, XRDS = 18;
 const XNEED = {QB: 1, RB: 2, WR: 3, TE: 1, SUPERFLEX: 1, FLEX: 1, K: 1, DEF: 1};
 const XSTART = Object.values(XNEED).reduce((a, b) => a + b, 0);   // 11
@@ -4152,7 +4288,7 @@ function draw() {
     boardTable(); drawLast(); drawPlan(); drawStrategy();
     tierChart(); startableChart(); posShare(); scatter(); deadZones();
   } else {
-    xBoard(); xLast(); xDrawPlan(); xStr(); xAnl();
+    xBoard(); xLast(); xFaab(); xDrawPlan(); xStr(); xAnl();
   }
   drawNFLAny(); drawVegas();                // shared, but NFL stats re-score by league
   // an open profile card holds points scored under whichever league it was

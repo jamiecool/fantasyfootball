@@ -42,7 +42,10 @@ disagreements), which is the first half of backlog item 1.
 | `teams.psv` | `season\|teamId\|name\|abbrev\|owner\|w\|l\|pf\|seed\|finish`, including 2026 rosters |
 | `board2026.psv` | the 2026 board: `pid\|name\|pos\|proTeam\|espnRank\|adp\|own\|proj` |
 | `league.json` | scoring, roster slots, superflex flag, per-season team counts |
-| `snapshots/` | dated board pulls, `espn_board_YYYY-MM-DD.psv` |
+| `snapshots/` | dated board pulls, `espn_board_YYYY-MM-DD.psv`; `draft_<y>_raw.json` |
+| `draft2026.psv` + `_meta.json` | the season just drafted (`fetch_ppp_draft.py`), actual blank; meta carries the autopicks |
+| `faab<y>.psv` | every waiver claim and free-agent add with bid, status, add/drop (`fetch_ppp_faab.py`); 2025 onward public |
+| `players_cache.json` | ESPN playerId → name/pos, filled by the FAAB fetcher so re-runs do not re-ask |
 
 `draft*.psv` schema: `overall|round|pick|teamId|playerId|keeper|name|pos|actual|proj|gp`
 
