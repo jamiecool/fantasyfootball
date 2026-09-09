@@ -54,8 +54,14 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "rawdata", "ppp")
 OUT = os.path.join(ROOT, "cleandata", "analysis")
 
-SEASONS = [2021, 2022, 2023, 2024, 2025]
-TEAMS = {2021: 14, 2022: 12, 2023: 12, 2024: 12, 2025: 12}
+SEASONS = [2021, 2022, 2023, 2024, 2025]      # played seasons: everything measured comes from these
+# The season just drafted (fetch_ppp_draft.py). Its picks are shown on Past drafts and
+# judged against ESPN's list, but it has no points yet, so it stays out of every curve,
+# replacement level, ratio and round mean -- the same split PBAFFL's draft_current makes.
+CURRENT = 2026
+ALL_SEASONS = SEASONS + ([CURRENT] if os.path.exists(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "rawdata", "ppp", f"draft{CURRENT}.psv")) else [])
+TEAMS = {2021: 14, 2022: 12, 2023: 12, 2024: 12, 2025: 12, 2026: 12}
 ROUNDS = 18
 
 # The board's cross-position curve uses the last THREE seasons, matching the
@@ -91,14 +97,15 @@ def rows(path):
 # ---- 1. five seasons of picks ----------------------------------------------
 # schema: overall|round|pick|teamId|playerId|keeper|name|pos|actual|proj|gp
 picks = []
-for y in SEASONS:
+for y in ALL_SEASONS:
     for p in rows(src(f"draft{y}.psv")):
         picks.append(dict(
             s=y, o=int(p[0]), rd=int(p[1]), sl=int(p[2]), tm=int(p[3]), pid=p[4],
             n=p[6], pos=p[7],
             act=float(p[8]) if p[8] else None,
             prj=float(p[9]) if p[9] else None))
-print(f"{len(picks)} picks across {len(SEASONS)} seasons")
+print(f"{len(picks)} picks across {len(ALL_SEASONS)} seasons"
+      + (f" (the {CURRENT} draft is shown but not measured)" if CURRENT in ALL_SEASONS else ""))
 
 
 def need(y, pos):
@@ -353,7 +360,20 @@ for _y in SEASONS:
         FPC[_y] = {player_key(p.get("player_name") or p.get("player_short_name")): p["rank_ecr"]
                    for p in _j["players"]
                    if p.get("rank_ecr") and (p.get("player_name") or p.get("player_short_name"))}
+if CURRENT in ALL_SEASONS:
+    _bp = os.path.join(ROOT, "rawdata", "ppp", f"board{CURRENT}.psv")
+    with open(_bp, encoding="utf-8") as _fh:
+        ESP[CURRENT] = {player_key(r[1]): int(r[4]) for r in csv.reader(_fh, delimiter="|")
+                        if len(r) >= 5 and r[0].isdigit()}
+    ESP_SRC[CURRENT] = f"espn superflex list, the draft-room order (board{CURRENT}.psv)"
 print(f"\npreseason superflex lists: ESPN for {sorted(ESP)}, FantasyPros consensus for {sorted(FPC)}")
+
+# autopicks, where ESPN recorded them (fetch_ppp_draft.py writes draft<y>_meta.json)
+AUTO = {}
+for _y in ALL_SEASONS:
+    _m = os.path.join(ROOT, "rawdata", "ppp", f"draft{_y}_meta.json")
+    if os.path.exists(_m):
+        AUTO[_y] = json.load(open(_m, encoding="utf-8")).get("autopicks", {})
 
 # ---- 5. teams and their drafts ---------------------------------------------
 teams = {}
@@ -363,7 +383,7 @@ for f in rows(src("teams.psv")):
     teams.setdefault(f[0], []).append(dict(
         id=int(f[1]), name=f[2], ab=f[3], own=f[4], w=int(f[5]), l=int(f[6]),
         pf=float(f[7]), seed=int(f[8]), fin=int(f[9])))
-for y in SEASONS:
+for y in ALL_SEASONS:
     haul, starters = defaultdict(float), defaultdict(int)
     for p in picks:
         if p["s"] == y and p["act"]:
@@ -380,7 +400,8 @@ espn_qb_top3 = len([p for p in skill if p["pos"] == "QB" and p["espnRank"] <= 36
 
 D = dict(
     league=json.load(open(src("league.json"), encoding="utf-8")),
-    seasons=SEASONS, curveSeasons=CURVE_SEASONS, rounds=ROUNDS,
+    seasons=ALL_SEASONS, current=CURRENT if CURRENT in ALL_SEASONS else None,
+    curveSeasons=CURVE_SEASONS, rounds=ROUNDS,
     replacement=REPL_ACT, ratio=RATIO, need=NEED, curves=DIAG["curves"],
     nUnderdog=DIAG["n_underdog"], nEspn=DIAG["n_espn"],
     qbTop3=qb_top3, qbcum=qbcum, board=board, vb=vb_meta, yh=yh_meta, rdstat=rdstat, posband=posband,
@@ -392,11 +413,12 @@ D = dict(
     draft={str(y): [dict(o=p["o"], rd=p["rd"], pk=p["sl"], tm=p["tm"], n=p["n"],
                          pos=p["pos"], act=p["act"], prj=p["prj"], fin=p["fin"],
                          st=p["st"], vor=p["vor"], key=player_key(p["n"]),
+                         auto=AUTO.get(y, {}).get(str(p["o"])),
                          # preseason superflex list ranks, for the "vs ESPN" column
                          esp=ESP.get(y, {}).get(player_key(p["n"])),
                          fpc=FPC.get(y, {}).get(player_key(p["n"])))
-                    for p in picks if p["s"] == y] for y in SEASONS},
-    lists={str(y): dict(espn=ESP_SRC.get(y), fp=y in FPC) for y in SEASONS},
+                    for p in picks if p["s"] == y] for y in ALL_SEASONS},
+    lists={str(y): dict(espn=ESP_SRC.get(y), fp=y in FPC) for y in ALL_SEASONS},
     teams=teams)
 
 # ---- 6. the strategy rules -------------------------------------------------

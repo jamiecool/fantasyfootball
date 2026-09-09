@@ -528,6 +528,7 @@ Sanity check that this is right: the board now totals **$2,425 against the $2,40
 | Sleeper | `fetch_projections.py` | projections. **Not in the board any more** — dropped 2026-08-11 |
 | nflverse | `fetch_nflverse*.py` | stat lines, season and weekly. `fetch_nflverse_team.py` adds team-week stats + games.csv, from which `build_clean_data.py` scores **D/ST game logs** (position `DEF`, key `def_<code>`) into `player_weeks` — PBAFFL points baked, PPP re-scored on the page from the stat columns. Not in `final_ranks`. |
 | **Vegas** | `fetch_vegas.py` | implied team totals. **Display only** — never touches pricing or sort |
+| PPP draft | `fetch_ppp_draft.py` | the season's Perennial Push draft from ESPN, **once it is complete** (the read API shows nothing mid-draft) → `rawdata/ppp/draft<y>.psv` + `_meta.json` (autopicks). `CURRENT` in `build_ppp_data.py` keeps the unplayed season out of every measured curve, same as PBAFFL's `draft_current`. |
 
 The board's price is: Underdog says who is WR9, our own 2023-25 price curve says what
 WR9 costs here. No projection enters it. Yahoo and Vegas ride along as cross-checks.

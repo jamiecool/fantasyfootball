@@ -3163,8 +3163,10 @@ function xBoard() {
 function xLast() {
   const sel = document.getElementById('xseason');
   if (!sel.options.length) {
-    PPP.seasons.slice().reverse().forEach(s => sel.add(new Option(s, s)));
-    xState.season = String(PPP.seasons[PPP.seasons.length - 1]);
+    PPP.seasons.slice().reverse().forEach(s => sel.add(new Option(s + (String(s) === String(PPP.current) ? ' (drafted, not played)' : ''), s)));
+    // default to the last PLAYED season; the one just drafted has no results to judge
+    const played = PPP.seasons.filter(s => String(s) !== String(PPP.current));
+    xState.season = String(played[played.length - 1]);
     sel.value = xState.season;
   }
   const yr = xState.season || sel.value;
@@ -3174,13 +3176,15 @@ function xLast() {
   const picks = (PPP.draft[yr] || []);
   const tname = {}; teams.forEach(t => tname[t.id] = t);
 
-  document.getElementById('xlastH').textContent = yr + ' draft';
+  const isCur = String(yr) === String(PPP.current);
+  document.getElementById('xlastH').textContent = yr + ' draft' + (isCur ? ' — drafted, not yet played: no results to judge' : '');
   const nT = teams.length;
   const scored = picks.filter(p => p.act != null);
   const meanH = teams.length ? teams.reduce((a, t) => a + (t.haul || 0), 0) / teams.length : 0;
+  const nAuto = picks.filter(p => p.auto).length;
   document.getElementById('xlTiles').innerHTML = [
     [nT, 'teams'], [picks.length, 'picks'],
-    [Math.round(meanH), 'mean points drafted'],
+    isCur ? [nAuto, 'autopicks'] : [Math.round(meanH), 'mean points drafted'],
     [scored.length ? Math.round(scored.reduce((a, p) => a + p.st, 0) / scored.length * 100) + '%' : '—', 'picks that finished startable']
   ].map(([v, k]) => `<div class="tile"><div class="v kpi">${v}</div><div class="k">${k}</div></div>`).join('');
 
@@ -3190,7 +3194,7 @@ function xLast() {
     teams.map(t => `<tr>
       <td class="l" style="font-weight:650">${t.fin || '—'}</td>
       <td class="l">${t.name}</td><td class="l" style="color:var(--ink2)">${t.own}</td>
-      <td>${t.w}-${t.l}</td><td>${xFmt(t.pf)}</td><td>${xFmt(t.haul)}</td><td>${t.startables}</td></tr>`).join('') +
+      <td>${isCur ? '—' : t.w + '-' + t.l}</td><td>${isCur ? '—' : xFmt(t.pf)}</td><td>${isCur ? '—' : xFmt(t.haul)}</td><td>${isCur ? '—' : t.startables}</td></tr>`).join('') +
     '</tbody>';
 
   let rows = picks;
@@ -3220,7 +3224,7 @@ function xLast() {
       return `<tr>
       <td class="l" style="color:var(--muted)">${i + 1}</td>
       <td class="l" style="font-weight:650">${p.rd}.${String(p.pk).padStart(2, '0')}</td>
-      <td class="l">${pLink(p.n, p.key, +yr)}</td>
+      <td class="l">${pLink(p.n, p.key, +yr)}${p.auto ? ' <span class="lgnote" style="margin:0 0 0 4px" title="autopick (ESPN made this pick for the team)">⚙</span>' : ''}</td>
       <td class="l"><span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos}</span></td>
       <td class="l" style="color:var(--ink2)">${tname[p.tm] ? tname[p.tm].ab : p.tm}</td>
       <td>${p.act == null ? '—' : xFmt(p.act)}</td>
