@@ -3470,10 +3470,10 @@ function xFaab() {
       <td style="color:var(--ink2)">${b.won || b.lost ? b.won + '-' + b.lost : ''}</td></tr>`).join('') + '</tbody>';
 
   // ---- claims: grouped by player added ----
-  const wkRows = rows.filter(r => r.sp === wk && (showFree || r.k !== 'free'));
+  const wkRows = rows.filter(r => r.sp === wk && (showFree || (r.k !== 'free' && r.k !== 'drop')));
   const groups = new Map();
   wkRows.forEach(r => {
-    const k = (r.a && r.a.pid) || r.tx;
+    const k = (r.a && r.a.pid) || (r.k === 'drop' ? 'drop:' + r.tx : r.tx);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
   });
@@ -3484,14 +3484,14 @@ function xFaab() {
   });
   const nWon = wkRows.filter(r => r.k === 'won').length, nOut = wkRows.filter(r => r.k === 'outbid').length;
   document.getElementById('xfClaimH').textContent = `Week ${wk}: ${nWon} claim${nWon === 1 ? '' : 's'} won, ${nOut} outbid${showFree ? ', plus free-agent adds' : ''}`;
-  const kindTxt = k => k === 'won' ? 'won' : k === 'outbid' ? 'outbid' : k === 'free' ? 'free agent' : k === 'cancelled' ? 'cancelled' : k.replace('failed:', 'failed: ').replace(/([a-z])([A-Z])/g, '$1 $2');
+  const kindTxt = k => k === 'won' ? 'won' : k === 'outbid' ? 'outbid' : k === 'free' ? 'free agent' : k === 'drop' ? 'drop' : k === 'cancelled' ? 'cancelled' : k.replace('failed:', 'failed: ').replace(/([a-z])([A-Z])/g, '$1 $2');
   const body = order.map(g => {
     g.sort((a, b) => (a.k === 'won' ? -1 : b.k === 'won' ? 1 : 0) || b.bid - a.bid);
     const lead = g[0], p = lead.a || {};
     return g.map((r, i) => `<tr class="${i === 0 ? 'grp' : 'lost'}${r.tm === me ? ' me' : ''}">
-      <td class="l">${i === 0 ? `${pLink(p.n || '?', p.key, +yr)} <span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos || '?'}</span>` : ''}</td>
+      <td class="l">${i === 0 ? (r.k === 'drop' ? '<span style="color:var(--muted)">cut, nobody added</span>' : `${pLink(p.n || '?', p.key, +yr)} <span class="pos" style="background:var(${POSC[p.pos] || '--muted'})">${p.pos || '?'}</span>`) : ''}</td>
       <td class="l" style="font-weight:${r.k === 'won' ? 650 : 400}">${esc(ab(r.tm))}</td>
-      <td class="bid">${r.k === 'free' ? '<span style="color:var(--muted)">$0</span>' : '$' + r.bid}</td>
+      <td class="bid">${r.k === 'free' || r.k === 'drop' ? '<span style="color:var(--muted)">$0</span>' : '$' + r.bid}</td>
       <td class="l">${r.k === 'won' ? '<span class="up">won</span>' : r.k === 'outbid' ? '<span class="dn">outbid</span>' : `<span style="color:var(--muted)">${kindTxt(r.k)}</span>`}</td>
       <td class="l" style="color:var(--muted)">${r.d ? 'dropped ' + esc(r.d.n) : ''}</td></tr>`).join('');
   }).join('');

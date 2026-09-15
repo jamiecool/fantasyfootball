@@ -7,7 +7,11 @@ ESPN's mTransactions2 view answers per scoring period, so each season is 18 call
 returns every waiver claim with its bid and a status: EXECUTED is the winner,
 FAILED_INVALIDPLAYERSOURCE is a bid that lost because the player had already gone to a
 higher bid in the same run, and the other FAILED_* are roster-rule failures. Free-agent
-adds after waivers clear are FREEAGENT with bidAmount 0. That is what the FAAB page needs:
+adds after waivers clear are FREEAGENT with bidAmount 0, and a player cut without a
+replacement is a ROSTER transaction carrying only a DROP item (kept, so a player's roster
+history has no gaps; lineup shuffles are ROSTER too but carry no DROP and are skipped). Every
+dropped player is kept -- a two-for-one claim yields an extra row per additional drop. That
+is what the FAAB page needs:
 who bid what on whom, who won, and (by subtraction from the budget) what each team had
 left going into any week.
 
@@ -88,17 +92,26 @@ def pull(season, cache):
         if st != 200 or not j:
             continue
         for t in j.get("transactions", []):
-            if t.get("type") not in ("WAIVER", "FREEAGENT") or t["id"] in seen:
+            # WAIVER = bids, FREEAGENT = $0 adds, ROSTER = a plain drop with nothing added
+            # (a roster move that has a DROP item; lineup shuffles have none and are skipped)
+            items = t.get("items", [])
+            if t.get("type") not in ("WAIVER", "FREEAGENT", "ROSTER") or t["id"] in seen:
+                continue
+            if t["type"] == "ROSTER" and not any(i["type"] == "DROP" for i in items):
                 continue
             seen.add(t["id"])
-            add = next((i for i in t.get("items", []) if i["type"] == "ADD"), {})
-            drop = next((i for i in t.get("items", []) if i["type"] == "DROP"), {})
-            rows.append(dict(season=season, sp=t.get("scoringPeriodId", sp), type=t["type"],
-                             status=t.get("status", ""), teamId=t.get("teamId"),
-                             bid=t.get("bidAmount", 0) or 0,
-                             processDate=t.get("processDate") or t.get("proposedDate") or 0,
-                             txId=t["id"], relatedId=t.get("relatedTransactionId") or "",
-                             addPid=add.get("playerId"), dropPid=drop.get("playerId")))
+            add = next((i for i in items if i["type"] == "ADD"), {})
+            drops = [i for i in items if i["type"] == "DROP"]
+            drop = drops[0] if drops else {}
+            base_row = dict(season=season, sp=t.get("scoringPeriodId", sp), type=t["type"],
+                            status=t.get("status", ""), teamId=t.get("teamId"),
+                            bid=t.get("bidAmount", 0) or 0,
+                            processDate=t.get("processDate") or t.get("proposedDate") or 0,
+                            txId=t["id"], relatedId=t.get("relatedTransactionId") or "")
+            rows.append(dict(base_row, addPid=add.get("playerId"), dropPid=drop.get("playerId")))
+            for extra in drops[1:]:                       # a two-for-one claim drops two players
+                rows.append(dict(base_row, txId=t["id"] + "#" + str(extra["playerId"]),
+                                 type="ROSTER", bid=0, addPid=None, dropPid=extra["playerId"]))
     pids = {r["addPid"] for r in rows if r["addPid"]} | {r["dropPid"] for r in rows if r["dropPid"]}
     names_for(season, pids, cache)
     for r in rows:
@@ -128,8 +141,9 @@ def main():
         won = sum(1 for r in rows if r["type"] == "WAIVER" and r["status"] == "EXECUTED")
         lost = sum(1 for r in rows if r["type"] == "WAIVER" and r["status"] == "FAILED_INVALIDPLAYERSOURCE")
         fa = sum(1 for r in rows if r["type"] == "FREEAGENT")
+        dr = sum(1 for r in rows if r["type"] == "ROSTER")
         print(f"{y}: {len(rows)} rows -> {os.path.relpath(out, ROOT)}  "
-              f"({won} winning bids, {lost} outbid, {fa} free-agent adds)")
+              f"({won} winning bids, {lost} outbid, {fa} free-agent adds, {dr} plain drops)")
     with open(CACHE, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=0, sort_keys=True)
     print(f"player cache: {len(cache)} names  ({time.strftime('%Y-%m-%d %H:%M')})")

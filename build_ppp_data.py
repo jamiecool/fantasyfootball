@@ -389,7 +389,8 @@ for _y in ALL_SEASONS:
     with open(_f, encoding="utf-8") as _fh:
         for r in csv.DictReader(_fh, delimiter="|"):
             _st = r["status"]
-            kind = ("free" if r["type"] == "FREEAGENT" else
+            kind = ("drop" if r["type"] == "ROSTER" else
+                    "free" if r["type"] == "FREEAGENT" else
                     "won" if _st == "EXECUTED" else
                     "outbid" if _st == "FAILED_INVALIDPLAYERSOURCE" else
                     "cancelled" if _st == "CANCELED" else
